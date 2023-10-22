@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <set>
+#include "tsl/robin_map.h"
 
 using namespace std;
 
@@ -47,8 +48,8 @@ public:
         return complement;
     }
 
-    map<uint32_t, string> reverseComplementMapValues(map<uint32_t, string>& genomeMap) {
-        map<uint32_t, string> revMap;
+    tsl::robin_map <uint32_t, string> reverseComplementMapValues(const tsl::robin_map <uint32_t, string>& genomeMap) {
+        tsl::robin_map <uint32_t, string> revMap;
         for (auto& pair : genomeMap) {
             string rev = reverseComplement(pair.second);
             revMap[pair.first] = rev;
@@ -68,7 +69,7 @@ public:
         }
     }
 
-    uint32_t readContigsFromFile(string fileAddress, T numberOfEntriesToRead, map<T, string>& queries)
+    uint32_t readContigsFromFile(string fileAddress, T numberOfEntriesToRead, tsl::robin_map <uint32_t, string>& queries)
     {
         ifstream file(fileAddress);
         if (!file) {

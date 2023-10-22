@@ -166,7 +166,7 @@ public:
         return true;
     }
 
-    vector<SamReader::Sam> comparePmWithBWA(map<uint32_t, LevAlign>& pmr, Config& cfg, tsl::robin_map <uint32_t, string>& reads, map<uint32_t,string>& queries, ofstream &cmp, IndexContainer<uint32_t, uint32_t>& pmAlignments, vector<std::pair<uint32_t, uint32_t>>& alnPmBwaHisto, uint32_t queryCount)
+    vector<SamReader::Sam> comparePmWithBWA(map<uint32_t, LevAlign>& pmr, Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, ofstream &cmp, IndexContainer<uint32_t, uint32_t>& pmAlignments, vector<std::pair<uint32_t, uint32_t>>& alnPmBwaHisto, uint32_t queryCount)
     {
         SamReader samReader(cfg.bwaSamFileAddress);
         vector<SamReader::Sam> alignments = samReader.parseFile(queryCount);

@@ -61,7 +61,7 @@ public:
         return out.str();
     }
 
-    void cheapSeedFilter(Container<kmerT, readIndT>& cheapKmers, map<queryIndT, string>& queries, 
+    void cheapSeedFilter(Container<kmerT, readIndT>& cheapKmers, tsl::robin_map <uint32_t, string>& queries, 
     IndexContainer<queryIndT, readIndT>& frontMinThCheapSeeds, IndexContainer<queryIndT, readIndT>& backMinThCheapSeeds)
     {
         Utilities<uint32_t> utilint;
