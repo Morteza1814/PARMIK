@@ -178,6 +178,92 @@ public:
         ifs.close();
     }
 
+        // Serialize the Container to a file
+    void serialize(const string& filename) {
+
+        ofstream outfile(filename, ios::binary);
+
+        // Write size of outer map
+        size_t outerSize = container.size();
+        outfile.write((char*)&outerSize, sizeof(outerSize));
+
+        // Loop through outer map
+        for (auto& kv : container) {
+            
+            // Write key
+            outfile.write((char*)&kv.first, sizeof(kv.first));
+            
+            // Get inner container
+            auto& inner = kv.second;
+            
+            // Write size of inner container
+            size_t innerSize = inner.size();
+            outfile.write((char*)&innerSize, sizeof(innerSize));
+            
+            // Write each element of inner container
+            for (auto& elem : inner) {
+            outfile.write((char*)&elem, sizeof(elem)); 
+            }
+        }
+
+        outfile.close();
+    }
+
+
+    // Deserialize the Container from a file 
+    void deserialize(const string& filename) {
+        // OuterContainerType container2;
+        ifstream infile(filename, ios::binary); 
+
+        // Read size of outer map
+        size_t outerSize;
+        infile.read((char*)&outerSize, sizeof(outerSize));
+
+        // Clear existing data
+        container.clear();
+
+        // Read each entry
+        for (size_t i = 0; i < outerSize; i++) {
+
+            Key key;
+            infile.read((char*)&key, sizeof(key));
+
+            // Read size of inner container
+            size_t innerSize;
+            infile.read((char*)&innerSize, sizeof(innerSize));
+
+            // Read each element
+            InnerContainerType inner;
+            for (size_t j = 0; j < innerSize; j++) {
+            Value elem;
+            infile.read((char*)&elem, sizeof(elem));
+            inner.insert(elem);
+            }
+
+            // Insert into container
+            container[key] = inner;
+        }
+        // cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<check serlizer>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+        // cout << "deser cheap kmer size is : " << container2.size() << endl;
+        // for (const auto& kv : container) {
+        //     auto it = container2.find(kv.first);
+        //     if (it == container2.end()) {
+        //         cout << "Error: key not found in deserialized container" << endl;
+        //     } else {
+        //         // Check inner values
+        //         const auto& originalValues = kv.second;
+        //         const auto& deserializedValues = it->second;
+                
+        //         for (const auto& value : originalValues) {
+        //             if (deserializedValues.find(value) == deserializedValues.end()) {
+        //                 cout << "Error: value not found in deserialized container" << endl;
+        //             } 
+        //         }
+        //     }
+        // }
+        // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<check serlizer>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n" << endl;
+        infile.close();
+    }
 
 // private:
     OuterContainerType container;

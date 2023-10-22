@@ -771,7 +771,7 @@ public:
         return ((l.editDistance <= maxAllowedEdit) && (((uint32_t)l.partialMatchSize >= (uint32_t)regionSize) || ((uint32_t)(l.numberOfMatches + l.numberOfInDel + l.numberOfSub) >= (uint32_t)regionSize)));
     }
 
-    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, map<uint32_t,string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, uint32_t allowedEditDistance, uint32_t contigSize, map<contigIndT, LevAlign> &pmres, IndexContainer<contigIndT, contigIndT>& alignments)
+    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, uint32_t allowedEditDistance, uint32_t contigSize, map<contigIndT, LevAlign> &pmres, IndexContainer<contigIndT, contigIndT>& alignments)
     {      
         Utilities<double> utildouble;   
         set<double> seedAndExtend_times;

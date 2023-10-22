@@ -38,7 +38,7 @@ public:
         return kmers;
     }
 
-    IndexContainer<keyT, valT> build(const string& fastqFile, uint32_t contigCountToRead, bool isIndexOffline, string offlineIndexAddress, tsl::robin_map <uint32_t, string> &readsMap)
+    IndexContainer<keyT, valT> build(const string& fastqFile, uint32_t contigCountToRead, bool isIndexOffline, string offlineIndexAddress)
     {
         ifstream file(fastqFile);
         if (!file) {
@@ -77,7 +77,6 @@ public:
                     for (const auto& kmer : kmers) {
                         invertedIndex.put(kmer, currentContigId);
                     }
-                    readsMap[currentContigId] = line;
                     contigCount++;
                     kmerIndCount += kmers.size();
                     if ((currentContigId % 100000) == 0)
