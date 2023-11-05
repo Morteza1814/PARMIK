@@ -13,25 +13,30 @@
 #include "Includes/SamReader.h"
 #include "Includes/CompareWithBWA.h"
 
+#define PARMIK_MODE_INDEX   0
+#define PARMIK_MODE_ALIGN   1
+#define PARMIK_MODE_COMPARE 2
+
 int argParse(int argc, char** argv, Config &cfg){
 	args::ArgumentParser parser("=========================Arguments===========================", "======================================================");
-    args::HelpFlag help(parser, "help", "Help", {'h', "help"});
-	args::ValueFlag<string> readDatabaseAddressArg(parser, "", "Read Data Base Address", {'r', "read"});
-	args::ValueFlag<string> queryFileAddressArg(parser, "", "Query File Address", {'q', "query"});
-	args::ValueFlag<string> offlineIndexAddressArg(parser, "", "Offline Index Address", {'f', "offlineIndex"});
-    args::ValueFlag<string> bwaSamAddressArg(parser, "", "BWA MEM SAM output", {'b', "bwa"});
-	args::ValueFlag<int> readsCountArg(parser, "", "Number of Reads", {'i', "readCount"});
-	args::ValueFlag<int> queryCountArg(parser, "", "Number of Queries", {'j', "queryCount"});
-    args::ValueFlag<int> overlapSizeArg(parser, "", "Overlap Size", {'z', "overlapSize"});
-    args::ValueFlag<int> cheapKmerThresholdArg(parser, "", "Cheap Kmer Threshold", {'t', "cheapKmerThreshold"});
-	args::ValueFlag<string> outputDirArg(parser, "", "OutputDir", {'o', "outputDir"});
-	args::ValueFlag<int> kmerLengthArg(parser, "", "Kmer Length", {'k', "kmerLen"});
-	args::ValueFlag<int> minExactMatchLenArg(parser, "", "Minimum Exact Match Len", {'m', "minExactMatchLen"});
-	args::ValueFlag<int> regionSizeArg(parser, "", "Region Size", {'s', "regionSize"});
-	args::ValueFlag<int> contigSizeArg(parser, "", "Contig Size", {'c', "contigSize"});
-	args::ValueFlag<int> editDistanceArg(parser, "", "Edit Distance (i/d/s)", {'e', "editDistance"});
-	args::Flag isIndexOfflineArg(parser, "", "Is the read inndex offline", {'x', "isIndexOffline"});
-	args::Flag isVerboseLogArg(parser, "", "Verbose Logging", {'v', "verboseLog"});
+    args::ValueFlag<int> parmikModeArg(parser, "", "PARMIK mode",                              {'a', "mode"});
+    args::ValueFlag<string> bwaSamAddressArg(parser, "", "BWA MEM SAM output",              {'b', "bwa"});
+	args::ValueFlag<int> contigSizeArg(parser, "", "Contig Size",                           {'c', "contigSize"});
+	args::ValueFlag<int> editDistanceArg(parser, "", "Edit Distance (i/d/s)",               {'e', "editDistance"});
+	args::ValueFlag<string> offlineIndexAddressArg(parser, "", "Offline Index Address",     {'f', "offlineIndex"});
+    args::HelpFlag help(parser, "help", "Help",                                             {'h', "help"});
+	args::ValueFlag<int> readsCountArg(parser, "", "Number of Reads",                       {'i', "readCount"});
+	args::ValueFlag<int> queryCountArg(parser, "", "Number of Queries",                     {'j', "queryCount"});
+	args::ValueFlag<int> kmerLengthArg(parser, "", "Kmer Length",                           {'k', "kmerLen"});
+	args::ValueFlag<int> minExactMatchLenArg(parser, "", "Minimum Exact Match Len",         {'m', "minExactMatchLen"});
+	args::ValueFlag<string> outputDirArg(parser, "", "OutputDir",                           {'o', "outputDir"});
+	args::ValueFlag<string> queryFileAddressArg(parser, "", "Query File Address",           {'q', "query"});
+	args::ValueFlag<string> readDatabaseAddressArg(parser, "", "Read Data Base Address",    {'r', "read"});
+	args::ValueFlag<int> regionSizeArg(parser, "", "Region Size",                           {'s', "regionSize"});
+    args::ValueFlag<int> cheapKmerThresholdArg(parser, "", "Cheap Kmer Threshold",          {'t', "cheapKmerThreshold"});
+	args::Flag isVerboseLogArg(parser, "", "Verbose Logging",                               {'v', "verboseLog"});
+	args::Flag isIndexOfflineArg(parser, "", "Is the read inndex offline",                  {'x', "isIndexOffline"});
+    args::ValueFlag<int> overlapSizeArg(parser, "", "Overlap Size",                         {'z', "overlapSize"});
 	// args::Flag isFreqAndMemReportArg(parser, "", "Report Seed Frequencies and Avg MEM sizes", {'z', "memfreq"});
 	// args::Flag isReverseStrandArg(parser, "", "Check the Reverse Strand of Queries", {'y', "reverseStrand"});
 	// args::Flag isOnlyBestAlignmentArg(parser, "", "Only Output the Largest Alignment for Each Query", {'b', "bestAlign"});
@@ -70,6 +75,7 @@ int argParse(int argc, char** argv, Config &cfg){
     if (isVerboseLogArg) {cfg.isVerboseLog = true; } else {cfg.isVerboseLog = false;}
     if (offlineIndexAddressArg) {cfg.offlineIndexAddress = args::get(offlineIndexAddressArg); } else {cout << "no offlineIndexAddress!"<< endl; return 0;}
     if (bwaSamAddressArg) {cfg.bwaSamFileAddress = args::get(bwaSamAddressArg); } else {cout << "no bwaSamFileAddress!"<< endl; return 0;}
+    if (parmikModeArg) {cfg.parmikMode = args::get(parmikModeArg); } else {cout << "no parmik mode is determined!"<< endl; return 0;}
 	if (editDistanceArg) {cfg.editDistance = args::get(editDistanceArg); } else {cfg.editDistance = NUMBER_OF_ALLOWED_EDIT_DISTANCES;}
 	cfg.readFileName = cfg.readDatabaseAddress.substr(cfg.readDatabaseAddress.find_last_of("/\\") + 1);
 	cfg.queryFileName = cfg.queryFileAddress.substr(cfg.queryFileAddress.find_last_of("/\\") + 1);
@@ -169,6 +175,7 @@ int run(int argc, char *argv[]) {
 	if (!argParse(argc, argv, cfg))
     	return 0;
 	cout << "**********************CONFIGURATIONS*****************************" << endl;
+    cout << left << setw(30) << "PARMIK mode: " << cfg.parmikMode << endl;
 	cout << left << setw(30) << "readDatabaseAddress: " << cfg.readDatabaseAddress << endl;
 	cout << left << setw(30) << "readFileName: " << cfg.readFileName << endl;
 	cout << left << setw(30) << "queryFileAddress: " << cfg.queryFileAddress << endl;
@@ -191,113 +198,128 @@ int run(int argc, char *argv[]) {
 
     try { 
         //construct the baseline
-        IndexContainer<uint32_t, uint32_t> baselineQueriesFrontSeeds; 
-        IndexContainer<uint32_t, uint32_t> baselineQueriesBackSeeds;
+        // IndexContainer<uint32_t, uint32_t> baselineQueriesFrontSeeds; 
+        // IndexContainer<uint32_t, uint32_t> baselineQueriesBackSeeds;
         // BaseLinePartialMatcher<uint32_t, uint64_t, uint32_t> blpm(cfg.minExactMatchLen, cfg.regionSize);
         // blpm.constructBaseline(cfg.readDatabaseAddress, cfg.readsCount, cfg.queryFileAddress, cfg.queryCount,cfg.minExactMatchLen, cfg.cheapKmerThreshold, baselineQueriesFrontSeeds, baselineQueriesBackSeeds, cfg.isIndexOffline, cfg.offlineIndexAddress);
         // run the experiment
         IndexContainer<uint32_t, uint32_t> frontMinThCheapSeedReads, backMinThCheapSeedReads, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads;
         map<uint32_t, LevAlign> pmr;
+        string parmikAlignments = cfg.outputDir + "parmikAlignments.txt";
         tsl::robin_map <uint32_t, string> reads, queries;
-        uint32_t queryCount = util.readContigsFromFile(cfg.queryFileAddress, cfg.queryCount, queries);
-        cout << "queryCount : " << queryCount << endl;
+        uint32_t queryCount = 0;
+        if (cfg.parmikMode != PARMIK_MODE_INDEX)
+        {
+            queryCount = util.readContigsFromFile(cfg.queryFileAddress, cfg.queryCount, queries);
+            cout << "queryCount : " << queryCount << endl;
+        }
         uint32_t readCount = util.readContigsFromFile(cfg.readDatabaseAddress, cfg.readsCount, reads);
         cout << "readCount : " << readCount << endl;
         IndexContainer<uint32_t, uint32_t> alignments;
         // unordered_map<uint32_t, unordered_set<LevAlign>> alignments;
         string offlineCheapIndexAddress = cfg.offlineIndexAddress + "CheapKmers/cheapKmers_" + to_string(cfg.cheapKmerThreshold) + "_" + to_string(cfg.readsCount);
-
-        if (cfg.kmerLength <= 16)
+        if (cfg.parmikMode != PARMIK_MODE_COMPARE)
         {
-            Container<uint32_t, uint32_t> cheapKmers;
-            if(!cfg.isIndexOffline)
+            if (cfg.kmerLength <= 16)
             {
-                //create the partial matching inverted read index
-                InvertedIndexBuilder<uint32_t, uint32_t> builder(cfg.kmerLength, cfg.overlapSize);
-                // Build the inverted index
-                string offlineIndexAddress = cfg.offlineIndexAddress + "experiments/R" + to_string(cfg.readsCount);
-                IndexContainer<uint32_t, uint32_t> invertedIndex = builder.build(cfg.readDatabaseAddress, cfg.readsCount, cfg.isIndexOffline, offlineIndexAddress);
-                // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-                // invertedIndex.getSize();
-                // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-                //collect cheap kmers
-                KmersFrequencyCounter<uint32_t, uint32_t> kfc(cfg.cheapKmerThreshold);
-                kfc.collectCheapKmers(cheapKmers, invertedIndex);
-                // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-                // cheapKmers.getSize();
-                // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-                invertedIndex.clear();
-                clock_t ser_start_time = clock();
-                cheapKmers.serialize(offlineCheapIndexAddress);
-                cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Serialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
-            } else 
+                Container<uint32_t, uint32_t> cheapKmers;
+                if(!cfg.isIndexOffline)
+                {
+                    //create the partial matching inverted read index
+                    InvertedIndexBuilder<uint32_t, uint32_t> builder(cfg.kmerLength, cfg.overlapSize);
+                    // Build the inverted index
+                    string offlineIndexAddress = cfg.offlineIndexAddress + "experiments/R" + to_string(cfg.readsCount);
+                    IndexContainer<uint32_t, uint32_t> invertedIndex = builder.build(cfg.readDatabaseAddress, cfg.readsCount, cfg.isIndexOffline, offlineIndexAddress);
+                    // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+                    // invertedIndex.getSize();
+                    // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+                    //collect cheap kmers
+                    KmersFrequencyCounter<uint32_t, uint32_t> kfc(cfg.cheapKmerThreshold);
+                    kfc.collectCheapKmers(cheapKmers, invertedIndex);
+                    // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+                    // cheapKmers.getSize();
+                    // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+                    invertedIndex.clear();
+                    clock_t ser_start_time = clock();
+                    cheapKmers.serialize(offlineCheapIndexAddress);
+                    cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Serialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
+                } else 
+                {
+                    clock_t ser_start_time = clock();
+                    cheapKmers.deserialize(offlineCheapIndexAddress);
+                    cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
+                }
+                //do partial matching based on cheap k-mers
+                CheapKmerPartialMatcher<uint32_t, uint32_t, uint32_t> ckpm50(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
+                ckpm50.cheapSeedFilter(cheapKmers, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads);
+                //get the reverse complement of queries
+                tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
+                ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
+                // ckpm50.printArrays();
+                SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog);
+                pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, true, parmikAlignments);
+                //do it again for the reverse strand
+                pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, false, parmikAlignments);
+            } else
             {
-                clock_t ser_start_time = clock();
-                cheapKmers.deserialize(offlineCheapIndexAddress);
-                cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
+                Container<uint64_t, uint32_t> cheapKmers;
+                if(!cfg.isIndexOffline)
+                {
+                    //create the partial matching inverted read index
+                    InvertedIndexBuilder<uint64_t, uint32_t> builder(cfg.kmerLength, cfg.overlapSize);
+                    // Build the inverted index
+                    string offlineIndexAddress = cfg.offlineIndexAddress + "experiments/R" + to_string(cfg.readsCount);
+                    IndexContainer<uint64_t, uint32_t> invertedIndex = builder.build(cfg.readDatabaseAddress, cfg.readsCount, cfg.isIndexOffline, offlineIndexAddress);
+                    // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+                    // invertedIndex.getSize();
+                    // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+                    //collect cheap kmers
+                    KmersFrequencyCounter<uint64_t, uint32_t> kfc(cfg.cheapKmerThreshold);
+                    kfc.collectCheapKmers(cheapKmers, invertedIndex);
+                    // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+                    // cheapKmers.getSize();
+                    // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+                    invertedIndex.clear();
+                    clock_t ser_start_time = clock();
+                    cheapKmers.serialize(offlineCheapIndexAddress);
+                    cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Serialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
+                } else 
+                {
+                    clock_t ser_start_time = clock();
+                    cheapKmers.deserialize(offlineCheapIndexAddress);
+                    cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
+                }
+                // do partial matching based on cheap k-mers
+                CheapKmerPartialMatcher<uint32_t, uint64_t, uint32_t> ckpm50(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
+                ckpm50.cheapSeedFilter(cheapKmers, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads);
+                //get the reverse complement of queries
+                tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
+                ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
+                // ckpm50.printArrays();
+                SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog);
+                pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, true, parmikAlignments);
+                //do it again for the reverse strand
+                pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, false, parmikAlignments);
             }
-            //do partial matching based on cheap k-mers
-            CheapKmerPartialMatcher<uint32_t, uint32_t, uint32_t> ckpm50(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
-            ckpm50.cheapSeedFilter(cheapKmers, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads);
-            //get the reverse complement of queries
-            tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
-            ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
-            // ckpm50.printArrays();
-            SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog);
-            pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments);
-            //do it again for the reverse strand
-            pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments);
+        
+            //report the histogram of the alignments
+            if(!cfg.noOutputFileDump)
+            {
+                ofstream matches(cfg.outputDir + "PM_best_matches.txt");
+                //report PM final best match results
+                matches << "Q , R" << endl;
+                for (const auto& pair : pmr) {
+                    matches << pair.first << " , " << pair.second.readID << endl;
+                }
+                matches.close();
+            }
         } else
         {
-            Container<uint64_t, uint32_t> cheapKmers;
-            if(!cfg.isIndexOffline)
+            if(!cfg.noOutputFileDump)
             {
-                //create the partial matching inverted read index
-                InvertedIndexBuilder<uint64_t, uint32_t> builder(cfg.kmerLength, cfg.overlapSize);
-                // Build the inverted index
-                string offlineIndexAddress = cfg.offlineIndexAddress + "experiments/R" + to_string(cfg.readsCount);
-                IndexContainer<uint64_t, uint32_t> invertedIndex = builder.build(cfg.readDatabaseAddress, cfg.readsCount, cfg.isIndexOffline, offlineIndexAddress);
-                // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-                // invertedIndex.getSize();
-                // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-                //collect cheap kmers
-                KmersFrequencyCounter<uint64_t, uint32_t> kfc(cfg.cheapKmerThreshold);
-                kfc.collectCheapKmers(cheapKmers, invertedIndex);
-                // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-                // cheapKmers.getSize();
-                // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-                invertedIndex.clear();
-                clock_t ser_start_time = clock();
-                cheapKmers.serialize(offlineCheapIndexAddress);
-                cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Serialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
-            } else 
-            {
-                clock_t ser_start_time = clock();
-                cheapKmers.deserialize(offlineCheapIndexAddress);
-                cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
+                cout << "no noOutputFileDump!!" << endl;
+                return 0;
             }
-            // do partial matching based on cheap k-mers
-            CheapKmerPartialMatcher<uint32_t, uint64_t, uint32_t> ckpm50(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
-            ckpm50.cheapSeedFilter(cheapKmers, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads);
-            //get the reverse complement of queries
-            tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
-            ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
-            // ckpm50.printArrays();
-            SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog);
-            pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments);
-            //do it again for the reverse strand
-            pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments);
-        }
-        //report the histogram of the alignments
-        if(!cfg.noOutputFileDump)
-        {
-            ofstream matches(cfg.outputDir + "PM_best_matches.txt");
-            //report PM final best match results
-            matches << "Q , R" << endl;
-            for (const auto& pair : pmr) {
-                matches << pair.first << " , " << pair.second.readID << endl;
-            }
-            matches.close();
             //check the alignment results with the baseline (BWA)
             ofstream cmp(cfg.outputDir + "comparePMwithBWA.txt");
             ComparatorWithBWA cwb;
@@ -338,35 +360,35 @@ int run(int argc, char *argv[]) {
             cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<BWA vs PM Alignments Sizes finished!>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         }
 
-        if(cfg.isVerboseLog)
-        {
-            //check FN, FP,...
-            cout << "<<<<<<<<<<<<<<<<<<<<<<<<Partial Matching Seeding FN results>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
-            map<uint32_t, uint32_t> frontSeedsFNRates;
-            map<uint32_t, uint32_t> backSeedsFNRates;
-            map<uint32_t, uint32_t> frontSeedsTPRates = checkRates(baselineQueriesFrontSeeds, frontMinThCheapSeedReads, frontSeedsFNRates);
-            map<uint32_t, uint32_t> backSeedsTPRates = checkRates(baselineQueriesBackSeeds, backMinThCheapSeedReads, backSeedsFNRates);
-            tuple<uint32_t, uint32_t, uint32_t> frontSeedsFNRateTuple = util.calculateStatistics(convertMapToSet(frontSeedsFNRates));
-            tuple<uint32_t, uint32_t, uint32_t> backSeedsFNRateTuple = util.calculateStatistics(convertMapToSet(backSeedsFNRates));
-            uint32_t frontSeedsFNRate = sumMapValues(frontSeedsFNRates);
-            uint32_t backSeedsFNRate= sumMapValues(backSeedsFNRates);
-            printf("Number of Seeds FN Rate  => Front [total: %d, average: %d, median: %d, mean: %d] - Back [total: %d, average: %d, median: %d, mean: %d]\n", frontSeedsFNRate, get<0>(frontSeedsFNRateTuple), get<1>(frontSeedsFNRateTuple), get<2>(frontSeedsFNRateTuple), backSeedsFNRate, get<0>(backSeedsFNRateTuple), get<1>(backSeedsFNRateTuple), get<2>(backSeedsFNRateTuple));
-            uint32_t frontSeedsTPRate = sumMapValues(frontSeedsTPRates);
-            uint32_t backSeedsTPRate= sumMapValues(backSeedsTPRates);
-            tuple<uint32_t, uint32_t, uint32_t> frontSeedsTPRatesTuple = util.calculateStatistics(convertMapToSet(frontSeedsTPRates));
-            tuple<uint32_t, uint32_t, uint32_t> backSeedsTPRatesTuple = util.calculateStatistics(convertMapToSet(backSeedsTPRates));
-            printf("Number of Seeds TP Rate  => Front [total: %d, average: %d, median: %d, mean: %d] - Back [total: %d, average: %d, median: %d, mean: %d]\n", frontSeedsTPRate, get<0>(frontSeedsTPRatesTuple), get<1>(frontSeedsTPRatesTuple), get<2>(frontSeedsTPRatesTuple), backSeedsTPRate, get<0>(backSeedsTPRatesTuple), get<1>(backSeedsTPRatesTuple), get<2>(backSeedsTPRatesTuple));
-            cout << "<<<<<<<<<<<<<<<<<<<<<<<<Partial Matching Seeding FP results>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
-            map<uint32_t, uint32_t> frontSeedsFPRates;
-            map<uint32_t, uint32_t> backSeedsFPRates;
-            checkRates(frontMinThCheapSeedReads, baselineQueriesFrontSeeds, frontSeedsFPRates);
-            checkRates(backMinThCheapSeedReads, baselineQueriesBackSeeds, backSeedsFPRates);
-            uint32_t frontSeedsFPRate = sumMapValues(frontSeedsFPRates);
-            uint32_t backSeedsFPRate= sumMapValues(backSeedsFPRates);
-            tuple<uint32_t, uint32_t, uint32_t> frontSeedsFPRateTuple = util.calculateStatistics(convertMapToSet(frontSeedsFPRates));
-            tuple<uint32_t, uint32_t, uint32_t> backSeedsFPRateTuple = util.calculateStatistics(convertMapToSet(backSeedsFPRates));
-            printf("Number of Seeds FP Rate  => Front [total: %d, average: %d, median: %d, mean: %d] - Back [total: %d, average: %d, median: %d, mean: %d]\n", frontSeedsFPRate , get<0>(frontSeedsFPRateTuple), get<1>(frontSeedsFPRateTuple), get<2>(frontSeedsFPRateTuple), backSeedsFPRate, get<0>(backSeedsFPRateTuple), get<1>(backSeedsFPRateTuple), get<2>(backSeedsFPRateTuple));      
-        }
+        // if(cfg.isVerboseLog)
+        // {
+        //     //check FN, FP,...
+        //     cout << "<<<<<<<<<<<<<<<<<<<<<<<<Partial Matching Seeding FN results>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+        //     map<uint32_t, uint32_t> frontSeedsFNRates;
+        //     map<uint32_t, uint32_t> backSeedsFNRates;
+        //     map<uint32_t, uint32_t> frontSeedsTPRates = checkRates(baselineQueriesFrontSeeds, frontMinThCheapSeedReads, frontSeedsFNRates);
+        //     map<uint32_t, uint32_t> backSeedsTPRates = checkRates(baselineQueriesBackSeeds, backMinThCheapSeedReads, backSeedsFNRates);
+        //     tuple<uint32_t, uint32_t, uint32_t> frontSeedsFNRateTuple = util.calculateStatistics(convertMapToSet(frontSeedsFNRates));
+        //     tuple<uint32_t, uint32_t, uint32_t> backSeedsFNRateTuple = util.calculateStatistics(convertMapToSet(backSeedsFNRates));
+        //     uint32_t frontSeedsFNRate = sumMapValues(frontSeedsFNRates);
+        //     uint32_t backSeedsFNRate= sumMapValues(backSeedsFNRates);
+        //     printf("Number of Seeds FN Rate  => Front [total: %d, average: %d, median: %d, mean: %d] - Back [total: %d, average: %d, median: %d, mean: %d]\n", frontSeedsFNRate, get<0>(frontSeedsFNRateTuple), get<1>(frontSeedsFNRateTuple), get<2>(frontSeedsFNRateTuple), backSeedsFNRate, get<0>(backSeedsFNRateTuple), get<1>(backSeedsFNRateTuple), get<2>(backSeedsFNRateTuple));
+        //     uint32_t frontSeedsTPRate = sumMapValues(frontSeedsTPRates);
+        //     uint32_t backSeedsTPRate= sumMapValues(backSeedsTPRates);
+        //     tuple<uint32_t, uint32_t, uint32_t> frontSeedsTPRatesTuple = util.calculateStatistics(convertMapToSet(frontSeedsTPRates));
+        //     tuple<uint32_t, uint32_t, uint32_t> backSeedsTPRatesTuple = util.calculateStatistics(convertMapToSet(backSeedsTPRates));
+        //     printf("Number of Seeds TP Rate  => Front [total: %d, average: %d, median: %d, mean: %d] - Back [total: %d, average: %d, median: %d, mean: %d]\n", frontSeedsTPRate, get<0>(frontSeedsTPRatesTuple), get<1>(frontSeedsTPRatesTuple), get<2>(frontSeedsTPRatesTuple), backSeedsTPRate, get<0>(backSeedsTPRatesTuple), get<1>(backSeedsTPRatesTuple), get<2>(backSeedsTPRatesTuple));
+        //     cout << "<<<<<<<<<<<<<<<<<<<<<<<<Partial Matching Seeding FP results>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+        //     map<uint32_t, uint32_t> frontSeedsFPRates;
+        //     map<uint32_t, uint32_t> backSeedsFPRates;
+        //     checkRates(frontMinThCheapSeedReads, baselineQueriesFrontSeeds, frontSeedsFPRates);
+        //     checkRates(backMinThCheapSeedReads, baselineQueriesBackSeeds, backSeedsFPRates);
+        //     uint32_t frontSeedsFPRate = sumMapValues(frontSeedsFPRates);
+        //     uint32_t backSeedsFPRate= sumMapValues(backSeedsFPRates);
+        //     tuple<uint32_t, uint32_t, uint32_t> frontSeedsFPRateTuple = util.calculateStatistics(convertMapToSet(frontSeedsFPRates));
+        //     tuple<uint32_t, uint32_t, uint32_t> backSeedsFPRateTuple = util.calculateStatistics(convertMapToSet(backSeedsFPRates));
+        //     printf("Number of Seeds FP Rate  => Front [total: %d, average: %d, median: %d, mean: %d] - Back [total: %d, average: %d, median: %d, mean: %d]\n", frontSeedsFPRate , get<0>(frontSeedsFPRateTuple), get<1>(frontSeedsFPRateTuple), get<2>(frontSeedsFPRateTuple), backSeedsFPRate, get<0>(backSeedsFPRateTuple), get<1>(backSeedsFPRateTuple), get<2>(backSeedsFPRateTuple));      
+        // }
     } catch (const exception& ex) {
         cerr << "Error: " << ex.what() << endl;
         return 1;

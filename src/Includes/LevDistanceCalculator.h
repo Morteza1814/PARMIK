@@ -24,6 +24,7 @@ typedef struct LevenshteinDistanceAlignment
     uint16_t readRegionEndPos = 0;
     uint16_t queryRegionStartPos = 0;
     uint16_t queryRegionEndPos = 0;
+    uint16_t flag = 0;                  // determines the strand for now
 }LevAlign;
 
 class LevDistanceCalculator {
