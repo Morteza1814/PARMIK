@@ -39,6 +39,7 @@ typedef struct config
     unsigned int minExactMatchLen;
     unsigned int regionSize;
     unsigned int contigSize;
+    unsigned int parmikMode;
     // unsigned int numberOfKmers;
     unsigned int editDistance;
     bool isIndexOffline = false;

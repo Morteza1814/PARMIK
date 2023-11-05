@@ -771,11 +771,18 @@ public:
         return ((l.editDistance <= maxAllowedEdit) && (((uint32_t)l.partialMatchSize >= (uint32_t)regionSize) || ((uint32_t)(l.numberOfMatches + l.numberOfInDel + l.numberOfSub) >= (uint32_t)regionSize)));
     }
 
-    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, uint32_t allowedEditDistance, uint32_t contigSize, map<contigIndT, LevAlign> &pmres, IndexContainer<contigIndT, contigIndT>& alignments)
+    void dumpSam(ofstream &oSam, LevAlign l)
+    {
+        oSam << l.queryID << '\t' << l.flag << '\t' << l.readID << '\t' << "*" << '\t'
+                << "*" << '\t' << l.cigar << '\t' << "*" << '\t' << "*" << '\t' << "*" << '\t' << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.numberOfSub) << '\n';
+    }
+
+    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, uint32_t allowedEditDistance, uint32_t contigSize, map<contigIndT, LevAlign> &pmres, IndexContainer<contigIndT, contigIndT>& alignments, bool isForwardStrand, string parmikAlignments)
     {      
         Utilities<double> utildouble;   
         set<double> seedAndExtend_times;
         uint32_t pmNotFoundMatchQueries = 0;
+        ofstream pAln(parmikAlignments);
         for (size_t i = 0; i < queryCount; i++)
         {
             auto itq = queries.find(i);
@@ -805,18 +812,23 @@ public:
             // readFromFile_ExeTime += duration.count();
             vector<kmerT> frontKmers;
             extractKmersFromRegions(query, frontKmers, frontRegion);
-            LevAlign frontLa;
             // start = chrono::high_resolution_clock::now();
             for (auto it = frontCandidateReads.begin(); it != frontCandidateReads.end(); it++)
             {
+                LevAlign frontLa;
                 frontLa = extendSeed(query, it->second, frontKmers, allowedEditDistance, contigSize, frontRegion);
+                frontLa.queryID = i;
+                if (!isForwardStrand) frontLa.flag = 16;
                 frontLa.readID = it->first;
                 vector<LevAlign> pms;
                 pms.push_back(frontLa);
                 pms.push_back(bestAlignmentForQuery);
                 bestAlignmentForQuery = comparePartialMatchRes(pms);
                 if(checkAlingmentCriteria(frontLa, allowedEditDistance))
+                {
                     alignments.put(i, it->first);
+                    dumpSam(pAln, frontLa);
+                }
             }
             // end = chrono::high_resolution_clock::now();
             // duration = chrono::duration_cast<chrono::nanoseconds>(end - start);
@@ -832,18 +844,23 @@ public:
             // readFromFile_ExeTime += duration.count();
             vector<kmerT> backKmers;
             extractKmersFromRegions(query, backKmers, backRegion);
-            LevAlign backLa;
             // start = chrono::high_resolution_clock::now();
             for (auto it = backCandidateReads.begin(); it != backCandidateReads.end(); it++)
             {
+                LevAlign backLa;
                 backLa = extendSeed(query, it->second, backKmers, allowedEditDistance, contigSize, backRegion);
+                backLa.queryID = i;
+                if (!isForwardStrand) backLa.flag = 16;
                 backLa.readID = it->first;
                 vector<LevAlign> pms;
                 pms.push_back(backLa);
                 pms.push_back(bestAlignmentForQuery);
                 bestAlignmentForQuery = comparePartialMatchRes(pms);
                 if(checkAlingmentCriteria(backLa, allowedEditDistance))
+                {
                     alignments.put(i, it->first);
+                    dumpSam(pAln, backLa);
+                }
             }
             // end = chrono::high_resolution_clock::now();
             // duration = chrono::duration_cast<chrono::nanoseconds>(end - start);
@@ -877,6 +894,7 @@ public:
         tuple<double, double, double> seedAndExtend_timesTuple = utildouble.calculateStatistics(seedAndExtend_times);
         printf("seed find and extension time (micro second) for queries up to q(%d) => [average: %f, median: %f, mean: %f]\n", queryCount, get<0>(seedAndExtend_timesTuple), get<1>(seedAndExtend_timesTuple), get<2>(seedAndExtend_timesTuple));
         cout << "# of queries that pm did not find match : " << pmNotFoundMatchQueries << endl;
+        pAln.close();
     }
 };
 
