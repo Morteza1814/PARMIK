@@ -166,10 +166,10 @@ public:
         return true;
     }
 
-    vector<SamReader::Sam> comparePmWithBWA(map<uint32_t, LevAlign>& pmr, Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, ofstream &cmp, IndexContainer<uint32_t, uint32_t>& pmAlignments, vector<std::pair<uint32_t, uint32_t>>& alnPmBwaHisto, uint32_t queryCount)
+    vector<SamReader::Sam> comparePmWithBWA(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, ofstream &cmp, IndexContainer<uint32_t, LevAlign>& pmAlignments, vector<std::pair<uint32_t, uint32_t>>& alnPmBwaHisto, const uint32_t queryCount)
     {
-        SamReader samReader(cfg.bwaSamFileAddress);
-        vector<SamReader::Sam> alignments = samReader.parseFile(queryCount);
+        SamReader bwaSam(cfg.bwaSamFileAddress);
+        vector<SamReader::Sam> alignments = bwaSam.parseFile(queryCount);
         uint32_t numberOfEqualalignment = 0, numberOfBWAbetter = 0, numberOfPMbetter = 0, 
         numberOfBWAbetterExceedMaxEdits = 0, numberOfBwaClippedAlignments = 0, 
         numberOfBWAbetterWithLowMatchSize = 0, numberOfBWAbetterNotObserveOurCriteria = 0, 
@@ -177,12 +177,14 @@ public:
         onlyPmFoundMatchForQuery = 0, nonePmBWAFoundAlignmentForQuery = 0, bwaClipCount = 0, 
         numberOfQueryContainN = 0;
         LevAlign pmAlignment;
+        uint32_t pmQueriesFound = 0;
         SamReader::Sam bwaAlignment;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
             bool bwaFound = false, pmFound = false;
             uint32_t bwaMatchSize = 0, pmMatchSize = 0;
-            if(queries[queryInd].find('N') != string::npos || queries[queryInd].find('n') != string::npos)
+            string query = queries[queryInd];
+            if(query.find('N') != string::npos || query.find('n') != string::npos)
             {
                 cmp << "query contains N!" << endl;
                 numberOfQueryContainN++; 
@@ -194,8 +196,8 @@ public:
                 {
                     bwaFound = true;
                     bwaAlignment = aln;
-                    bwaMatchSize = samReader.countMatches(bwaAlignment.cigar);
-                    bwaClipCount = samReader.countClips(bwaAlignment.cigar);
+                    bwaMatchSize = bwaSam.countMatches(bwaAlignment.cigar);
+                    bwaClipCount = bwaSam.countClips(bwaAlignment.cigar);
                     if (bwaClipCount > 0)
                     {
                         numberOfBwaClippedAlignments++;
@@ -203,12 +205,30 @@ public:
                     break;
                 }
             }
-            auto it = pmr.find(queryInd);
-            if (it != pmr.end())
+            auto range = pmAlignments.getRange(queryInd);
+            LevAlign pmAlignment;
+            for (auto it = range.first; it != range.second; it++) 
             {
                 pmFound = true;
-                pmAlignment = it->second;
-                pmMatchSize = samReader.countMatches(pmAlignment.cigar);
+                LevAlign aln = it->second;
+                if (aln.numberOfMatches > pmAlignment.numberOfMatches)
+                {
+                    pmAlignment = aln;
+                } else if (aln.numberOfMatches == pmAlignment.numberOfMatches)
+                {
+                    if (aln.numberOfInDel < pmAlignment.numberOfInDel && aln.numberOfSub <= pmAlignment.numberOfSub + 1) // this is a preference on sub over InDel
+                    {
+                        pmAlignment = aln;
+                    } else if (aln.numberOfInDel == pmAlignment.numberOfInDel && aln.numberOfSub < pmAlignment.numberOfSub)
+                    {
+                        pmAlignment = aln;
+                    }
+                }
+            }
+            if (pmFound)
+            {
+                pmQueriesFound++;
+                pmMatchSize = bwaSam.countMatches(pmAlignment.cigar);
             }
             alnPmBwaHisto.push_back(std::make_pair(pmMatchSize, bwaMatchSize));
             if (pmFound && !bwaFound)
@@ -217,12 +237,12 @@ public:
                 numberOfPMbetter++;
                 onlyPmFoundMatchForQuery++;
                 cmp << "<<<<<<<<<<<PM alignment>>>>>>>>>>>" << endl;
-                cmp << "Q : " << pmAlignment.query << endl;
-                cmp << "R : " << pmAlignment.read << endl;
-                cmp << "q : " << pmAlignment.alignedQuery << endl;
-                cmp << "r : " << pmAlignment.alignedRead << endl;
-                cmp << "E : " << pmAlignment.editDistanceTypes << endl;
-                cmp << "CIGAR : " << pmAlignment.cigar << ", subs : " << pmAlignment.numberOfSub << ", query id : " << it->first << ", read id : " << pmAlignment.readID << ", partial match size : " << pmAlignment.partialMatchSize << ", edits : " << pmAlignment.editDistance << endl;
+                cmp << "Q : " << query << endl;
+                cmp << "R : " << reads[pmAlignment.readID] << endl;
+                // cmp << "q : " << pmAlignment.alignedQuery << endl;
+                // cmp << "r : " << pmAlignment.alignedRead << endl;
+                // cmp << "E : " << pmAlignment.editDistanceTypes << endl;
+                cmp << "CIGAR : " << pmAlignment.cigar << ", subs : " << pmAlignment.numberOfSub << ", query id : " << queryInd << ", read id : " << pmAlignment.readID << ", flag : " << pmAlignment.flag << ", partial match size : " << pmAlignment.partialMatchSize << ", edits : " << pmAlignment.editDistance << endl;
                 cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
             } else if (!pmFound && bwaFound)
             {
@@ -244,13 +264,13 @@ public:
                     }
                 }
                 cmp << "<<<<<<<<<<<<<BWA alignment>>>>>>>>>>>>>" << endl;
-                cmp << "Q : " << queries[bwaAlignment.queryId] << endl;
+                cmp << "Q : " << query << endl;
                 cmp << "R : " << reads[bwaAlignment.readId] << endl;
                 cmp << "CIGAR : " << bwaAlignment.cigar << ", subs : " << bwaAlignment.editDistance << ", query id : " << bwaAlignment.queryId << ", read id : " << bwaAlignment.readId << ", flag : " << bwaAlignment.flag << ", start pos : " << bwaAlignment.pos << ", mismatchPositions : " << bwaAlignment.mismatchPositions << endl;
                 cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";  
             } else if (pmFound && bwaFound) 
             {
-                // int bwaInDelSize = samReader.countInsertions(bwaAlignment.cigar) + samReader.countDeletions(bwaAlignment.cigar);
+                // int bwaInDelSize = bwaSam.countInsertions(bwaAlignment.cigar) + bwaSam.countDeletions(bwaAlignment.cigar);
                 cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
                
                 if (bwaMatchSize < pmMatchSize)
@@ -301,7 +321,8 @@ public:
                 bool found = false;
                 for (auto itt=range.first; itt != range.second; itt++)
                 {
-                    if(itt->second == bwaAlignment.readId)
+                    LevAlign aln = itt->second;
+                    if((uint32_t) aln.readID == bwaAlignment.readId)
                     {
                         bwaReadIdFoundInPM++;
                         found = true;
@@ -314,14 +335,14 @@ public:
                     cmp << "bwaReadIdNotFoundInPM = Q :" << bwaAlignment.queryId << ", R : " << bwaAlignment.readId << endl;
                 }
                 cmp << "<<<<<<<<<<<PM alignment>>>>>>>>>>>" << endl;
-                cmp << "Q : " << pmAlignment.query << endl;
-                cmp << "R : " << pmAlignment.read << endl;
-                cmp << "q : " << pmAlignment.alignedQuery << endl;
-                cmp << "r : " << pmAlignment.alignedRead << endl;
-                cmp << "E : " << pmAlignment.editDistanceTypes << endl;
-                cmp << "CIGAR : " << pmAlignment.cigar << ", subs : " << pmAlignment.numberOfSub << ", query id : " << it->first << ", read id : " << pmAlignment.readID << ", partial match size : " << pmAlignment.partialMatchSize << ", edits : " << pmAlignment.editDistance << endl;
+                cmp << "Q : " << query << endl;
+                cmp << "R : " << reads[pmAlignment.readID] << endl;
+                // cmp << "q : " << pmAlignment.alignedQuery << endl;
+                // cmp << "r : " << pmAlignment.alignedRead << endl;
+                // cmp << "E : " << pmAlignment.editDistanceTypes << endl;
+                cmp << "CIGAR : " << pmAlignment.cigar << ", subs : " << pmAlignment.numberOfSub << ", query id : " << queryInd << ", read id : " << pmAlignment.readID << ", flag : " << pmAlignment.flag << ", partial match size : " << pmAlignment.partialMatchSize << ", edits : " << pmAlignment.editDistance << endl;
                 cmp << "<<<<<<<<<<<<<BWA alignment>>>>>>>>>>>>>" << endl;
-                cmp << "Q : " << queries[bwaAlignment.queryId] << endl;
+                cmp << "Q : " << query << endl;
                 cmp << "R : " << reads[bwaAlignment.readId] << endl;
                 cmp << "CIGAR : " << bwaAlignment.cigar << ", subs : " << bwaAlignment.editDistance << ", query id : " << bwaAlignment.queryId << ", read id : " << bwaAlignment.readId << ", flag : " << bwaAlignment.flag << ", start pos : " << bwaAlignment.pos << ", mismatchPositions : " << bwaAlignment.mismatchPositions << endl;
                 cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
@@ -332,7 +353,7 @@ public:
         }
         cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Overall Comparison Results>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         cmp << left << setw(80) << "# Of queries : " << queryCount << endl;
-        cmp << left << setw(80) << "# Of queries that PM found match : " << pmr.size() << endl;
+        cmp << left << setw(80) << "# Of queries that PARMIK found match : " << pmQueriesFound << endl;
         cmp << left << setw(80) << "# Of queries that BWA found match : " << alignments.size() << endl;
         cmp << left << setw(80) << "# Of Matched Hits between PM and BWA : " << numberOfEqualalignment << endl;
         cmp << left << setw(80) << "# Of PM outperformed : " << numberOfPMbetter << endl;

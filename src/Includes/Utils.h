@@ -63,7 +63,10 @@ public:
         if (dotPos != string::npos) {
             // Add 1 to dotPos to skip the '.' character
             return atoi(line.substr(dotPos + 1).c_str());
-        }else {
+        } else if (line.find('.') == string::npos)
+        {
+            return atoi(line.c_str());
+        } else {
             cout << line << endl;
             throw runtime_error("Invalid contig ID format : " + line);
         }

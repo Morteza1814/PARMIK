@@ -168,6 +168,19 @@ void testOnePair(int argc, char *argv[])
     cout << "ed T : " << bla.editDistanceTypes << endl;
 }
 
+void convertSamToLev(SamReader::Sam parmikSamAlignment, LevAlign& parmikAlignment)
+{
+    SamReader sam("");
+    parmikAlignment.readID = parmikSamAlignment.readId;
+    parmikAlignment.queryID = parmikSamAlignment.queryId;
+    parmikAlignment.editDistance = parmikSamAlignment.editDistance;
+    parmikAlignment.cigar = parmikSamAlignment.cigar;
+    parmikAlignment.numberOfSub = parmikSamAlignment.editDistance;
+    parmikAlignment.numberOfMatches = sam.countMatches(parmikSamAlignment.cigar);
+    parmikAlignment.numberOfInDel = sam.countInsertions(parmikSamAlignment.cigar) + sam.countDeletions(parmikSamAlignment.cigar);
+    parmikAlignment.flag = parmikSamAlignment.flag;                
+}
+
 int run(int argc, char *argv[]) {
     Config cfg;
 	ofstream out;
@@ -205,7 +218,7 @@ int run(int argc, char *argv[]) {
         // run the experiment
         IndexContainer<uint32_t, uint32_t> frontMinThCheapSeedReads, backMinThCheapSeedReads, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads;
         map<uint32_t, LevAlign> pmr;
-        string parmikAlignments = cfg.outputDir + "parmikAlignments.txt";
+        string parmikAlignmentsAddress = cfg.outputDir + "parmikAlignments.txt";
         tsl::robin_map <uint32_t, string> reads, queries;
         uint32_t queryCount = 0;
         if (cfg.parmikMode != PARMIK_MODE_INDEX)
@@ -257,9 +270,9 @@ int run(int argc, char *argv[]) {
                 ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
                 // ckpm50.printArrays();
                 SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog);
-                pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, true, parmikAlignments);
+                pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, true, parmikAlignmentsAddress);
                 //do it again for the reverse strand
-                pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, false, parmikAlignments);
+                pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, false, parmikAlignmentsAddress);
             } else
             {
                 Container<uint64_t, uint32_t> cheapKmers;
@@ -297,9 +310,9 @@ int run(int argc, char *argv[]) {
                 ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
                 // ckpm50.printArrays();
                 SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog);
-                pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, true, parmikAlignments);
+                pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, true, parmikAlignmentsAddress);
                 //do it again for the reverse strand
-                pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, false, parmikAlignments);
+                pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, false, parmikAlignmentsAddress);
             }
         
             //report the histogram of the alignments
@@ -315,16 +328,27 @@ int run(int argc, char *argv[]) {
             }
         } else
         {
-            if(!cfg.noOutputFileDump)
+            if(cfg.noOutputFileDump)
             {
                 cout << "no noOutputFileDump!!" << endl;
                 return 0;
             }
-            //check the alignment results with the baseline (BWA)
+            //load the parmik alignments from the sam formatted file
+            SamReader parmikSam(parmikAlignmentsAddress);
+            vector<SamReader::Sam> parmikSamAlignments = parmikSam.parseFile(queryCount);
+            IndexContainer<uint32_t, LevAlign> parmikMultiAlignments;
+            for (const SamReader::Sam& aln : parmikSamAlignments) 
+            {
+                LevAlign l;
+                convertSamToLev(aln, l);
+                parmikMultiAlignments.put(aln.queryId, l);
+            }
+            cout<<"finished \n";
+            //check the alignment results with another aligner (BWA)
             ofstream cmp(cfg.outputDir + "comparePMwithBWA.txt");
             ComparatorWithBWA cwb;
             vector<std::pair<uint32_t, uint32_t>> alnPmVsBwaAlnSizesMap;
-            vector<SamReader::Sam> bwaAlignments = cwb.comparePmWithBWA(pmr, cfg, reads, queries, cmp, alignments, alnPmVsBwaAlnSizesMap, queryCount);
+            vector<SamReader::Sam> bwaAlignments = cwb.comparePmWithBWA(cfg, reads, queries, cmp, parmikMultiAlignments, alnPmVsBwaAlnSizesMap, queryCount);
             cmp.close();
             cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<PM and BWA alignments per query started!>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
             ofstream alnPerQ(cfg.outputDir + "PmBwaAlignmentPerQuery.txt");
@@ -335,8 +359,7 @@ int run(int argc, char *argv[]) {
                     alnPerQ << i << " 0 0"<< endl;
                     continue;
                 }
-                set<uint32_t> aln = alignments.get(i);
-                alnPerQ << i << " " << aln.size();
+                alnPerQ << i << " " << parmikMultiAlignments.container_.count(i);
                 bool bwaFoundReadForQuery = false;
                 for(auto it = bwaAlignments.begin(); it != bwaAlignments.end(); it++)
                 {
@@ -350,14 +373,14 @@ int run(int argc, char *argv[]) {
             }
             alnPerQ.close();
             cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<PM and BWA alignments per query finished!>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
-            cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<BWA vs PM Alignments Sizes started!>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
-            ofstream alnPmVsBwaAlnSizes(cfg.outputDir + "alnPmVsBwaAlnSizes.txt");
-            for (const auto& pair : alnPmVsBwaAlnSizesMap) 
-            {
-                alnPmVsBwaAlnSizes << pair.first << " " << pair.second << endl;
-            }
-            alnPmVsBwaAlnSizes.close();
-            cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<BWA vs PM Alignments Sizes finished!>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+            // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<BWA vs PM Alignments Sizes started!>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+            // ofstream alnPmVsBwaAlnSizes(cfg.outputDir + "alnPmVsBwaAlnSizes.txt");
+            // for (const auto& pair : alnPmVsBwaAlnSizesMap) 
+            // {
+            //     alnPmVsBwaAlnSizes << pair.first << " " << pair.second << endl;
+            // }
+            // alnPmVsBwaAlnSizes.close();
+            // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<BWA vs PM Alignments Sizes finished!>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         }
 
         // if(cfg.isVerboseLog)
