@@ -104,15 +104,26 @@ public:
             }
             Sam sam;
             istringstream iss(line);
-            string queryID, readID;
-            iss >> queryID >> sam.flag >> readID >> sam.pos >> sam.mapQ >>
-             sam.cigar >> sam.rNext >> sam.pNext >> sam.tLen >> sam.seq >> sam.qual;
+            string queryID, readID, flag, pos, mapQ, cigar, rNext, pNext, tLen, seq, qual;
+            iss >> queryID >>  flag >> readID >>  pos >>  mapQ >> cigar >>   rNext >>  pNext >>  tLen >>  seq >>  qual;
+            
             size_t found = readID.find("*");
             if (found != string::npos)
             {
                 queryCount++;
                 continue;
             }
+
+            if (flag.find("*") != string::npos) sam.flag = 0; else sam.flag = atoi(flag.c_str());
+            if (pos.find("*") != string::npos) sam.pos = 0; else sam.pos = atoi(pos.c_str());
+            if (mapQ.find("*") != string::npos) sam.mapQ = 0; else sam.mapQ = atoi(mapQ.c_str());
+            if (cigar.find("*") != string::npos) sam.cigar = ""; else sam.cigar = cigar;
+            if (rNext.find("*") != string::npos) sam.rNext = ""; else sam.rNext = rNext;
+            if (pNext.find("*") != string::npos) sam.pNext = ""; else sam.pNext = pNext;
+            if (tLen.find("*") != string::npos) sam.tLen = 0; else sam.tLen = atoi(tLen.c_str());
+            if (seq.find("*") != string::npos) sam.seq = ""; else sam.seq = seq;
+            if (qual.find("*") != string::npos) sam.qual = ""; else sam.qual = qual;
+
             sam.queryId = utl.extractContigId(queryID);
             sam.readId = utl.extractContigId(readID);
             if(sam.queryId > lastQueryID)

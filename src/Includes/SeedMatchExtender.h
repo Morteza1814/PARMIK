@@ -782,7 +782,7 @@ public:
         Utilities<double> utildouble;   
         set<double> seedAndExtend_times;
         uint32_t pmNotFoundMatchQueries = 0;
-        ofstream pAln(parmikAlignments);
+        ofstream pAln(parmikAlignments, ios::app);
         for (size_t i = 0; i < queryCount; i++)
         {
             auto itq = queries.find(i);
