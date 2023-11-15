@@ -166,10 +166,12 @@ public:
         return true;
     }
 
-    vector<SamReader::Sam> comparePmWithBWA(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, ofstream &cmp, IndexContainer<uint32_t, LevAlign>& pmAlignments, vector<std::pair<uint32_t, uint32_t>>& alnPmBwaHisto, const uint32_t queryCount)
+    void comparePmWithBWA(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, IndexContainer<uint32_t, LevAlign>& pmAlignments, vector<std::pair<uint32_t, uint32_t>>& alnPmBwaHisto, const uint32_t queryCount, string alnPerQueryFileAddress)
     {
-        SamReader bwaSam(cfg.bwaSamFileAddress);
-        vector<SamReader::Sam> alignments = bwaSam.parseFile(queryCount);
+        ofstream cmp(comparisonResultsFileAddress);
+        ofstream alnPerQ(alnPerQueryFileAddress);
+        SamReader bwaSam(cfg.otherToolOutputFileAddress);
+        vector<SamReader::Sam> bwaAlignments = bwaSam.parseFile(queryCount);
         uint32_t numberOfEqualalignment = 0, numberOfBWAbetter = 0, numberOfPMbetter = 0, 
         numberOfBWAbetterExceedMaxEdits = 0, numberOfBwaClippedAlignments = 0, 
         numberOfBWAbetterWithLowMatchSize = 0, numberOfBWAbetterNotObserveOurCriteria = 0, 
@@ -188,9 +190,23 @@ public:
             {
                 cmp << "query contains N!" << endl;
                 numberOfQueryContainN++; 
+                alnPerQ << queryInd << " 0 0"<< endl;
                 continue;
             }
-            for (const SamReader::Sam& aln : alignments) 
+            //PM and BWA alignments per query
+            alnPerQ << queryInd << " " << pmAlignments.container_.count(queryInd);
+            bool bwaFoundReadForQuery = false;
+            for(auto it = bwaAlignments.begin(); it != bwaAlignments.end(); it++)
+            {
+                if(it->queryId == queryInd)
+                {
+                    bwaFoundReadForQuery = true;
+                    break;
+                }
+            }
+            alnPerQ << ((bwaFoundReadForQuery==true) ? " 1" : " 0") << endl;
+
+            for (const SamReader::Sam& aln : bwaAlignments) 
             {
                 if(aln.queryId == queryInd)
                 {
@@ -354,7 +370,7 @@ public:
         cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Overall Comparison Results>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         cmp << left << setw(80) << "# Of queries : " << queryCount << endl;
         cmp << left << setw(80) << "# Of queries that PARMIK found match : " << pmQueriesFound << endl;
-        cmp << left << setw(80) << "# Of queries that BWA found match : " << alignments.size() << endl;
+        cmp << left << setw(80) << "# Of queries that BWA found match : " << bwaAlignments.size() << endl;
         cmp << left << setw(80) << "# Of Matched Hits between PM and BWA : " << numberOfEqualalignment << endl;
         cmp << left << setw(80) << "# Of PM outperformed : " << numberOfPMbetter << endl;
         cmp << left << setw(80) << "# Of BWA outperformed : " << numberOfBWAbetter << endl;
@@ -367,7 +383,8 @@ public:
         cmp << left << setw(80) << "# Of readIDs that BWA found but PM did not : " << bwaReadIdNotFoundInPM << endl;
         cmp << left << setw(80) << "# Of queries that neigther BWA nor PM found any match : " << nonePmBWAFoundAlignmentForQuery << endl;
         cmp << left << setw(80) << "# Of queries contains N: " << numberOfQueryContainN << endl;
-        return alignments;
+        cmp.close();
+        alnPerQ.close();
     }
 };
 

@@ -12,6 +12,7 @@
 #include "Includes/SeedMatchExtender.h"
 #include "Includes/SamReader.h"
 #include "Includes/CompareWithBWA.h"
+#include "Includes/CompareWithBlast.h"
 
 #define PARMIK_MODE_INDEX   0
 #define PARMIK_MODE_ALIGN   1
@@ -28,6 +29,7 @@ int argParse(int argc, char** argv, Config &cfg){
 	args::ValueFlag<int> readsCountArg(parser, "", "Number of Reads",                       {'i', "readCount"});
 	args::ValueFlag<int> queryCountArg(parser, "", "Number of Queries",                     {'j', "queryCount"});
 	args::ValueFlag<int> kmerLengthArg(parser, "", "Kmer Length",                           {'k', "kmerLen"});
+    args::ValueFlag<string> otherToolArg(parser, "", "The Other Tool  (bwa, blast, etc)",   {'l', "otherTool"});
 	args::ValueFlag<int> minExactMatchLenArg(parser, "", "Minimum Exact Match Len",         {'m', "minExactMatchLen"});
 	args::ValueFlag<string> outputDirArg(parser, "", "OutputDir",                           {'o', "outputDir"});
 	args::ValueFlag<string> queryFileAddressArg(parser, "", "Query File Address",           {'q', "query"});
@@ -74,8 +76,9 @@ int argParse(int argc, char** argv, Config &cfg){
     if (isIndexOfflineArg) {cfg.isIndexOffline = true; } else {cfg.isIndexOffline = false;}
     if (isVerboseLogArg) {cfg.isVerboseLog = true; } else {cfg.isVerboseLog = false;}
     if (offlineIndexAddressArg) {cfg.offlineIndexAddress = args::get(offlineIndexAddressArg); } else {cout << "no offlineIndexAddress!"<< endl; return 0;}
-    if (bwaSamAddressArg) {cfg.bwaSamFileAddress = args::get(bwaSamAddressArg); } else {cout << "no bwaSamFileAddress!"<< endl; return 0;}
+    if (bwaSamAddressArg) {cfg.otherToolOutputFileAddress = args::get(bwaSamAddressArg); } else {cout << "no otherToolOutputFileAddress!"<< endl; return 0;}
     if (parmikModeArg) {cfg.parmikMode = args::get(parmikModeArg); } else {cout << "no parmik mode is determined!"<< endl; return 0;}
+    if (otherToolArg) {cfg.otherTool = args::get(otherToolArg);} else {cout << "no otherToolArg!"<< endl;if(cfg.parmikMode == PARMIK_MODE_COMPARE) return 0;}
 	if (editDistanceArg) {cfg.editDistance = args::get(editDistanceArg); } else {cfg.editDistance = NUMBER_OF_ALLOWED_EDIT_DISTANCES;}
 	cfg.readFileName = cfg.readDatabaseAddress.substr(cfg.readDatabaseAddress.find_last_of("/\\") + 1);
 	cfg.queryFileName = cfg.queryFileAddress.substr(cfg.queryFileAddress.find_last_of("/\\") + 1);
@@ -193,7 +196,7 @@ int run(int argc, char *argv[]) {
 	cout << left << setw(30) << "readFileName: " << cfg.readFileName << endl;
 	cout << left << setw(30) << "queryFileAddress: " << cfg.queryFileAddress << endl;
 	cout << left << setw(30) << "queryFileName: " << cfg.queryFileName << endl;
-    cout << left << setw(30) << "bwaSamFileAddress: " << cfg.bwaSamFileAddress << endl;
+    cout << left << setw(30) << "otherToolOutputFileAddress: " << cfg.otherToolOutputFileAddress << endl;
 	cout << left << setw(30) << "outputDir: " << cfg.outputDir << endl;
 	cout << left << setw(30) << "readsCount: " << cfg.readsCount << endl; 
 	cout << left << setw(30) << "queryCount: " << cfg.queryCount << endl;
@@ -344,38 +347,24 @@ int run(int argc, char *argv[]) {
                 parmikMultiAlignments.put(aln.queryId, l);
             }
             cout<<"finished \n";
-            //check the alignment results with another aligner (BWA)
-            ofstream cmp(cfg.outputDir + "comparePMwithBWA.txt");
-            ComparatorWithBWA cwb;
-            vector<std::pair<uint32_t, uint32_t>> alnPmVsBwaAlnSizesMap;
-            vector<SamReader::Sam> bwaAlignments = cwb.comparePmWithBWA(cfg, reads, queries, cmp, parmikMultiAlignments, alnPmVsBwaAlnSizesMap, queryCount);
-            cmp.close();
-            cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<PM and BWA alignments per query started!>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
-            ofstream alnPerQ(cfg.outputDir + "PmBwaAlignmentPerQuery.txt");
-            for (size_t i = 0; i < queryCount; i++)
+            //check the alignment results with another aligner
+            string comparisonResultsFileAddress = cfg.outputDir + "compareParmikwith" + cfg.otherTool + ".txt";
+            string alnPerQueryFileAddress = cfg.outputDir + "Parmikvs" + cfg.otherTool + "AlignmentPerQuery.txt";
+            vector<std::pair<uint32_t, uint32_t>> alnPmVsOtherAlnSizesMap;
+            // (BWA)
+            if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
             {
-                if(queries[i].find('N') != string::npos || queries[i].find('n') != string::npos)
-                {
-                    alnPerQ << i << " 0 0"<< endl;
-                    continue;
-                }
-                alnPerQ << i << " " << parmikMultiAlignments.container_.count(i);
-                bool bwaFoundReadForQuery = false;
-                for(auto it = bwaAlignments.begin(); it != bwaAlignments.end(); it++)
-                {
-                    if(it->queryId == i)
-                    {
-                        bwaFoundReadForQuery = true;
-                        break;
-                    }
-                }
-                alnPerQ << ((bwaFoundReadForQuery==true) ? " 1" : " 0") << endl;
+                ComparatorWithBWA cwb;
+                cwb.comparePmWithBWA(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress);
+            } else if(cfg.otherTool == "BLAST" || cfg.otherTool == "blast")
+            {
+                CompareWithBlast cwb;
+                cwb.comparePmWithBlast(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress);
             }
-            alnPerQ.close();
-            cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<PM and BWA alignments per query finished!>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+         
             // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<BWA vs PM Alignments Sizes started!>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
             // ofstream alnPmVsBwaAlnSizes(cfg.outputDir + "alnPmVsBwaAlnSizes.txt");
-            // for (const auto& pair : alnPmVsBwaAlnSizesMap) 
+            // for (const auto& pair : alnPmVsOtherAlnSizesMap) 
             // {
             //     alnPmVsBwaAlnSizes << pair.first << " " << pair.second << endl;
             // }
