@@ -6,7 +6,7 @@ all: parmik
 parmik: main.o
 	$(CC) $(CFLAGS) -o $@  $^
 
-main.o:  Includes/IndexContainer.h Includes/InvertedIndexBuilder.h Includes/KmersFrequencyCounter.h Includes/CheapKmerPartialMatcher.h Includes/args.hxx Includes/Configs.h Includes/BaseLinePartialMatcher.h Includes/Utils.h Includes/Container.h Includes/nlohmann/json.hpp Includes/IndexFile.h Includes/SeedMatchExtender.h Includes/LevDistanceCalculator.h Includes/CompareWithBWA.h
+main.o:  Includes/IndexContainer.h Includes/InvertedIndexBuilder.h Includes/KmersFrequencyCounter.h Includes/CheapKmerPartialMatcher.h Includes/args.hxx Includes/Configs.h Includes/BaseLinePartialMatcher.h Includes/Utils.h Includes/Container.h Includes/nlohmann/json.hpp Includes/IndexFile.h Includes/SeedMatchExtender.h Includes/LevDistanceCalculator.h Includes/CompareWithBWA.h Includes/BlastReader.h Includes/CompareWithBlast.h
 	$(CC) $(CFLAGS) -o $@ main.cc -c
 
 clean: 

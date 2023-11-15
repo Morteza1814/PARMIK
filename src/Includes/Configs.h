@@ -29,7 +29,7 @@ typedef struct config
     string outputDir;
     string readFileName;
     string queryFileName;
-    string bwaSamFileAddress;
+    string otherToolOutputFileAddress;
     string offlineIndexAddress;
     unsigned int readsCount;
     unsigned int queryCount;
@@ -45,6 +45,7 @@ typedef struct config
     bool isIndexOffline = false;
     bool isVerboseLog = false;
     bool noOutputFileDump = false;
+    string otherTool;
     // bool isFreqAndMemReport = false;
     // bool isReverseStrand = false;
     // bool isBestAlignment = false;
