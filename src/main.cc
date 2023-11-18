@@ -231,7 +231,6 @@ int run(int argc, char *argv[]) {
         }
         uint32_t readCount = util.readContigsFromFile(cfg.readDatabaseAddress, cfg.readsCount, reads);
         cout << "readCount : " << readCount << endl;
-        IndexContainer<uint32_t, uint32_t> alignments;
         // unordered_map<uint32_t, unordered_set<LevAlign>> alignments;
         string offlineCheapIndexAddress = cfg.offlineIndexAddress + "CheapKmers/cheapKmers_" + to_string(cfg.cheapKmerThreshold) + "_" + to_string(cfg.readsCount);
         if (cfg.parmikMode != PARMIK_MODE_COMPARE)
@@ -265,17 +264,20 @@ int run(int argc, char *argv[]) {
                     cheapKmers.deserialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
                 }
-                //do partial matching based on cheap k-mers
-                CheapKmerPartialMatcher<uint32_t, uint32_t, uint32_t> ckpm50(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
-                ckpm50.cheapSeedFilter(cheapKmers, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads);
-                //get the reverse complement of queries
-                tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
-                ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
-                // ckpm50.printArrays();
-                SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog);
-                pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, true, parmikAlignmentsAddress);
-                //do it again for the reverse strand
-                pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, false, parmikAlignmentsAddress);
+                if (cfg.parmikMode != PARMIK_MODE_INDEX)
+                {
+                    //do partial matching based on cheap k-mers
+                    CheapKmerPartialMatcher<uint32_t, uint32_t, uint32_t> ckpm50(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
+                    ckpm50.cheapSeedFilter(cheapKmers, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads);
+                    //get the reverse complement of queries
+                    tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
+                    ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
+                    // ckpm50.printArrays();
+                    SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog);
+                    pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, true, parmikAlignmentsAddress);
+                    //do it again for the reverse strand
+                    pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, false, parmikAlignmentsAddress);
+                }
             } else
             {
                 Container<uint64_t, uint32_t> cheapKmers;
@@ -305,17 +307,20 @@ int run(int argc, char *argv[]) {
                     cheapKmers.deserialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
                 }
-                // do partial matching based on cheap k-mers
-                CheapKmerPartialMatcher<uint32_t, uint64_t, uint32_t> ckpm50(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
-                ckpm50.cheapSeedFilter(cheapKmers, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads);
-                //get the reverse complement of queries
-                tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
-                ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
-                // ckpm50.printArrays();
-                SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog);
-                pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, true, parmikAlignmentsAddress);
-                //do it again for the reverse strand
-                pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, alignments, false, parmikAlignmentsAddress);
+                if (cfg.parmikMode != PARMIK_MODE_INDEX)
+                {
+                    // do partial matching based on cheap k-mers
+                    CheapKmerPartialMatcher<uint32_t, uint64_t, uint32_t> ckpm50(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
+                    ckpm50.cheapSeedFilter(cheapKmers, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads);
+                    //get the reverse complement of queries
+                    tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
+                    ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
+                    // ckpm50.printArrays();
+                    SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog);
+                    pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, true, parmikAlignmentsAddress);
+                    //do it again for the reverse strand
+                    pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, false, parmikAlignmentsAddress);
+                }
             }
         
             //report the histogram of the alignments

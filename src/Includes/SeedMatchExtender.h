@@ -528,16 +528,13 @@ public:
             pms[i].numberOfInDel = numberOfInDel;
             pms[i].cigar = ldc.alignmentToCIGAR(pms[i].editDistanceTypes);
             pms[i].numberOfMatches = s.countMatches(pms[i].cigar);
-            if (pms[i].numberOfMatches > bestAln.numberOfMatches)
+            if (pms[i].numberOfMatches - pms[i].numberOfSub > bestAln.numberOfMatches - bestAln.numberOfSub) // only exact matches
             {
                 bestAln = pms[i];
             }
-            else if (pms[i].numberOfMatches == bestAln.numberOfMatches)
+            else if (pms[i].numberOfMatches - pms[i].numberOfSub == bestAln.numberOfMatches - bestAln.numberOfSub)
             {
-                if (pms[i].numberOfInDel < bestAln.numberOfInDel && pms[i].numberOfSub <= bestAln.numberOfSub + 1) // this is a preference on sub over InDel
-                {
-                    bestAln = pms[i];
-                } else if (pms[i].numberOfInDel == bestAln.numberOfInDel && pms[i].numberOfSub < bestAln.numberOfSub)
+                if (pms[i].numberOfInDel + pms[i].numberOfSub < bestAln.numberOfInDel + bestAln.numberOfSub) // InDel has the same wight as substitution
                 {
                     bestAln = pms[i];
                 }
@@ -768,7 +765,7 @@ public:
 
     bool checkAlingmentCriteria(LevAlign l, uint32_t maxAllowedEdit)
     {
-        return ((l.editDistance <= maxAllowedEdit) && (((uint32_t)l.partialMatchSize >= (uint32_t)regionSize) || ((uint32_t)(l.numberOfMatches + l.numberOfInDel + l.numberOfSub) >= (uint32_t)regionSize)));
+        return ((l.numberOfInDel + l.numberOfSub <= maxAllowedEdit) && (((uint32_t)l.partialMatchSize >= (uint32_t)regionSize) || ((uint32_t)(l.numberOfMatches + l.numberOfInDel) >= (uint32_t)regionSize)));//numberOfMatches includes subs
     }
 
     void dumpSam(ofstream &oSam, LevAlign l)
@@ -777,7 +774,7 @@ public:
                 << "*" << '\t' << l.cigar << '\t' << "*" << '\t' << "*" << '\t' << "*" << '\t' << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.numberOfSub) << '\n';
     }
 
-    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, uint32_t allowedEditDistance, uint32_t contigSize, map<contigIndT, LevAlign> &pmres, IndexContainer<contigIndT, contigIndT>& alignments, bool isForwardStrand, string parmikAlignments)
+    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, uint32_t allowedEditDistance, uint32_t contigSize, map<contigIndT, LevAlign> &pmres, bool isForwardStrand, string parmikAlignments)
     {      
         Utilities<double> utildouble;   
         set<double> seedAndExtend_times;
@@ -788,7 +785,7 @@ public:
             auto itq = queries.find(i);
             if (itq == queries.end())
                 continue;
-            string query = queries[i];
+            string query = itq->second;
             if (query.find('n') != string::npos || query.find('N') != string::npos)
                 continue;
             // long long readFromFile_ExeTime = 0, seedExtension_ExeTime = 0;
@@ -826,7 +823,6 @@ public:
                 bestAlignmentForQuery = comparePartialMatchRes(pms);
                 if(checkAlingmentCriteria(frontLa, allowedEditDistance))
                 {
-                    alignments.put(i, it->first);
                     dumpSam(pAln, frontLa);
                 }
             }
@@ -858,7 +854,6 @@ public:
                 bestAlignmentForQuery = comparePartialMatchRes(pms);
                 if(checkAlingmentCriteria(backLa, allowedEditDistance))
                 {
-                    alignments.put(i, it->first);
                     dumpSam(pAln, backLa);
                 }
             }

@@ -24,6 +24,7 @@ public:
         uint32_t AlignmentLength = 0;
         uint32_t Mismatches = 0;
         uint32_t flag = 0;
+        uint32_t InDels = 0;
     };
 
     BlastReader(const string& filename) : filename_(filename) {}
