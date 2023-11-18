@@ -184,7 +184,7 @@ public:
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
             bool bwaFound = false, pmFound = false;
-            uint32_t bwaMatchSize = 0, pmMatchSize = 0;
+            uint32_t bwaMatchSize = 0, bwaInDels = 0, pmMatchSize = 0;
             string query = queries[queryInd];
             if(query.find('N') != string::npos || query.find('n') != string::npos)
             {
@@ -214,6 +214,7 @@ public:
                     bwaAlignment = aln;
                     bwaMatchSize = bwaSam.countMatches(bwaAlignment.cigar);
                     bwaClipCount = bwaSam.countClips(bwaAlignment.cigar);
+                    bwaInDels = bwaSam.countInsertions(bwaAlignment.cigar) + bwaSam.countDeletions(bwaAlignment.cigar);
                     if (bwaClipCount > 0)
                     {
                         numberOfBwaClippedAlignments++;
@@ -227,15 +228,12 @@ public:
             {
                 pmFound = true;
                 LevAlign aln = it->second;
-                if (aln.numberOfMatches > pmAlignment.numberOfMatches)
+                if (aln.numberOfMatches - aln.numberOfSub > pmAlignment.numberOfMatches - pmAlignment.numberOfSub)
                 {
                     pmAlignment = aln;
-                } else if (aln.numberOfMatches == pmAlignment.numberOfMatches)
+                } else if (aln.numberOfMatches - aln.numberOfSub == pmAlignment.numberOfMatches - pmAlignment.numberOfSub)
                 {
-                    if (aln.numberOfInDel < pmAlignment.numberOfInDel && aln.numberOfSub <= pmAlignment.numberOfSub + 1) // this is a preference on sub over InDel
-                    {
-                        pmAlignment = aln;
-                    } else if (aln.numberOfInDel == pmAlignment.numberOfInDel && aln.numberOfSub < pmAlignment.numberOfSub)
+                    if (aln.numberOfInDel + aln.numberOfSub < pmAlignment.numberOfInDel + pmAlignment.numberOfSub) // InDel has the same wight as substitution
                     {
                         pmAlignment = aln;
                     }
@@ -265,11 +263,11 @@ public:
                 cmp << "BWA outperformed and PM did not found"; 
                 numberOfBWAbetter++;
                 onlyBwaFoundMatchForQuery++;
-                if (bwaAlignment.editDistance > cfg.editDistance)
+                if (bwaAlignment.editDistance + bwaInDels > cfg.editDistance)
                 {
                     cmp << "with more edits > " << cfg.editDistance << endl;
                     numberOfBWAbetterExceedMaxEdits++;
-                } else if(bwaMatchSize - bwaAlignment.editDistance < cfg.regionSize - cfg.editDistance) {
+                } else if(bwaMatchSize + bwaInDels < cfg.regionSize) {
                     cmp << "with low match size : " << bwaMatchSize << endl;
                     numberOfBWAbetterWithLowMatchSize++;
                 } else
@@ -289,20 +287,20 @@ public:
                 // int bwaInDelSize = bwaSam.countInsertions(bwaAlignment.cigar) + bwaSam.countDeletions(bwaAlignment.cigar);
                 cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
                
-                if (bwaMatchSize < pmMatchSize)
+                if (bwaMatchSize - bwaAlignment.editDistance < pmMatchSize - pmAlignment.numberOfSub)
                 {
                     cmp << "PM outperformed "; 
                     numberOfPMbetter++;
                     cmp << "and # of BWA clips are: " << bwaClipCount << endl;
-                } else if (bwaMatchSize > pmMatchSize)
+                } else if (bwaMatchSize - bwaAlignment.editDistance > pmMatchSize - pmAlignment.numberOfSub)
                 {
                     cmp << "BWA outperformed";
                     numberOfBWAbetter++;
-                    if (bwaAlignment.editDistance > cfg.editDistance)
+                    if (bwaAlignment.editDistance + bwaInDels > cfg.editDistance)
                     {
                         cmp << "with more edits > " << cfg.editDistance << endl;
                         numberOfBWAbetterExceedMaxEdits++;
-                    } else if(bwaMatchSize - bwaAlignment.editDistance < cfg.regionSize - cfg.editDistance) {
+                    } else if(bwaMatchSize + bwaInDels < cfg.regionSize) {
                         cmp << "with low match size : " << bwaMatchSize << endl;
                         numberOfBWAbetterWithLowMatchSize++;
                     } else
@@ -314,15 +312,15 @@ public:
                     }
                 } else
                 {
-                    if (pmAlignment.numberOfSub < bwaAlignment.editDistance)
+                    if (pmAlignment.numberOfSub + pmAlignment.numberOfInDel < bwaAlignment.editDistance + bwaInDels)
                     {
                         cmp << "PM outperformed with less subs" << endl;
                         numberOfPMbetter++;
-                    } else if (pmAlignment.numberOfSub > bwaAlignment.editDistance)
+                    } else if (pmAlignment.numberOfSub + pmAlignment.numberOfInDel > bwaAlignment.editDistance + bwaInDels)
                     {
                         cmp << "BWA outperformed with less subs" << endl;
                         numberOfBWAbetter++;
-                        if (bwaAlignment.editDistance > cfg.editDistance)
+                        if (bwaAlignment.editDistance + bwaInDels > cfg.editDistance)
                         {
                             numberOfBWAbetterExceedMaxEdits++;
                         }  

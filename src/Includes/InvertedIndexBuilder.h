@@ -52,6 +52,7 @@ public:
         string currentContigSequence;
         uint32_t contigCount = 0;
         uint32_t kmerIndCount = 0;
+        uint32_t readsContainingN = 0;
         Utilities<uint32_t> utl;
         cout << "<<<<<<<<<<<<<<<<<<<<<<<< Index Construction Started!!>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         clock_t start_time = clock();
@@ -67,6 +68,12 @@ public:
                     // Line contains the contig ID
                     currentContigId = utl.extractContigId(line);
                 } else {
+                    // read should not contain N
+                    if (line.find('n') != string::npos || line.find('N') != string::npos)
+                    {
+                        readsContainingN++;
+                        continue;
+                    }
                     // Line contains the contig sequence
                     currentContigSequence = line;
 
@@ -86,9 +93,10 @@ public:
                 }
             }
             printf("Index Construction took: %.2f seconds\n", (double)(clock() - start_time)/CLOCKS_PER_SEC);
-            cout << left << setw(30) << "Number of kmers: " << kmerIndCount << endl;
-            cout << left << setw(30) << "Number of contigs: " << contigCount << endl;
-            cout << left << setw(30) << "Size of inverted index: " << invertedIndex.size() << endl;
+            cout << left << setw(40) << "Number of kmers: " << kmerIndCount << endl;
+            cout << left << setw(40) << "Number of contigs: " << contigCount << endl;
+            cout << left << setw(40) << "Size of inverted index: " << invertedIndex.size() << endl;
+            cout << left << setw(40) << "Number of Reads Containing N: " << readsContainingN << endl;
             cout <<  "<<<<<<<<<<<<<<<<<<<<<<<Index Construction Ended!!>>>>>>>>>>>>>>>>>>>>>>> " << endl;
             file.close();
             //store the index
