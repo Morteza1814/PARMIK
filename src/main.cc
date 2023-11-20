@@ -143,15 +143,15 @@ uint32_t sumMapValues(const map<uint32_t, uint32_t>& inputMap) {
 
 void testOnePair(int argc, char *argv[])
 {
-    SeedMatchExtender<uint32_t, uint64_t> pm(30, 50, true);
-    string query = argv[1];
-    string read =  argv[2];
+    SeedMatchExtender<uint32_t, uint64_t> pm(30, 50, true, 2, 150);
+    string read =  argv[1];
+    string query = argv[2];
     cout << "read  : " << read << endl;
     cout << "query : " << query << endl;
     vector<uint64_t> frontKmers;
     char frontRegion = 'F';
     pm.extractKmersFromRegions(query, frontKmers, frontRegion);
-    LevAlign fla = pm.extendSeed(query, read, frontKmers, 2, 150, frontRegion);
+    LevAlign fla = pm.extendSeed(query, read, frontKmers, frontRegion);
     cout << "front partialMatchSize : " << fla.partialMatchSize << ", editDistance : " << fla.editDistance << endl;
     cout << "or R : " << fla.read << endl;
     cout << "or Q : " << fla.query << endl;
@@ -162,7 +162,7 @@ void testOnePair(int argc, char *argv[])
     vector<uint64_t> backKmers;
     char backRegion = 'B';
     pm.extractKmersFromRegions(query, backKmers, backRegion);
-    LevAlign bla = pm.extendSeed(query, read, backKmers, 2, 150, backRegion);
+    LevAlign bla = pm.extendSeed(query, read, backKmers, backRegion);
     cout << "back partialMatchSize : " << bla.partialMatchSize << ", editDistance : " << bla.editDistance << endl;
     cout << "or R : " << bla.read << endl;
     cout << "or Q : " << bla.query << endl;
@@ -273,10 +273,10 @@ int run(int argc, char *argv[]) {
                     tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
                     ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
                     // ckpm50.printArrays();
-                    SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog);
-                    pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, true, parmikAlignmentsAddress);
+                    SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize);
+                    pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
                     //do it again for the reverse strand
-                    pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, false, parmikAlignmentsAddress);
+                    pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
                 }
             } else
             {
@@ -316,10 +316,10 @@ int run(int argc, char *argv[]) {
                     tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
                     ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
                     // ckpm50.printArrays();
-                    SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog);
-                    pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, true, parmikAlignmentsAddress);
+                    SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize);
+                    pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
                     //do it again for the reverse strand
-                    pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, cfg.editDistance, cfg.contigSize, pmr, false, parmikAlignmentsAddress);
+                    pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
                 }
             }
         
@@ -416,10 +416,6 @@ int run(int argc, char *argv[]) {
 
 int main(int argc, char *argv[])
 {
-    // if(!checkBwaAlignmentBasedOnOurCriteria(50, 30, 150, "27S123M", "90G13G18"))
-    // {
-    //     cout << "zed" << endl;
-    // }
     // testOnePair(argc, argv);
     run(argc, argv);
     return 0;

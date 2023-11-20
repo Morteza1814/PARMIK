@@ -228,10 +228,10 @@ public:
             {
                 pmFound = true;
                 LevAlign aln = it->second;
-                if (aln.numberOfMatches - aln.numberOfSub > pmAlignment.numberOfMatches - pmAlignment.numberOfSub)
+                if (aln.numberOfMatches + aln.numberOfInDel > pmAlignment.numberOfMatches + pmAlignment.numberOfInDel)
                 {
                     pmAlignment = aln;
-                } else if (aln.numberOfMatches - aln.numberOfSub == pmAlignment.numberOfMatches - pmAlignment.numberOfSub)
+                } else if (aln.numberOfMatches + aln.numberOfInDel == pmAlignment.numberOfMatches + pmAlignment.numberOfInDel)
                 {
                     if (aln.numberOfInDel + aln.numberOfSub < pmAlignment.numberOfInDel + pmAlignment.numberOfSub) // InDel has the same wight as substitution
                     {
@@ -287,12 +287,12 @@ public:
                 // int bwaInDelSize = bwaSam.countInsertions(bwaAlignment.cigar) + bwaSam.countDeletions(bwaAlignment.cigar);
                 cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
                
-                if (bwaMatchSize - bwaAlignment.editDistance < pmMatchSize - pmAlignment.numberOfSub)
+                if (bwaMatchSize + bwaInDels < pmMatchSize + pmAlignment.numberOfInDel)
                 {
                     cmp << "PM outperformed "; 
                     numberOfPMbetter++;
                     cmp << "and # of BWA clips are: " << bwaClipCount << endl;
-                } else if (bwaMatchSize - bwaAlignment.editDistance > pmMatchSize - pmAlignment.numberOfSub)
+                } else if (bwaMatchSize + bwaInDels > pmMatchSize + pmAlignment.numberOfInDel)
                 {
                     cmp << "BWA outperformed";
                     numberOfBWAbetter++;

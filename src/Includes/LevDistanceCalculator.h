@@ -58,10 +58,10 @@ public:
         for (int i = 1; i <= len2; ++i)
             d[0][i] = i;
 
-        if (len1 != len2)
-        {
-            cout << "\nQ and R MEM size is not equal!" << endl;
-        }
+        // if (len1 != len2)
+        // {
+        //     cout << "\nQ and R MEM size is not equal!" << endl;
+        // }
         // make the alignment 'N' insensitive
         string query = la->query, read = la->read;
         for (int i = 0; i < len1; i++)

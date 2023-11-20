@@ -29,6 +29,29 @@ public:
 
     BlastReader(const string& filename) : filename_(filename) {}
 
+    uint32_t getIndels(string read, string query) {
+        uint32_t inDelCount = 0;
+        if (read == "" || query == "") {
+            cerr << "Error: Sequences are empty." << endl;
+            return 0;
+        }
+        // Check if the sequences have the same length
+        if (read.length() != query.length()) {
+            cerr << "Error: Sequences have different lengths." << endl;
+            return 0;
+        }
+        // Iterate through the sequences and compare corresponding characters
+        for (size_t i = 0; i < read.length(); ++i) {
+            if (read[i] != query[i]) {
+                if (read[i] == '-' || query[i] == '-') {
+                    inDelCount++;
+                }
+            } 
+        }
+ 
+        return inDelCount;
+    }
+
     void parseFile(uint32_t lastQueryID, IndexContainer<uint32_t, Blast>& alignments) {
         
         ifstream blastFile(filename_);
@@ -46,8 +69,8 @@ public:
             }
             Blast blast;
             istringstream iss(line);
-            string queryID, readID, queryS, queryE, readS, readE, AlignmentLength, Mismatches, flag;
-            iss >> queryID >>  readID >>  queryS >>  queryE >>  readS >>  readE >>  AlignmentLength >>  Mismatches >>  flag;
+            string queryID, readID, queryS, queryE, readS, readE, AlignmentLength, Mismatches, flag, queryAligned, readAligned;
+            iss >> queryID >>  readID >>  queryS >>  queryE >>  readS >>  readE >>  AlignmentLength >>  Mismatches >>  flag >> queryAligned >> readAligned;
 
             if (queryID == "") blast.queryId = 0; else blast.queryId = utl.extractContigId(queryID);
             if (readID == "") blast.readId = 0; else blast.readId = utl.extractContigId(readID);
@@ -58,6 +81,8 @@ public:
             if (AlignmentLength == "") blast.AlignmentLength = 0; else blast.AlignmentLength = atoi(AlignmentLength.c_str());
             if (Mismatches == "") blast.Mismatches = 0; else blast.Mismatches = atoi(Mismatches.c_str());
             if (flag == "") blast.flag = 0; else if (flag == "plus") blast.flag = 0; else blast.flag = 16;
+
+            blast.InDels = getIndels(readAligned, queryAligned);
 
             if(blast.queryId > lastQueryID)
                 break;
