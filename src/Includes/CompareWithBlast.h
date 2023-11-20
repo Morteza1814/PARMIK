@@ -12,35 +12,30 @@ using namespace std;
 class CompareWithBlast {
 public: 
 
-    uint32_t determineEditsLocationsAndType(string read, string query, vector<int>& editPos) {
-        uint32_t inDelCount = 0;
+    void determineEditsLocationsAndType(string read, string query, vector<int>& editPos) {
         // Check if the sequences have the same length
         if (read.length() != query.length()) {
             cerr << "Error: Sequences have different lengths." << endl;
-            return 0;
+            return;
         }
         // Iterate through the sequences and compare corresponding characters
         for (size_t i = 0; i < read.length(); ++i) {
             if (read[i] != query[i]) {
                 editPos.push_back(i);
-                if (read[i] == '-' || query[i] == '-') {
-                    inDelCount++;
-                }
             } 
         }
  
-        return inDelCount;
     }
 
     bool checkBlastEditPositions(BlastReader::Blast& blastAlignment, string query, string read, Config cfg)
     {
         vector<int> editPos;
-        blastAlignment.InDels = determineEditsLocationsAndType(read, query, editPos);
-        if (editPos.size() != blastAlignment.Mismatches) 
-        {
-            cout << "Error: Edit distance not equals mismatch." << endl;
-            return false;
-        }
+        determineEditsLocationsAndType(read, query, editPos);
+        // if (editPos.size() != blastAlignment.Mismatches) 
+        // {
+        //     cout << "Error: Edit distance not equals mismatch." << endl;
+        //     return false;
+        // }
         bool firstKmerInFrontRegionDismissed = false, lastKmerInFrontRegionDismissed = false,
             firstKmerInBackRegionDismissed = false, lastKmerInBacktRegionDismissed = false;
         uint32_t queryS = blastAlignment.queryS - 1;
@@ -85,7 +80,6 @@ public:
         numberOfQueryContainN = 0, queriesBLASTFoundMatch = 0;
         LevAlign pmAlignment;
         uint32_t pmQueriesFound = 0;
-        BlastReader::Blast blastAlignment;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
             bool blastFound = false, pmFound = false;
@@ -109,10 +103,10 @@ public:
                 if (aln.Mismatches + aln.InDels <= cfg.editDistance)
                 {
                     blastFound = true;
-                    if (aln.AlignmentLength - (aln.Mismatches + aln.InDels) > blastAlignment.AlignmentLength - (blastAlignment.Mismatches + blastAlignment.InDels))
+                    if (aln.AlignmentLength  > blastAlignment.AlignmentLength)
                     {
                         blastAlignment = aln;
-                    } else if (aln.AlignmentLength - (aln.Mismatches + aln.InDels) == blastAlignment.AlignmentLength - (blastAlignment.Mismatches + blastAlignment.InDels))
+                    } else if (aln.AlignmentLength == blastAlignment.AlignmentLength)
                     {
                         if (aln.Mismatches + aln.InDels < blastAlignment.Mismatches + blastAlignment.InDels)
                         {
@@ -129,10 +123,10 @@ public:
             {
                 pmFound = true;
                 LevAlign aln = it->second;
-                if (aln.numberOfMatches - aln.numberOfSub > pmAlignment.numberOfMatches - pmAlignment.numberOfSub)
+                if (aln.numberOfMatches + aln.numberOfInDel > pmAlignment.numberOfMatches + pmAlignment.numberOfInDel)
                 {
                     pmAlignment = aln;
-                } else if (aln.numberOfMatches - aln.numberOfSub == pmAlignment.numberOfMatches - pmAlignment.numberOfSub)
+                } else if (aln.numberOfMatches + aln.numberOfInDel == pmAlignment.numberOfMatches + pmAlignment.numberOfInDel)
                 {
                     if (aln.numberOfInDel + aln.numberOfSub < pmAlignment.numberOfInDel + pmAlignment.numberOfSub) // InDel has the same wight as substitution
                     {
@@ -191,11 +185,11 @@ public:
                 // int bwaInDelSize = bwaSam.countInsertions(blastAlignment.cigar) + bwaSam.countDeletions(blastAlignment.cigar);
                 cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
                
-                if (blastMatchSize - (blastAlignment.Mismatches + blastAlignment.InDels) < pmMatchSize - pmAlignment.editDistance)
+                if (blastMatchSize < pmMatchSize + pmAlignment.numberOfInDel)
                 {
                     cmp << "PM outperformed "; 
                     numberOfPMbetter++;
-                } else if (blastMatchSize - (blastAlignment.Mismatches + blastAlignment.InDels) > pmMatchSize - pmAlignment.editDistance)
+                } else if (blastMatchSize > pmMatchSize + pmAlignment.numberOfInDel)
                 {
                     cmp << "BLAST outperformed";
                     numberOfBLASTbetter++;
@@ -216,11 +210,11 @@ public:
                 {
                     if (pmAlignment.numberOfSub + pmAlignment.numberOfInDel < blastAlignment.Mismatches + blastAlignment.InDels)
                     {
-                        cmp << "PM outperformed with less subs" << endl;
+                        cmp << "PM outperformed with fewer edits" << endl;
                         numberOfPMbetter++;
                     } else if (pmAlignment.numberOfSub + pmAlignment.numberOfInDel > blastAlignment.Mismatches + blastAlignment.InDels)
                     {
-                        cmp << "BLAST outperformed with less subs" << endl;
+                        cmp << "BLAST outperformed with fewer edits" << endl;
                         numberOfBLASTbetter++;
                         if (blastAlignment.Mismatches + blastAlignment.InDels > cfg.editDistance)
                         {

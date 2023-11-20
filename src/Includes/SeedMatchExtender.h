@@ -24,9 +24,11 @@ private:
     char frontRegion = 'F';
     char backRegion = 'B';
     size_t regionSize;
-    bool isVerboseLog_ = false;
+    bool isVerboseLog_;
+    uint32_t allowedEditDistance;
+    uint32_t contigSize;
 public:
-    SeedMatchExtender(size_t k, size_t R, bool isVerboseLog) : encoder_(k), k_(k), regionSize(R), isVerboseLog_(isVerboseLog) {}
+    SeedMatchExtender(size_t k, size_t R, bool isVerboseLog, uint32_t a, uint32_t c) : encoder_(k), k_(k), regionSize(R), isVerboseLog_(isVerboseLog), allowedEditDistance(a), contigSize(c) {}
 
     string readOneContig(const string &filename, contigIndT n)
     {
@@ -180,7 +182,7 @@ public:
         return commonPositions;
     }
 
-    LevAlign extendPreMem(int readMemStartInd, int queryMemStartInd, string read, string query, uint32_t allowedEditDistance)
+    LevAlign extendPreMem(int readMemStartInd, int queryMemStartInd, string read, string query)
     {
         LevDistanceCalculator ldc;
         LevAlign preLa;
@@ -233,11 +235,12 @@ public:
         return preLa;
     }
 
-    LevAlign extendSufMem(unsigned int readMemEndInd, unsigned int queryMemEndInd, string read, string query, uint32_t allowedEditDistance, uint32_t contigSize)
+    LevAlign extendSufMem(unsigned int readMemEndInd, unsigned int queryMemEndInd, string read, string query)
     {
         LevDistanceCalculator ldc;
         LevAlign sufLa;
         unsigned int suffixRegionSize = 0;
+        uint32_t queryRemainedBp = 0, readRemainedBp = 0;
         if (readMemEndInd == (contigSize - 1) || queryMemEndInd == (contigSize - 1)) // no Suffix region check is needed
         {
             suffixRegionSize = 0;
@@ -245,8 +248,14 @@ public:
         else if (readMemEndInd > queryMemEndInd) // query Suffix region is larger
         {
             suffixRegionSize = contigSize - (readMemEndInd + 1);
+            queryRemainedBp = readMemEndInd - queryMemEndInd;
         }
-        else // query Suffix region is larger
+        else if (readMemEndInd < queryMemEndInd) // read Suffix region is larger
+        {
+            suffixRegionSize = contigSize - (queryMemEndInd + 1);
+            readRemainedBp = queryMemEndInd - readMemEndInd;
+        }
+        else // equal suffix region size
         {
             suffixRegionSize = contigSize - (queryMemEndInd + 1);
         }
@@ -254,10 +263,11 @@ public:
         {
             sufLa.readRegionEndPos = readMemEndInd + suffixRegionSize;
             sufLa.queryRegionEndPos = queryMemEndInd + suffixRegionSize;
-            sufLa.read = read.substr(readMemEndInd + 1, suffixRegionSize);
-            sufLa.query = query.substr(queryMemEndInd + 1, suffixRegionSize);
+            sufLa.read = read.substr(readMemEndInd + 1, suffixRegionSize + readRemainedBp);
+            sufLa.query = query.substr(queryMemEndInd + 1, suffixRegionSize + queryRemainedBp);
             unsigned int sufEd = ldc.edit_distance(&sufLa);
             vector<unsigned int> editPos = ldc.getEditDistancePositions(sufLa.editDistanceTypes);
+            // cout << "suffixRegionSize: " << suffixRegionSize << ", readMemEndInd: " << readMemEndInd << ", queryMemEndInd: " << queryMemEndInd << endl;
             // cout << "suf query: " << sufLa.query << endl;
             // cout << "suf ed: " << sufEd << endl;
             // cout << "sufLa.query : " <<  sufLa.query << endl;
@@ -327,11 +337,11 @@ public:
         return read.substr(readMemStartInd, (readMemEndInd - readMemStartInd + 1));
     }
 
-    LevAlign findMaximalPartialMatch(uint32_t allowedEditDistance, uint32_t regionSize, LevAlign preLa, LevAlign sufLa, LevAlign memLa)
+    LevAlign findMaximalPartialMatch(uint32_t region_Size, LevAlign preLa, LevAlign sufLa, LevAlign memLa)
     {
         uint32_t maxPM = 0;
         LevAlign midLa;
-        // cout << "regionSize : " << regionSize << endl;
+        // cout << "region_Size : " << region_Size << endl;
         // whole region is accepted
         if (preLa.editPositions.size() + sufLa.editPositions.size() <= allowedEditDistance)
         {
@@ -341,7 +351,7 @@ public:
             midLa.editDistance = preLa.editPositions.size() + sufLa.editPositions.size();
             midLa.editPositions.insert(midLa.editPositions.end(), preLa.editPositions.begin(), preLa.editPositions.end());
             midLa.editPositions.insert(midLa.editPositions.end(), sufLa.editPositions.begin(), sufLa.editPositions.end());
-            midLa.partialMatchSize = regionSize;
+            midLa.partialMatchSize = region_Size;
             midLa.alignedQuery = preLa.alignedQuery.substr(0, preLa.alignedQuery.size() - memLa.alignedQuery.size()) + memLa.alignedQuery + sufLa.alignedQuery.substr(memLa.alignedQuery.size());
             midLa.alignedRead = preLa.alignedRead.substr(0, preLa.alignedRead.size() - memLa.alignedRead.size()) + memLa.alignedRead + sufLa.alignedRead.substr(memLa.alignedRead.size());
             midLa.editDistanceTypes = preLa.editDistanceTypes.substr(0, preLa.editDistanceTypes.size() - memLa.editDistanceTypes.size()) + memLa.editDistanceTypes + sufLa.editDistanceTypes.substr(memLa.editDistanceTypes.size());
@@ -513,7 +523,7 @@ public:
         SamReader s("");
         for (size_t i = 0; i < pms.size(); i++)
         {
-            int numberOfSub = 0, numberOfInDel = 0;
+            uint32_t numberOfSub = 0, numberOfInDel = 0;
             for (size_t j = 0; j < pms[i].editDistanceTypes.size(); j++)
             {
                 if (pms[i].editDistanceTypes[j] == 's')
@@ -528,11 +538,16 @@ public:
             pms[i].numberOfInDel = numberOfInDel;
             pms[i].cigar = ldc.alignmentToCIGAR(pms[i].editDistanceTypes);
             pms[i].numberOfMatches = s.countMatches(pms[i].cigar);
-            if (pms[i].numberOfMatches - pms[i].numberOfSub > bestAln.numberOfMatches - bestAln.numberOfSub) // only exact matches
+            if (numberOfSub + numberOfInDel > allowedEditDistance)
+            {
+                cout << "parmik : numberOfSub + numberOfInDel > maxAllowedEdit" << endl;
+                continue;
+            }
+            if (pms[i].numberOfMatches + pms[i].numberOfInDel > bestAln.numberOfMatches + bestAln.numberOfInDel) // only exact matches
             {
                 bestAln = pms[i];
             }
-            else if (pms[i].numberOfMatches - pms[i].numberOfSub == bestAln.numberOfMatches - bestAln.numberOfSub)
+            else if (pms[i].numberOfMatches + pms[i].numberOfInDel == bestAln.numberOfMatches + bestAln.numberOfInDel)
             {
                 if (pms[i].numberOfInDel + pms[i].numberOfSub < bestAln.numberOfInDel + bestAln.numberOfSub) // InDel has the same wight as substitution
                 {
@@ -576,7 +591,7 @@ public:
         return hamLa.editDistance;
     }
 
-    LevAlign extendSeed(string query, string read, vector<kmerT> regionKmers, uint32_t allowedEditDistance, uint32_t contigSize, char region)
+    LevAlign extendSeed(string query, string read, vector<kmerT> regionKmers, char region)
     {
         vector<kmerT> readKmers = extractReadKmers(read);
         LevAlign maxLa;
@@ -638,7 +653,7 @@ public:
                 }
                 /*	Finding edits in prefix MEM region*/
                 // cout << "=====preMEM extension=====" << endl;
-                LevAlign preLa = extendPreMem(readMemStartInd, queryMemStartInd, read, query, allowedEditDistance);
+                LevAlign preLa = extendPreMem(readMemStartInd, queryMemStartInd, read, query);
                 preLa.partialMatchSize += memStr.size();
                 preLa.alignedQuery = preLa.alignedQuery + memStr;
                 preLa.alignedRead = preLa.alignedRead + memStr;
@@ -646,7 +661,7 @@ public:
                 // cout << "preLa edit: " << preLa.editDistanceTypes << endl;
                 /*	Finding edits in sudfix MEM region*/
                 // cout << "=====sufMEM extension=====" << endl;
-                LevAlign sufLa = extendSufMem(readMemEndInd, queryMemEndInd, read, query, allowedEditDistance, contigSize);
+                LevAlign sufLa = extendSufMem(readMemEndInd, queryMemEndInd, read, query);
                 sufLa.partialMatchSize += memStr.size();
                 sufLa.alignedQuery = memStr + sufLa.alignedQuery;
                 sufLa.alignedRead = memStr + sufLa.alignedRead;
@@ -706,7 +721,7 @@ public:
                     // cout << "----middle calculation-----" << endl;
                     int preMemRegionSizeDiff = ((readMemStartInd > queryMemStartInd) ? (readMemStartInd - queryMemStartInd) : (queryMemStartInd - readMemStartInd));
                     // int memRegionStart = ((readMemStartInd>queryMemStartInd)?readMemStartInd:queryMemStartInd) - 1;
-                    LevAlign midLa = findMaximalPartialMatch(allowedEditDistance, (contigSize - preMemRegionSizeDiff), preLa, sufLa, memLa);\
+                    LevAlign midLa = findMaximalPartialMatch((contigSize - preMemRegionSizeDiff), preLa, sufLa, memLa);
                     // cout << "<<<<only midle>>>>" << endl;
                     //check the hamming distance
                     LevAlign hamLa;
@@ -763,9 +778,9 @@ public:
         return readContigs;
     }
 
-    bool checkAlingmentCriteria(LevAlign l, uint32_t maxAllowedEdit)
+    bool checkAlingmentCriteria(LevAlign l)
     {
-        return ((l.numberOfInDel + l.numberOfSub <= maxAllowedEdit) && (((uint32_t)l.partialMatchSize >= (uint32_t)regionSize) || ((uint32_t)(l.numberOfMatches + l.numberOfInDel) >= (uint32_t)regionSize)));//numberOfMatches includes subs
+        return ((l.numberOfInDel + l.numberOfSub <= allowedEditDistance) && (((uint32_t)l.partialMatchSize >= (uint32_t)regionSize) || ((uint32_t)(l.numberOfMatches + l.numberOfInDel) >= (uint32_t)regionSize)));//numberOfMatches includes subs
     }
 
     void dumpSam(ofstream &oSam, LevAlign l)
@@ -774,7 +789,7 @@ public:
                 << "*" << '\t' << l.cigar << '\t' << "*" << '\t' << "*" << '\t' << "*" << '\t' << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.numberOfSub) << '\n';
     }
 
-    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, uint32_t allowedEditDistance, uint32_t contigSize, map<contigIndT, LevAlign> &pmres, bool isForwardStrand, string parmikAlignments)
+    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, map<contigIndT, LevAlign> &pmres, bool isForwardStrand, string parmikAlignments)
     {      
         Utilities<double> utildouble;   
         set<double> seedAndExtend_times;
@@ -813,7 +828,7 @@ public:
             for (auto it = frontCandidateReads.begin(); it != frontCandidateReads.end(); it++)
             {
                 LevAlign frontLa;
-                frontLa = extendSeed(query, it->second, frontKmers, allowedEditDistance, contigSize, frontRegion);
+                frontLa = extendSeed(query, it->second, frontKmers, frontRegion);
                 frontLa.queryID = i;
                 if (!isForwardStrand) frontLa.flag = 16;
                 frontLa.readID = it->first;
@@ -821,7 +836,7 @@ public:
                 pms.push_back(frontLa);
                 pms.push_back(bestAlignmentForQuery);
                 bestAlignmentForQuery = comparePartialMatchRes(pms);
-                if(checkAlingmentCriteria(frontLa, allowedEditDistance))
+                if(checkAlingmentCriteria(frontLa))
                 {
                     dumpSam(pAln, frontLa);
                 }
@@ -844,7 +859,7 @@ public:
             for (auto it = backCandidateReads.begin(); it != backCandidateReads.end(); it++)
             {
                 LevAlign backLa;
-                backLa = extendSeed(query, it->second, backKmers, allowedEditDistance, contigSize, backRegion);
+                backLa = extendSeed(query, it->second, backKmers, backRegion);
                 backLa.queryID = i;
                 if (!isForwardStrand) backLa.flag = 16;
                 backLa.readID = it->first;
@@ -852,7 +867,7 @@ public:
                 pms.push_back(backLa);
                 pms.push_back(bestAlignmentForQuery);
                 bestAlignmentForQuery = comparePartialMatchRes(pms);
-                if(checkAlingmentCriteria(backLa, allowedEditDistance))
+                if(checkAlingmentCriteria(backLa))
                 {
                     dumpSam(pAln, backLa);
                 }
@@ -878,7 +893,7 @@ public:
             if (isVerboseLog_) cout << "seed find and extension for this q took : " << seedAndExtendForQuery_microsecond << " microseconds" << endl;
             // cout << "seed extension for this q took : " << seedExtensionForQuery_second << " seconds" << endl;
             // cout << "read from file for this q took : " << readFromFileForQuery_second << " seconds" << endl;
-            if(bestAlignmentForQuery.readID >= 0 && checkAlingmentCriteria(bestAlignmentForQuery, allowedEditDistance))
+            if(bestAlignmentForQuery.readID >= 0 && checkAlingmentCriteria(bestAlignmentForQuery))
                 pmres[i] = bestAlignmentForQuery;
             else
             {
