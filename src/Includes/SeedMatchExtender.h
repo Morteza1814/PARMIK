@@ -456,7 +456,7 @@ public:
             {
                 midLa.editPositions.push_back(preLa.editPositions[m]);
             }
-            for (size_t m = i; m < sufLa.editPositions.size(); m++)
+            for (size_t m = 0 ; m <= j; m++)
             {
                 midLa.editPositions.push_back(sufLa.editPositions[m]);
             }
