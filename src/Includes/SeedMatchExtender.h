@@ -600,7 +600,7 @@ public:
         // cout << "number of common positions: " << commonPositions.size() << endl;
         if (!commonPositions.empty())
         {
-            map<uint32_t, uint32_t> readMemStartEnd, queryMemStartEnd;
+            map<uint32_t, uint32_t> readMemStartInds, queryMemStartInds;
             uint32_t skippedCommonPositions = 0;
             for (const auto &pos : commonPositions)
             {
@@ -614,9 +614,9 @@ public:
                 // cout << "----MEM extension-----" << endl;
                 string memStr = extendMEM(pos.second, pos.first, read, query, readMemStartInd, queryMemStartInd, readMemEndInd, queryMemEndInd, contigSize);
                 //check for skipping rechecking the same MEM
-                auto it_r = readMemStartEnd.find(readMemStartInd);
-                auto it_q = queryMemStartEnd.find(queryMemStartInd);
-                if (it_r != readMemStartEnd.end() && it_q != queryMemStartEnd.end())
+                auto it_r = readMemStartInds.find(readMemStartInd);
+                auto it_q = queryMemStartInds.find(queryMemStartInd);
+                if (it_r != readMemStartInds.end() && it_q != queryMemStartInds.end())
                 {
                     if (it_r->second == readMemEndInd && it_q->second == queryMemEndInd)
                     {
@@ -626,8 +626,8 @@ public:
 
                 } else
                 {
-                    readMemStartEnd[readMemStartInd] = readMemEndInd;
-                    queryMemStartEnd[queryMemStartInd] = queryMemEndInd;
+                    readMemStartInds[readMemStartInd] = readMemEndInd;
+                    queryMemStartInds[queryMemStartInd] = queryMemEndInd;
                 }
                 
                 // cout << "query seed start: " << pos.first << ", read seed start: " << pos.second << endl;
