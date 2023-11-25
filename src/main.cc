@@ -416,7 +416,7 @@ int run(int argc, char *argv[]) {
 
 int main(int argc, char *argv[])
 {
-    testOnePair(argc, argv);
-    //run(argc, argv);
+    // testOnePair(argc, argv);
+    run(argc, argv);
     return 0;
 }

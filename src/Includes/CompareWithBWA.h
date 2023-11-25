@@ -10,10 +10,10 @@ using namespace std;
 
 class ComparatorWithBWA {
 public: 
-    pair<int, int> countBwaClippedBases(const string& cigarString) {
-        int softClippedStart = 0;
-        int softClippedEnd = 0;
-        int currentCount = 0;
+    pair<uint32_t, uint32_t> countBwaClippedBases(const string& cigarString) {
+        uint32_t softClippedStart = 0;
+        uint32_t softClippedEnd = 0;
+        uint32_t currentCount = 0;
         bool frontClip = true;
         for (char c : cigarString) {
             if (isdigit(c)) {
@@ -73,18 +73,18 @@ public:
         return indels;
     }
 
-    bool checkBwaAlignmentClips(const string& cigarString, int regionSize, int minExactMatchSize)
+    bool checkBwaAlignmentClips(const string& cigarString, uint32_t maxEditAllowed)
     {
         bool frontDismissed = false;//the alignment does not have min exact size front of query in it
         bool backDismissed = false;//the alignment does not have min exact size back of query in it
-        pair<int, int> clips = countBwaClippedBases(cigarString);
+        pair<uint32_t, uint32_t> clips = countBwaClippedBases(cigarString);
         // cout << "front clips: " << clips.first <<  ", back clips: " << clips.second << endl;
-        if (clips.first > regionSize-minExactMatchSize)
+        if (clips.first > maxEditAllowed)
         {
             frontDismissed = true;
             // cout << "frontDismissed\n";
         }
-        if (clips.second > regionSize-minExactMatchSize)
+        if (clips.second > maxEditAllowed)
         {
             backDismissed = true;
             // cout << "backDismissed\n";
@@ -94,10 +94,10 @@ public:
         return true;
     }
 
-    bool checkBwaAlignmentBasedOnOurCriteria(int regionSize, int minExactMatchSize, int contigSize, string cigar, string md, ofstream &cmp)
+    bool checkBwaAlignmentBasedOnOurCriteria(uint32_t maxEditAllowed, int regionSize, int minExactMatchSize, int contigSize, string cigar, string md, ofstream &cmp)
     {
         //check if the clips covered the front and back region
-        if(checkBwaAlignmentClips(cigar, regionSize, minExactMatchSize))
+        if(checkBwaAlignmentClips(cigar, maxEditAllowed))
         {
             //check if clips + edits covered the front and back region
             pair<int, int> clips = countBwaClippedBases(cigar);
@@ -155,12 +155,12 @@ public:
             }
             if(firstKmerInFrontRegionDismissed && lastKmerInFrontRegionDismissed && firstKmerInBackRegionDismissed && lastKmerInBacktRegionDismissed)
             {
-                cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
+                cmp << "the read was supposed to be discarded based on our criteria (edit pos)";
                 return false;
             }
         } else 
         {
-            cmp << "the read was supposed to be discarded based on our criteria (clips)" << endl;
+            cmp << "the read was supposed to be discarded based on our criteria (clips)";
             return false;
         }
         return true;
@@ -179,7 +179,7 @@ public:
         onlyPmFoundMatchForQuery = 0, nonePmBWAFoundAlignmentForQuery = 0, bwaClipCount = 0, 
         numberOfQueryContainN = 0;
         LevAlign pmAlignment;
-        uint32_t pmQueriesFound = 0;
+        uint32_t pmQueriesFound = 0, bwaQueriesFound = 0;
         SamReader::Sam bwaAlignment;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
@@ -201,6 +201,7 @@ public:
                 if(it->queryId == queryInd)
                 {
                     bwaFoundReadForQuery = true;
+                    bwaQueriesFound++;
                     break;
                 }
             }
@@ -272,10 +273,11 @@ public:
                     numberOfBWAbetterWithLowMatchSize++;
                 } else
                 {
-                    if(!checkBwaAlignmentBasedOnOurCriteria(cfg.regionSize, cfg.minExactMatchLen, cfg.contigSize, bwaAlignment.cigar, bwaAlignment.mismatchPositions, cmp))
+                    if(!checkBwaAlignmentBasedOnOurCriteria(cfg.editDistance, cfg.regionSize, cfg.minExactMatchLen, cfg.contigSize, bwaAlignment.cigar, bwaAlignment.mismatchPositions, cmp))
                     {
                         numberOfBWAbetterNotObserveOurCriteria++;
                     }
+                    cmp << "misc" << endl;
                 }
                 cmp << "<<<<<<<<<<<<<BWA alignment>>>>>>>>>>>>>" << endl;
                 cmp << "Q : " << query << endl;
@@ -305,10 +307,11 @@ public:
                         numberOfBWAbetterWithLowMatchSize++;
                     } else
                     {
-                        if(!checkBwaAlignmentBasedOnOurCriteria(cfg.regionSize, cfg.minExactMatchLen, cfg.contigSize, bwaAlignment.cigar, bwaAlignment.mismatchPositions, cmp))
+                        if(!checkBwaAlignmentBasedOnOurCriteria(cfg.editDistance, cfg.regionSize, cfg.minExactMatchLen, cfg.contigSize, bwaAlignment.cigar, bwaAlignment.mismatchPositions, cmp))
                         {
                             numberOfBWAbetterNotObserveOurCriteria++;
                         }
+                        cmp << "misc" << endl;
                     }
                 } else
                 {
@@ -323,7 +326,10 @@ public:
                         if (bwaAlignment.editDistance + bwaInDels > cfg.editDistance)
                         {
                             numberOfBWAbetterExceedMaxEdits++;
-                        }  
+                            cmp << "with more edits > " << cfg.editDistance << endl;
+                        } else {
+                            cmp << "BWA is really better" << endl;
+                        }
                     } else
                     {
                         cmp << "BWA and PM performed equal" << endl;   
@@ -368,7 +374,7 @@ public:
         cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Overall Comparison Results>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         cmp << left << setw(80) << "# Of queries : " << queryCount << endl;
         cmp << left << setw(80) << "# Of queries that PARMIK found match : " << pmQueriesFound << endl;
-        cmp << left << setw(80) << "# Of queries that BWA found match : " << bwaAlignments.size() << endl;
+        cmp << left << setw(80) << "# Of queries that BWA found match : " << bwaQueriesFound << endl;
         cmp << left << setw(80) << "# Of Matched Hits between PM and BWA : " << numberOfEqualalignment << endl;
         cmp << left << setw(80) << "# Of PM outperformed : " << numberOfPMbetter << endl;
         cmp << left << setw(80) << "# Of BWA outperformed : " << numberOfBWAbetter << endl;
