@@ -187,6 +187,7 @@ public:
         LevDistanceCalculator ldc;
         LevAlign preLa;
         unsigned int prefixRegionSize = 0;
+        uint32_t queryDiffBp = 0, readDiffBp = 0;
         if (readMemStartInd == 0 || queryMemStartInd == 0) // no Prefix region check is needed
         {
             prefixRegionSize = 0;
@@ -194,8 +195,14 @@ public:
         else if (readMemStartInd > queryMemStartInd) // read Prefix region is larger
         {
             prefixRegionSize = queryMemStartInd;
+            readDiffBp = ((uint32_t)(readMemStartInd - queryMemStartInd) >= allowedEditDistance) ? allowedEditDistance : (readMemStartInd - queryMemStartInd);
         }
-        else // query Prefix region is larger
+        else if (readMemStartInd < queryMemStartInd) // query Prefix region is larger
+        {
+            prefixRegionSize = readMemStartInd;
+            queryDiffBp = ((uint32_t)(queryMemStartInd - readMemStartInd) >= allowedEditDistance) ? allowedEditDistance : (queryMemStartInd - readMemStartInd);
+        }
+        else // equal prefix region size
         {
             prefixRegionSize = readMemStartInd;
         }
@@ -203,10 +210,35 @@ public:
         {
             preLa.readRegionStartPos = readMemStartInd - prefixRegionSize;
             preLa.queryRegionStartPos = queryMemStartInd - prefixRegionSize;
-            preLa.read = read.substr(preLa.readRegionStartPos, prefixRegionSize);
-            preLa.query = query.substr(preLa.queryRegionStartPos, prefixRegionSize);
-            unsigned int preEd = ldc.edit_distance(&preLa);
+            preLa.read = read.substr(preLa.readRegionStartPos - readDiffBp, prefixRegionSize + readDiffBp);
+            preLa.query = query.substr(preLa.queryRegionStartPos - queryDiffBp, prefixRegionSize + queryDiffBp);
+            LevAlign tmpLa;tmpLa.read = preLa.read;tmpLa.query = preLa.query;
+            reverse(tmpLa.read.begin(), tmpLa.read.end());
+            reverse(tmpLa.query.begin(), tmpLa.query.end());
+            unsigned int preEd = ldc.edit_distance(&tmpLa);
+            reverse(tmpLa.alignedRead.begin(), tmpLa.alignedRead.end());
+            reverse(tmpLa.alignedQuery.begin(), tmpLa.alignedQuery.end());
+            reverse(tmpLa.editDistanceTypes.begin(), tmpLa.editDistanceTypes.end());
+            preLa.alignedRead = tmpLa.alignedRead;
+            preLa.alignedQuery = tmpLa.alignedQuery;
+            preLa.editDistance = tmpLa.editDistance;
+            preLa.editDistanceTypes = tmpLa.editDistanceTypes;
+            // trim the InDels at the beginning
+            while(preLa.editDistanceTypes[0] == 'i' || preLa.editDistanceTypes[0] == 'd')
+            {
+                preEd--;
+                preLa.editDistanceTypes = preLa.editDistanceTypes.substr(1, preLa.editDistanceTypes.size()-1);
+                preLa.alignedQuery = preLa.alignedQuery.substr(1, preLa.alignedQuery.size()-1);
+                preLa.alignedRead = preLa.alignedRead.substr(1, preLa.alignedRead.size()-1);
+                preLa.editDistance--;
+            }
             vector<unsigned int> editPos= ldc.getEditDistancePositions(preLa.editDistanceTypes);
+            // cout << "prefixRegionSize: " << prefixRegionSize << ", readMemStartInd: " << readMemStartInd << ", queryMemStartInd: " << queryMemStartInd << endl;
+            // cout << "pre query: " << preLa.query << endl;
+            // cout << "preLa.read : " <<  preLa.read << endl;
+            // cout << "pre ed: " << preEd << endl;
+            // cout <<  "preLa.alignedQuery : " << preLa.alignedQuery << endl;
+            // cout <<  "preLa.alignedRead : " << preLa.alignedRead << endl;
             if (preEd <= allowedEditDistance) // accept the whole prefix
             {
                 preLa.partialMatchSize = preLa.editDistanceTypes.size();
@@ -240,7 +272,7 @@ public:
         LevDistanceCalculator ldc;
         LevAlign sufLa;
         unsigned int suffixRegionSize = 0;
-        uint32_t queryRemainedBp = 0, readRemainedBp = 0;
+        uint32_t queryDiffBp = 0, readDiffBp = 0;
         if (readMemEndInd == (contigSize - 1) || queryMemEndInd == (contigSize - 1)) // no Suffix region check is needed
         {
             suffixRegionSize = 0;
@@ -248,12 +280,12 @@ public:
         else if (readMemEndInd > queryMemEndInd) // query Suffix region is larger
         {
             suffixRegionSize = contigSize - (readMemEndInd + 1);
-            queryRemainedBp = readMemEndInd - queryMemEndInd;
+            queryDiffBp = ((uint32_t)(readMemEndInd - queryMemEndInd) >= allowedEditDistance) ? allowedEditDistance : (readMemEndInd - queryMemEndInd);
         }
         else if (readMemEndInd < queryMemEndInd) // read Suffix region is larger
         {
             suffixRegionSize = contigSize - (queryMemEndInd + 1);
-            readRemainedBp = queryMemEndInd - readMemEndInd;
+            readDiffBp = ((uint32_t)(queryMemEndInd - readMemEndInd) >= allowedEditDistance) ? allowedEditDistance : (queryMemEndInd - readMemEndInd);
         }
         else // equal suffix region size
         {
@@ -263,9 +295,18 @@ public:
         {
             sufLa.readRegionEndPos = readMemEndInd + suffixRegionSize;
             sufLa.queryRegionEndPos = queryMemEndInd + suffixRegionSize;
-            sufLa.read = read.substr(readMemEndInd + 1, suffixRegionSize + readRemainedBp);
-            sufLa.query = query.substr(queryMemEndInd + 1, suffixRegionSize + queryRemainedBp);
+            sufLa.read = read.substr(readMemEndInd + 1, suffixRegionSize + readDiffBp);
+            sufLa.query = query.substr(queryMemEndInd + 1, suffixRegionSize + queryDiffBp);
             unsigned int sufEd = ldc.edit_distance(&sufLa);
+            // trim the InDels at the end
+            while(sufLa.editDistanceTypes[sufLa.editDistanceTypes.size()-1] == 'i' || sufLa.editDistanceTypes[sufLa.editDistanceTypes.size()-1] == 'd')
+            {
+                sufEd--;
+                sufLa.editDistanceTypes = sufLa.editDistanceTypes.substr(0, sufLa.editDistanceTypes.size()-1);
+                sufLa.alignedQuery = sufLa.alignedQuery.substr(0, sufLa.alignedQuery.size()-1);
+                sufLa.alignedRead = sufLa.alignedRead.substr(0, sufLa.alignedRead.size()-1);
+                sufLa.editDistance--;
+            }
             vector<unsigned int> editPos = ldc.getEditDistancePositions(sufLa.editDistanceTypes);
             // cout << "suffixRegionSize: " << suffixRegionSize << ", readMemEndInd: " << readMemEndInd << ", queryMemEndInd: " << queryMemEndInd << endl;
             // cout << "suf query: " << sufLa.query << endl;
@@ -274,7 +315,7 @@ public:
             // cout <<  "sufLa.alignedQuery : " << sufLa.alignedQuery << endl;
             // cout << "sufLa.read : " <<  sufLa.read << endl;
             // cout <<  "sufLa.alignedRead : " << sufLa.alignedRead << endl;
-            if (sufEd <= allowedEditDistance) // accept the whole prefix
+            if (sufEd <= allowedEditDistance) // accept the whole suffix
             {
                 sufLa.partialMatchSize = sufLa.editDistanceTypes.size();
                 for (size_t i = 0; i < editPos.size(); i++)
