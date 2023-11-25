@@ -38,6 +38,7 @@ public:
         // }
         bool firstKmerInFrontRegionDismissed = false, lastKmerInFrontRegionDismissed = false,
             firstKmerInBackRegionDismissed = false, lastKmerInBacktRegionDismissed = false;
+        bool frontRegionDismissed = false, backRegionDismissed = false;
         uint32_t queryS = blastAlignment.queryS - 1;
         for(auto v : editPos)
         {
@@ -45,7 +46,7 @@ public:
             {
                 firstKmerInFrontRegionDismissed = true;
             }
-            if(((v + queryS) >= cfg.regionSize - cfg.minExactMatchLen && (v + queryS) <= cfg.regionSize))
+            if(((v + queryS) >= (cfg.regionSize - cfg.minExactMatchLen) && (v + queryS) <= cfg.regionSize))
             {
                 lastKmerInFrontRegionDismissed = true;
             }
@@ -58,10 +59,18 @@ public:
                 lastKmerInBacktRegionDismissed = true;
             }
         }
-        if(firstKmerInFrontRegionDismissed && lastKmerInFrontRegionDismissed && firstKmerInBackRegionDismissed && lastKmerInBacktRegionDismissed)
-        {
+        if(firstKmerInFrontRegionDismissed && lastKmerInFrontRegionDismissed)
+            frontRegionDismissed = true;
+        if(firstKmerInBackRegionDismissed && lastKmerInBacktRegionDismissed)
+            backRegionDismissed = true;
+        if(queryS > (cfg.editDistance - 1))
+            frontRegionDismissed = true;
+        if(queryS + blastAlignment.AlignmentLength <= cfg.contigSize - cfg.editDistance) //query start position + alignment len should be larger than conig size - allowed edit
+            backRegionDismissed = true;
+        if(frontRegionDismissed && backRegionDismissed)
             return false;
-        }
+        if(queryS > (cfg.contigSize - cfg.regionSize - 1 + cfg.editDistance)) //first bp of back region starts from 99
+            return false;
         return true;
     }
 
