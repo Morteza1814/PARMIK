@@ -177,7 +177,7 @@ public:
         numberOfBWAbetterWithLowMatchSize = 0, numberOfBWAbetterNotObserveOurCriteria = 0, 
         onlyBwaFoundMatchForQuery = 0, bwaReadIdFoundInPM = 0, bwaReadIdNotFoundInPM = 0, 
         onlyPmFoundMatchForQuery = 0, nonePmBWAFoundAlignmentForQuery = 0, bwaClipCount = 0, 
-        numberOfQueryContainN = 0;
+        numberOfQueryContainN = 0, pmReadIdNotFoundInBWA = 0;
         LevAlign pmAlignment;
         uint32_t pmQueriesFound = 0, bwaQueriesFound = 0;
         SamReader::Sam bwaAlignment;
@@ -223,6 +223,9 @@ public:
                     break;
                 }
             }
+            string bwaRead = "";
+            if(bwaFound)
+                bwaRead = reads[bwaAlignment.readId];
             auto range = pmAlignments.getRange(queryInd);
             LevAlign pmAlignment;
             for (auto it = range.first; it != range.second; it++) 
@@ -240,8 +243,10 @@ public:
                     }
                 }
             }
+            string pmRead = "";
             if (pmFound)
             {
+                pmRead = reads[pmAlignment.readID];
                 pmQueriesFound++;
                 pmMatchSize = bwaSam.countMatches(pmAlignment.cigar);
             }
@@ -253,7 +258,7 @@ public:
                 onlyPmFoundMatchForQuery++;
                 cmp << "<<<<<<<<<<<PM alignment>>>>>>>>>>>" << endl;
                 cmp << "Q : " << query << endl;
-                cmp << "R : " << reads[pmAlignment.readID] << endl;
+                cmp << "R : " << pmRead << endl;
                 // cmp << "q : " << pmAlignment.alignedQuery << endl;
                 // cmp << "r : " << pmAlignment.alignedRead << endl;
                 // cmp << "E : " << pmAlignment.editDistanceTypes << endl;
@@ -281,7 +286,7 @@ public:
                 }
                 cmp << "<<<<<<<<<<<<<BWA alignment>>>>>>>>>>>>>" << endl;
                 cmp << "Q : " << query << endl;
-                cmp << "R : " << reads[bwaAlignment.readId] << endl;
+                cmp << "R : " << bwaRead << endl;
                 cmp << "CIGAR : " << bwaAlignment.cigar << ", subs : " << bwaAlignment.editDistance << ", query id : " << bwaAlignment.queryId << ", read id : " << bwaAlignment.readId << ", flag : " << bwaAlignment.flag << ", start pos : " << bwaAlignment.pos << ", mismatchPositions : " << bwaAlignment.mismatchPositions << endl;
                 cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";  
             } else if (pmFound && bwaFound) 
@@ -337,33 +342,50 @@ public:
                     }
                 }
                 //check for the read id
-                auto range = pmAlignments.getRange(bwaAlignment.queryId);
-                bool found = false;
-                for (auto itt=range.first; itt != range.second; itt++)
+                if(bwaRead.find('N') == string::npos && bwaRead.find('n') == string::npos)// bwa read does not contain 'N'
                 {
-                    LevAlign aln = itt->second;
+                    auto range = pmAlignments.getRange(bwaAlignment.queryId);
+                    bool found = false;
+                    for (auto itt=range.first; itt != range.second; itt++)
+                    {
+                        LevAlign aln = itt->second;
+                        if((uint32_t) aln.readID == bwaAlignment.readId)
+                        {
+                            bwaReadIdFoundInPM++;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        bwaReadIdNotFoundInPM++;
+                        cmp << "bwaReadIdNotFoundInPM = Q :" << bwaAlignment.queryId << ", R : " << bwaAlignment.readId << endl;
+                    }
+                }
+                bool found = false;
+                for (auto it = range.first; it != range.second; it++) 
+                {
+                    LevAlign aln = it->second;
                     if((uint32_t) aln.readID == bwaAlignment.readId)
                     {
-                        bwaReadIdFoundInPM++;
                         found = true;
                         break;
                     }
-                }
-                if (!found)
-                {
-                    bwaReadIdNotFoundInPM++;
-                    cmp << "bwaReadIdNotFoundInPM = Q :" << bwaAlignment.queryId << ", R : " << bwaAlignment.readId << endl;
+                    if (!found)
+                    {
+                        pmReadIdNotFoundInBWA++;
+                    }
                 }
                 cmp << "<<<<<<<<<<<PM alignment>>>>>>>>>>>" << endl;
                 cmp << "Q : " << query << endl;
-                cmp << "R : " << reads[pmAlignment.readID] << endl;
+                cmp << "R : " << pmRead << endl;
                 // cmp << "q : " << pmAlignment.alignedQuery << endl;
                 // cmp << "r : " << pmAlignment.alignedRead << endl;
                 // cmp << "E : " << pmAlignment.editDistanceTypes << endl;
                 cmp << "CIGAR : " << pmAlignment.cigar << ", subs : " << pmAlignment.numberOfSub << ", query id : " << queryInd << ", read id : " << pmAlignment.readID << ", flag : " << pmAlignment.flag << ", partial match size : " << pmAlignment.partialMatchSize << ", edits : " << pmAlignment.editDistance << endl;
                 cmp << "<<<<<<<<<<<<<BWA alignment>>>>>>>>>>>>>" << endl;
                 cmp << "Q : " << query << endl;
-                cmp << "R : " << reads[bwaAlignment.readId] << endl;
+                cmp << "R : " << bwaRead << endl;
                 cmp << "CIGAR : " << bwaAlignment.cigar << ", subs : " << bwaAlignment.editDistance << ", query id : " << bwaAlignment.queryId << ", read id : " << bwaAlignment.readId << ", flag : " << bwaAlignment.flag << ", start pos : " << bwaAlignment.pos << ", mismatchPositions : " << bwaAlignment.mismatchPositions << endl;
                 cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
             } else {
@@ -384,6 +406,7 @@ public:
         cmp << left << setw(80) << "# Of BWA clipped alignments : " << numberOfBwaClippedAlignments << endl;
         cmp << left << setw(80) << "# Of queries that BWA found matches, not PM : " << onlyBwaFoundMatchForQuery << endl;
         cmp << left << setw(80) << "# Of queries that PM found matches, not BWA : " << onlyPmFoundMatchForQuery << endl;
+        cmp << left << setw(80) << "# Of readIDs that PM found but BWA did not : " << pmReadIdNotFoundInBWA << endl;
         cmp << left << setw(80) << "# Of readIDs that BWA found but PM did not : " << bwaReadIdNotFoundInPM << endl;
         cmp << left << setw(80) << "# Of queries that neigther BWA nor PM found any match : " << nonePmBWAFoundAlignmentForQuery << endl;
         cmp << left << setw(80) << "# Of queries contains N: " << numberOfQueryContainN << endl;

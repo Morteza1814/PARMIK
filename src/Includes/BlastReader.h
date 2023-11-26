@@ -32,11 +32,15 @@ public:
     uint32_t getIndels(string read, string query) {
         uint32_t inDelCount = 0;
         if (read == "" || query == "") {
+            // cout << "q : " << query << endl;
+            // cout << "r : " << read << endl;
             cerr << "Error: Sequences are empty." << endl;
             return 0;
         }
         // Check if the sequences have the same length
         if (read.length() != query.length()) {
+            // cout << "q : " << query << endl;
+            // cout << "r : " << read << endl;
             cerr << "Error: Sequences have different lengths." << endl;
             return 0;
         }
@@ -64,7 +68,7 @@ public:
         string line;
         uint32_t queryCount = 0;
         while (getline(blastFile, line)) {
-            if (line.empty() || line == "") {
+            if (line.empty() || line == "" || line.find('#') != string::npos) {
                 continue; // Skip empty lines
             }
             Blast blast;

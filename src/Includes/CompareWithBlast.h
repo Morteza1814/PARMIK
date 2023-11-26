@@ -15,6 +15,8 @@ public:
     void determineEditsLocationsAndType(string read, string query, vector<int>& editPos) {
         // Check if the sequences have the same length
         if (read.length() != query.length()) {
+            // cout << "q : " << query << endl;
+            // cout << "r : " << read << endl;
             cerr << "Error: Sequences have different lengths." << endl;
             return;
         }
@@ -86,7 +88,7 @@ public:
         numberOfBLASTbetterExceedMaxEdits = 0, numberOfBLASTbetterWithLowMatchSize = 0,  
         onlyblastFoundMatchForQuery = 0, pmReadIdNotFoundInBLAST = 0, blastReadIdNotFoundInPM = 0, 
         onlyPmFoundMatchForQuery = 0, nonePmblastFoundAlignmentForQuery = 0, numberOfBLASTbetterNotObserveOurCriteria = 0, 
-        numberOfQueryContainN = 0, queriesBLASTFoundMatch = 0;
+        numberOfQueryContainN = 0, queriesBLASTFoundMatch = 0, pmAvgReadPerQuery = 0, blastAvgReadPerQuery = 0;
         LevAlign pmAlignment;
         uint32_t pmQueriesFound = 0;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
@@ -106,6 +108,8 @@ public:
 
             BlastReader::Blast blastAlignment;
             auto blRrange = blastAlignments.getRange(queryInd);
+            size_t blastReadPerQuery = distance(blRrange.first, blRrange.second);
+            blastAvgReadPerQuery += blastReadPerQuery;
             for (auto it = blRrange.first; it != blRrange.second; it++) 
             {
                 BlastReader::Blast aln = it->second;
@@ -127,6 +131,8 @@ public:
             if(blastFound) queriesBLASTFoundMatch++;
             string blastRead = reads[blastAlignment.readId];
             auto pmRange = pmAlignments.getRange(queryInd);
+            size_t pmReadPerQuery = distance(pmRange.first, pmRange.second);
+            pmAvgReadPerQuery += pmReadPerQuery;
             LevAlign pmAlignment;
             for (auto it = pmRange.first; it != pmRange.second; it++) 
             {
@@ -164,7 +170,7 @@ public:
                 // cmp << "q : " << pmAlignment.alignedQuery << endl;
                 // cmp << "r : " << pmAlignment.alignedRead << endl;
                 // cmp << "E : " << pmAlignment.editDistanceTypes << endl;
-                cmp << "CIGAR : " << pmAlignment.cigar << ", subs : " << pmAlignment.numberOfSub << ", query id : " << queryInd << ", read id : " << pmAlignment.readID << ", flag : " << pmAlignment.flag << ", partial match size : " << pmAlignment.partialMatchSize << ", edits : " << pmAlignment.editDistance << endl;
+                cmp << "CIGAR : " << pmAlignment.cigar << ", subs : " << pmAlignment.numberOfSub << ", query id : " << queryInd << ", read id : " << pmAlignment.readID << ", flag : " << pmAlignment.flag << ", partial match size : " << pmAlignment.partialMatchSize << ", edits : " << pmAlignment.editDistance << ", R per Q : " << pmReadPerQuery << endl;
                 cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
             } else if (!pmFound && blastFound)
             {
@@ -187,7 +193,7 @@ public:
                 cmp << "<<<<<<<<<<<<<BLAST alignment>>>>>>>>>>>>>" << endl;
                 cmp << "Q : " << query << endl;
                 cmp << "R : " << blastRead << endl;
-                cmp << "AlignmentLength : " << blastAlignment.AlignmentLength << ", subs : " << blastAlignment.Mismatches << ", inDels : " << blastAlignment.InDels << ", query id : " << blastAlignment.queryId << ", read id : " << blastAlignment.readId << ", flag : " << blastAlignment.flag << ", query start pos : " << blastAlignment.queryS << ", read start pos : " << blastAlignment.readS << endl;
+                cmp << "AlignmentLength : " << blastAlignment.AlignmentLength << ", subs : " << blastAlignment.Mismatches << ", inDels : " << blastAlignment.InDels << ", query id : " << blastAlignment.queryId << ", read id : " << blastAlignment.readId << ", flag : " << blastAlignment.flag << ", query start pos : " << blastAlignment.queryS << ", read start pos : " << blastAlignment.readS << ", R per Q : " << blastReadPerQuery << endl;
                 cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";  
             } else if (pmFound && blastFound) 
             {
@@ -240,6 +246,7 @@ public:
                 for (auto it = pmRange.first; it != pmRange.second; it++) 
                 {
                     LevAlign aln = it->second;
+                    found = false;
                     for (auto itt = blRrange.first; itt != blRrange.second; itt++) 
                     {
                         BlastReader::Blast blast = itt->second;
@@ -255,23 +262,27 @@ public:
                         // cmp << "pmReadIdNotFoundInBLAST = Q :" << blastAlignment.queryId << ", R : " << blastAlignment.readId << endl;
                     }
                 }
-
                 for (auto itt = blRrange.first; itt != blRrange.second; itt++) 
                 {
                     BlastReader::Blast blast = itt->second;
-                    for (auto it = pmRange.first; it != pmRange.second; it++) 
+                    string blastRead = reads[blast.readId];
+                    found = false;
+                    if(blastRead.find('N') == string::npos && blastRead.find('n') == string::npos)// blast read does not contain 'N'
                     {
-                        LevAlign aln = it->second;
-                        if((uint32_t) aln.readID == blast.readId)
+                        for (auto it = pmRange.first; it != pmRange.second; it++) 
                         {
-                            found = true;
-                            break;
+                            LevAlign aln = it->second;
+                            if((uint32_t) aln.readID == blast.readId)
+                            {
+                                found = true;
+                                break;
+                            }
                         }
-                    }
-                    if (!found)
-                    {
-                        blastReadIdNotFoundInPM++;
-                        // cmp << "pmReadIdNotFoundInBLAST = Q :" << blastAlignment.queryId << ", R : " << blastAlignment.readId << endl;
+                        if (!found)
+                        {
+                            blastReadIdNotFoundInPM++;
+                            // cmp << "pmReadIdNotFoundInBLAST = Q :" << blastAlignment.queryId << ", R : " << blastAlignment.readId << endl;
+                        }
                     }
                 }
                 cmp << "<<<<<<<<<<<PM alignment>>>>>>>>>>>" << endl;
@@ -280,11 +291,11 @@ public:
                 // cmp << "q : " << pmAlignment.alignedQuery << endl;
                 // cmp << "r : " << pmAlignment.alignedRead << endl;
                 // cmp << "E : " << pmAlignment.editDistanceTypes << endl;
-                cmp << "CIGAR : " << pmAlignment.cigar << ", subs : " << pmAlignment.numberOfSub << ", query id : " << queryInd << ", read id : " << pmAlignment.readID << ", flag : " << pmAlignment.flag << ", partial match size : " << pmAlignment.partialMatchSize << ", edits : " << pmAlignment.editDistance << endl;
+                cmp << "CIGAR : " << pmAlignment.cigar << ", subs : " << pmAlignment.numberOfSub << ", query id : " << queryInd << ", read id : " << pmAlignment.readID << ", flag : " << pmAlignment.flag << ", partial match size : " << pmAlignment.partialMatchSize << ", edits : " << pmAlignment.editDistance << ", R per Q : " << pmReadPerQuery << endl;
                 cmp << "<<<<<<<<<<<<<BLAST alignment>>>>>>>>>>>>>" << endl;
                 cmp << "Q : " << query << endl;
                 cmp << "R : " << blastRead << endl;
-                cmp << "AlignmentLength : " << blastAlignment.AlignmentLength << ", subs : " << blastAlignment.Mismatches << ", inDels : " << blastAlignment.InDels << ", query id : " << blastAlignment.queryId << ", read id : " << blastAlignment.readId << ", flag : " << blastAlignment.flag << ", query start pos : " << blastAlignment.queryS << ", read start pos : " << blastAlignment.readS << endl;
+                cmp << "AlignmentLength : " << blastAlignment.AlignmentLength << ", subs : " << blastAlignment.Mismatches << ", inDels : " << blastAlignment.InDels << ", query id : " << blastAlignment.queryId << ", read id : " << blastAlignment.readId << ", flag : " << blastAlignment.flag << ", query start pos : " << blastAlignment.queryS << ", read start pos : " << blastAlignment.readS << ", R per Q : " << blastReadPerQuery << endl;
                 cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";  
             } else {
                 cmp << "query " << queryInd << " not found in the PM results nor in BLAST" << endl;
@@ -296,6 +307,8 @@ public:
         cmp << left << setw(80) << "# Of queries that PARMIK found match : " << pmQueriesFound << endl;
         cmp << left << setw(80) << "# Of queries that BLAST found match : " << queriesBLASTFoundMatch << endl;
         cmp << left << setw(80) << "# Of Matched Hits between PM and BLAST : " << numberOfEqualalignment << endl;
+        cmp << left << setw(80) << "Average Reads per Query that PARMIK found : " << pmAvgReadPerQuery/pmQueriesFound << endl;
+        cmp << left << setw(80) << "Average Reads per Query that BLAST found : " << blastAvgReadPerQuery/queriesBLASTFoundMatch << endl;
         cmp << left << setw(80) << "# Of PM outperformed : " << numberOfPMbetter << endl;
         cmp << left << setw(80) << "# Of BLAST outperformed : " << numberOfBLASTbetter << endl;
         cmp << left << setw(80) << "# Of BLAST outperformed that Exceed Max Edits : " << numberOfBLASTbetterExceedMaxEdits << endl;
