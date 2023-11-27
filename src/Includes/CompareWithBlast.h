@@ -88,7 +88,8 @@ public:
         numberOfBLASTbetterExceedMaxEdits = 0, numberOfBLASTbetterWithLowMatchSize = 0,  
         onlyblastFoundMatchForQuery = 0, pmReadIdNotFoundInBLAST = 0, blastReadIdNotFoundInPM = 0, 
         onlyPmFoundMatchForQuery = 0, nonePmblastFoundAlignmentForQuery = 0, numberOfBLASTbetterNotObserveOurCriteria = 0, 
-        numberOfQueryContainN = 0, queriesBLASTFoundMatch = 0, pmAvgReadPerQuery = 0, blastAvgReadPerQuery = 0;
+        numberOfQueryContainN = 0, queriesBLASTFoundMatch = 0;
+        set<uint32_t> pmReadPerQuerySet, blastReadPerQuerySet;
         LevAlign pmAlignment;
         uint32_t pmQueriesFound = 0;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
@@ -109,7 +110,7 @@ public:
             BlastReader::Blast blastAlignment;
             auto blRrange = blastAlignments.getRange(queryInd);
             size_t blastReadPerQuery = distance(blRrange.first, blRrange.second);
-            blastAvgReadPerQuery += blastReadPerQuery;
+            blastReadPerQuerySet.insert(blastReadPerQuery);
             for (auto it = blRrange.first; it != blRrange.second; it++) 
             {
                 BlastReader::Blast aln = it->second;
@@ -132,7 +133,7 @@ public:
             string blastRead = reads[blastAlignment.readId];
             auto pmRange = pmAlignments.getRange(queryInd);
             size_t pmReadPerQuery = distance(pmRange.first, pmRange.second);
-            pmAvgReadPerQuery += pmReadPerQuery;
+            pmReadPerQuerySet.insert(pmReadPerQuery);
             LevAlign pmAlignment;
             for (auto it = pmRange.first; it != pmRange.second; it++) 
             {
@@ -302,13 +303,14 @@ public:
                 nonePmblastFoundAlignmentForQuery++;
             }
         }
+        Utilities<uint32_t> util;   
+        tuple<uint32_t, uint32_t, uint32_t> pmReadPerQueryTuple = util.calculateStatistics(pmReadPerQuerySet);
+        tuple<uint32_t, uint32_t, uint32_t> blastReadPerQueryTuple = util.calculateStatistics(blastReadPerQuerySet);
         cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Overall Comparison Results>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         cmp << left << setw(80) << "# Of queries : " << queryCount << endl;
         cmp << left << setw(80) << "# Of queries that PARMIK found match : " << pmQueriesFound << endl;
         cmp << left << setw(80) << "# Of queries that BLAST found match : " << queriesBLASTFoundMatch << endl;
-        cmp << left << setw(80) << "# Of Matched Hits between PM and BLAST : " << numberOfEqualalignment << endl;
-        cmp << left << setw(80) << "Average Reads per Query that PARMIK found : " << pmAvgReadPerQuery/pmQueriesFound << endl;
-        cmp << left << setw(80) << "Average Reads per Query that BLAST found : " << blastAvgReadPerQuery/queriesBLASTFoundMatch << endl;
+        cmp << left << setw(80) << "# Of Matched Hits between PM and BLAST : " << numberOfEqualalignment << endl;;
         cmp << left << setw(80) << "# Of PM outperformed : " << numberOfPMbetter << endl;
         cmp << left << setw(80) << "# Of BLAST outperformed : " << numberOfBLASTbetter << endl;
         cmp << left << setw(80) << "# Of BLAST outperformed that Exceed Max Edits : " << numberOfBLASTbetterExceedMaxEdits << endl;
@@ -320,6 +322,8 @@ public:
         cmp << left << setw(80) << "# Of readIDs that BLAST found but PM did not : " << blastReadIdNotFoundInPM << endl;
         cmp << left << setw(80) << "# Of queries that neigther BLAST nor PM found any match : " << nonePmblastFoundAlignmentForQuery << endl;
         cmp << left << setw(80) << "# Of queries contains N: " << numberOfQueryContainN << endl;
+        cmp << left << setw(80) << "# of Read Per Query found by PM" << "average: " <<  get<0>(pmReadPerQueryTuple) << ", median: " <<  get<1>(pmReadPerQueryTuple) << ", mean: " << get<2>(pmReadPerQueryTuple)<< endl;
+        cmp << left << setw(80) << "# of Read Per Query found by BLAST" << "average: " <<  get<0>(blastReadPerQueryTuple) << ", median: " <<  get<1>(blastReadPerQueryTuple) << ", mean: " << get<2>(blastReadPerQueryTuple)<< endl;
         cmp.close();
         alnPerQ.close();
     }
