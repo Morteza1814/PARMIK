@@ -46,7 +46,7 @@ public:
             // count total k-mers
             totalkmers += itemCount;
             // count cheap k-mers
-            if (itemCount < cheapKmersThreshold_)
+            if (itemCount < cheapKmersThreshold_ || cheapKmersThreshold_ == 0)
             {
                 cheapKmersCount++;
                 // cheapKmers.insertRange(rangeBegin, rangeEnd);

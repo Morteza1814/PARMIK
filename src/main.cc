@@ -243,8 +243,7 @@ int run(int argc, char *argv[]) {
                     //create the partial matching inverted read index
                     InvertedIndexBuilder<uint32_t, uint32_t> builder(cfg.kmerLength, cfg.overlapSize);
                     // Build the inverted index
-                    string offlineIndexAddress = cfg.offlineIndexAddress + "experiments/R" + to_string(cfg.readsCount);
-                    IndexContainer<uint32_t, uint32_t> invertedIndex = builder.build(cfg.readDatabaseAddress, cfg.readsCount, cfg.isIndexOffline, offlineIndexAddress);
+                    IndexContainer<uint32_t, uint32_t> invertedIndex = builder.build(cfg.readDatabaseAddress, cfg.readsCount, cfg.isIndexOffline);
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
                     // invertedIndex.getSize();
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
@@ -286,8 +285,7 @@ int run(int argc, char *argv[]) {
                     //create the partial matching inverted read index
                     InvertedIndexBuilder<uint64_t, uint32_t> builder(cfg.kmerLength, cfg.overlapSize);
                     // Build the inverted index
-                    string offlineIndexAddress = cfg.offlineIndexAddress + "experiments/R" + to_string(cfg.readsCount);
-                    IndexContainer<uint64_t, uint32_t> invertedIndex = builder.build(cfg.readDatabaseAddress, cfg.readsCount, cfg.isIndexOffline, offlineIndexAddress);
+                    IndexContainer<uint64_t, uint32_t> invertedIndex = builder.build(cfg.readDatabaseAddress, cfg.readsCount, cfg.isIndexOffline);
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
                     // invertedIndex.getSize();
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
