@@ -38,14 +38,13 @@ public:
         return kmers;
     }
 
-    IndexContainer<keyT, valT> build(const string& fastqFile, uint32_t contigCountToRead, bool isIndexOffline, string offlineIndexAddress)
+    IndexContainer<keyT, valT> build(const string& fastqFile, uint32_t contigCountToRead, bool isIndexOffline)
     {
         ifstream file(fastqFile);
         if (!file) {
             cout << "fastqFile address: " << fastqFile << endl;
             throw runtime_error("Failed to open the FASTQ file.");
         }
-        // IndexFile<keyT, valT> ife(offlineIndexAddress);
         IndexContainer<keyT, valT> invertedIndex;
         string line;
         uint32_t currentContigId = 0;
