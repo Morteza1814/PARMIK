@@ -233,7 +233,7 @@ int run(int argc, char *argv[]) {
         uint32_t readCount = util.readContigsFromFile(cfg.readDatabaseAddress, cfg.readsCount, reads);
         cout << "readCount : " << readCount << endl;
         // unordered_map<uint32_t, unordered_set<LevAlign>> alignments;
-        string offlineCheapIndexAddress = cfg.offlineIndexAddress + "CheapKmers/cheapKmers_" + to_string(cfg.cheapKmerThreshold) + "_" + to_string(cfg.readsCount);
+        string offlineCheapIndexAddress = cfg.offlineIndexAddress + "cheapKmers_" + to_string(cfg.cheapKmerThreshold) + "_" + to_string(cfg.readsCount);
         if (cfg.parmikMode != PARMIK_MODE_COMPARE)
         {
             if (cfg.kmerLength <= 16)
