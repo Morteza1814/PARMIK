@@ -13,6 +13,7 @@
 #include "Includes/SamReader.h"
 #include "Includes/CompareWithBWA.h"
 #include "Includes/CompareWithBlast.h"
+#include "Includes/CompareWithGT.h"
 
 #define PARMIK_MODE_INDEX   0
 #define PARMIK_MODE_ALIGN   1
@@ -263,7 +264,7 @@ int run(int argc, char *argv[]) {
                     cheapKmers.deserialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
                 }
-                if (cfg.parmikMode != PARMIK_MODE_INDEX)
+                if (cfg.parmikMode == PARMIK_MODE_ALIGN)
                 {
                     //do partial matching based on cheap k-mers
                     CheapKmerPartialMatcher<uint32_t, uint32_t, uint32_t> ckpm50(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
@@ -305,7 +306,7 @@ int run(int argc, char *argv[]) {
                     cheapKmers.deserialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
                 }
-                if (cfg.parmikMode != PARMIK_MODE_INDEX)
+                if (cfg.parmikMode == PARMIK_MODE_ALIGN)
                 {
                     // do partial matching based on cheap k-mers
                     CheapKmerPartialMatcher<uint32_t, uint64_t, uint32_t> ckpm50(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
@@ -322,7 +323,7 @@ int run(int argc, char *argv[]) {
             }
         
             //report the histogram of the alignments
-            if(!cfg.noOutputFileDump)
+            if(cfg.parmikMode == PARMIK_MODE_ALIGN && !cfg.noOutputFileDump)
             {
                 ofstream matches(cfg.outputDir + "PM_best_matches.txt");
                 //report PM final best match results
@@ -349,7 +350,7 @@ int run(int argc, char *argv[]) {
                 convertSamToLev(aln, l);
                 parmikMultiAlignments.put(aln.queryId, l);
             }
-            cout<<"finished \n";
+            // cout<<"finished \n";
             //check the alignment results with another aligner
             string comparisonResultsFileAddress = cfg.outputDir + "compareParmikwith" + cfg.otherTool + ".txt";
             string alnPerQueryFileAddress = cfg.outputDir + "Parmikvs" + cfg.otherTool + "AlignmentPerQuery.txt";
@@ -363,6 +364,20 @@ int run(int argc, char *argv[]) {
             {
                 CompareWithBlast cwb;
                 cwb.comparePmWithBlast(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress);
+            } else if(cfg.otherTool == "GT" || cfg.otherTool == "gt")
+            {
+                SamReader gtSam(cfg.otherToolOutputFileAddress);
+                vector<SamReader::Sam> gtSamAlignments = gtSam.parseFile(queryCount);
+                IndexContainer<uint32_t, LevAlign> gtMultiAlignments;
+                for (const SamReader::Sam& aln : gtSamAlignments) 
+                {
+                    LevAlign l;
+                    convertSamToLev(aln, l);
+                    gtMultiAlignments.put(aln.queryId, l);
+                }
+                CompareWithGroundTruth cwgt;
+                cwgt.comparePmWithGroundTruth(gtMultiAlignments, cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress);
+            
             }
          
             // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<BWA vs PM Alignments Sizes started!>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;

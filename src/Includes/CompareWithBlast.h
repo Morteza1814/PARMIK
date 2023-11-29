@@ -90,7 +90,6 @@ public:
         onlyPmFoundMatchForQuery = 0, nonePmblastFoundAlignmentForQuery = 0, numberOfBLASTbetterNotObserveOurCriteria = 0, 
         numberOfQueryContainN = 0, queriesBLASTFoundMatch = 0;
         set<uint32_t> pmReadPerQuerySet, blastReadPerQuerySet;
-        LevAlign pmAlignment;
         uint32_t pmQueriesFound = 0;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
