@@ -211,6 +211,9 @@ public:
             {
                 if(aln.queryId == queryInd)
                 {
+                    string bwaR = reads[bwaAlignment.readId];
+                    if(bwaR.find('N') != string::npos || bwaR.find('n') != string::npos)
+                        break;
                     bwaFound = true;
                     bwaAlignment = aln;
                     bwaMatchSize = bwaSam.countMatches(bwaAlignment.cigar);

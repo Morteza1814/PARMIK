@@ -113,6 +113,9 @@ public:
             for (auto it = blRrange.first; it != blRrange.second; it++) 
             {
                 BlastReader::Blast aln = it->second;
+                string blastR = reads[aln.readId]; 
+                if(blastR.find('N') != string::npos || blastR.find('n') != string::npos)
+                    continue;
                 if (aln.Mismatches + aln.InDels <= cfg.editDistance)
                 {
                     blastFound = true;
@@ -128,7 +131,6 @@ public:
                     }
                 } 
             }
-            if(blastFound) queriesBLASTFoundMatch++;
             string blastRead = reads[blastAlignment.readId];
             auto pmRange = pmAlignments.getRange(queryInd);
             size_t pmReadPerQuery = distance(pmRange.first, pmRange.second);
@@ -156,6 +158,7 @@ public:
             }
             if (blastFound)
             {
+                queriesBLASTFoundMatch++;
                 blastMatchSize = blastAlignment.AlignmentLength;
             }
             alnPmBLASTHisto.push_back(std::make_pair(pmMatchSize, blastMatchSize));
