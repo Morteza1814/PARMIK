@@ -222,7 +222,7 @@ int run(int argc, char *argv[]) {
         // run the experiment
         IndexContainer<uint32_t, uint32_t> frontMinThCheapSeedReads, backMinThCheapSeedReads, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads;
         map<uint32_t, LevAlign> pmr;
-        string parmikAlignmentsAddress = cfg.outputDir + "parmikAlignments.txt";
+        string parmikAlignmentsAddress = cfg.outputDir + "/aln/parmikAlignments.txt";
         tsl::robin_map <uint32_t, string> reads, queries;
         uint32_t queryCount = 0;
         if (cfg.parmikMode != PARMIK_MODE_INDEX)
@@ -325,7 +325,7 @@ int run(int argc, char *argv[]) {
             //report the histogram of the alignments
             if(cfg.parmikMode == PARMIK_MODE_ALIGN && !cfg.noOutputFileDump)
             {
-                ofstream matches(cfg.outputDir + "PM_best_matches.txt");
+                ofstream matches(cfg.outputDir + "/aln/PM_best_matches.txt");
                 //report PM final best match results
                 matches << "Q , R" << endl;
                 for (const auto& pair : pmr) {
@@ -352,8 +352,8 @@ int run(int argc, char *argv[]) {
             }
             // cout<<"finished \n";
             //check the alignment results with another aligner
-            string comparisonResultsFileAddress = cfg.outputDir + "compareParmikwith" + cfg.otherTool + ".txt";
-            string alnPerQueryFileAddress = cfg.outputDir + "Parmikvs" + cfg.otherTool + "AlignmentPerQuery.txt";
+            string comparisonResultsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/compareResults.txt";
+            string alnPerQueryFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/AlignmentPerQuery.txt";
             vector<std::pair<uint32_t, uint32_t>> alnPmVsOtherAlnSizesMap;
             // (BWA)
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")

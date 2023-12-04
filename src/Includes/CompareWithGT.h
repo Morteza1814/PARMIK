@@ -16,11 +16,11 @@ public:
         ofstream cmp(comparisonResultsFileAddress);
         ofstream alnPerQ(alnPerQueryFileAddress);
         SamReader sam(cfg.otherToolOutputFileAddress);
-        uint32_t numberOfEqualalignment = 0, numberOfGTbetter = 0, numberOfPMbetter = 0, 
+        uint64_t numberOfEqualalignment = 0, numberOfGTbetter = 0, numberOfPMbetter = 0, 
         numberOfGTbetterExceedMaxEdits = 0, numberOfGTbetterWithLowMatchSize = 0,  
         onlyGTFoundMatchForQuery = 0, pmReadIdNotFoundInGT = 0, gtReadIdNotFoundInPM = 0, 
         onlyPmFoundMatchForQuery = 0, nonePmGTFoundAlignmentForQuery = 0, numberOfGTbetterNotObserveOurCriteria = 0, 
-        numberOfQueryContainN = 0, queriesGTFoundMatch = 0;
+        numberOfQueryContainN = 0, queriesGTFoundMatch = 0, pmTotalNumberOfReadIDs = 0, gtTotalNumberOfReadIDs = 0;
         set<uint32_t> pmReadPerQuerySet, gtReadPerQuerySet;
         uint32_t pmQueriesFound = 0;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
@@ -40,6 +40,7 @@ public:
             LevAlign gtAlignment;
             auto gtRrange = gtAlignments.getRange(queryInd);
             size_t gtReadPerQuery = distance(gtRrange.first, gtRrange.second);
+            gtTotalNumberOfReadIDs += gtReadPerQuery;
             gtReadPerQuerySet.insert(gtReadPerQuery);
             for (auto it = gtRrange.first; it != gtRrange.second; it++) 
             {
@@ -59,6 +60,7 @@ public:
             string gtRead = reads[gtAlignment.readID];
             auto pmRange = pmAlignments.getRange(queryInd);
             size_t pmReadPerQuery = distance(pmRange.first, pmRange.second);
+            pmTotalNumberOfReadIDs += pmReadPerQuery;
             pmReadPerQuerySet.insert(pmReadPerQuery);
             LevAlign pmAlignment;
             for (auto it = pmRange.first; it != pmRange.second; it++) 
@@ -238,7 +240,9 @@ public:
         cmp << left << setw(80) << "# Of queries : " << queryCount << endl;
         cmp << left << setw(80) << "# Of queries that PARMIK found match : " << pmQueriesFound << endl;
         cmp << left << setw(80) << "# Of queries that GT found match : " << queriesGTFoundMatch << endl;
-        cmp << left << setw(80) << "# Of Matched Hits between PM and GT : " << numberOfEqualalignment << endl;;
+        cmp << left << setw(80) << "# Of Matched Hits between PM and GT : " << numberOfEqualalignment << endl;
+        cmp << left << setw(80) << "# Of readIDs found by PARMIK (total): " << pmTotalNumberOfReadIDs << endl;
+        cmp << left << setw(80) << "# Of readIDs found by GT (total): " << gtTotalNumberOfReadIDs << endl;
         cmp << left << setw(80) << "# Of PM outperformed : " << numberOfPMbetter << endl;
         cmp << left << setw(80) << "# Of GT outperformed : " << numberOfGTbetter << endl;
         cmp << left << setw(80) << "# Of GT outperformed that Exceed Max Edits : " << numberOfGTbetterExceedMaxEdits << endl;

@@ -84,11 +84,11 @@ public:
         BlastReader blastReader(cfg.otherToolOutputFileAddress);
         IndexContainer<uint32_t, BlastReader::Blast> blastAlignments;
         blastReader.parseFile(queryCount, blastAlignments);
-        uint32_t numberOfEqualalignment = 0, numberOfBLASTbetter = 0, numberOfPMbetter = 0, 
+        uint64_t numberOfEqualalignment = 0, numberOfBLASTbetter = 0, numberOfPMbetter = 0, 
         numberOfBLASTbetterExceedMaxEdits = 0, numberOfBLASTbetterWithLowMatchSize = 0,  
         onlyblastFoundMatchForQuery = 0, pmReadIdNotFoundInBLAST = 0, blastReadIdNotFoundInPM = 0, 
         onlyPmFoundMatchForQuery = 0, nonePmblastFoundAlignmentForQuery = 0, numberOfBLASTbetterNotObserveOurCriteria = 0, 
-        numberOfQueryContainN = 0, queriesBLASTFoundMatch = 0;
+        numberOfQueryContainN = 0, queriesBLASTFoundMatch = 0, pmTotalNumberOfReadIDs = 0, blastTotalNumberOfReadIDs = 0;
         set<uint32_t> pmReadPerQuerySet, blastReadPerQuerySet;
         uint32_t pmQueriesFound = 0;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
@@ -109,6 +109,7 @@ public:
             BlastReader::Blast blastAlignment;
             auto blRrange = blastAlignments.getRange(queryInd);
             size_t blastReadPerQuery = distance(blRrange.first, blRrange.second);
+            blastTotalNumberOfReadIDs += blastReadPerQuery;
             blastReadPerQuerySet.insert(blastReadPerQuery);
             for (auto it = blRrange.first; it != blRrange.second; it++) 
             {
@@ -134,6 +135,7 @@ public:
             string blastRead = reads[blastAlignment.readId];
             auto pmRange = pmAlignments.getRange(queryInd);
             size_t pmReadPerQuery = distance(pmRange.first, pmRange.second);
+            pmTotalNumberOfReadIDs += pmReadPerQuery;
             pmReadPerQuerySet.insert(pmReadPerQuery);
             LevAlign pmAlignment;
             for (auto it = pmRange.first; it != pmRange.second; it++) 
@@ -313,6 +315,8 @@ public:
         cmp << left << setw(80) << "# Of queries that PARMIK found match : " << pmQueriesFound << endl;
         cmp << left << setw(80) << "# Of queries that BLAST found match : " << queriesBLASTFoundMatch << endl;
         cmp << left << setw(80) << "# Of Matched Hits between PM and BLAST : " << numberOfEqualalignment << endl;;
+        cmp << left << setw(80) << "# Of readIDs found by PARMIK (total): " << pmTotalNumberOfReadIDs << endl;
+        cmp << left << setw(80) << "# Of readIDs found by BLAST (total): " << blastTotalNumberOfReadIDs << endl;
         cmp << left << setw(80) << "# Of PM outperformed : " << numberOfPMbetter << endl;
         cmp << left << setw(80) << "# Of BLAST outperformed : " << numberOfBLASTbetter << endl;
         cmp << left << setw(80) << "# Of BLAST outperformed that Exceed Max Edits : " << numberOfBLASTbetterExceedMaxEdits << endl;
