@@ -25,6 +25,8 @@ public:
         uint32_t Mismatches = 0;
         uint32_t flag = 0;
         uint32_t InDels = 0;
+        string queryAligned;
+        string readAligned;
     };
 
     BlastReader(const string& filename) : filename_(filename) {}
@@ -85,6 +87,8 @@ public:
             if (AlignmentLength == "") blast.AlignmentLength = 0; else blast.AlignmentLength = atoi(AlignmentLength.c_str());
             if (Mismatches == "") blast.Mismatches = 0; else blast.Mismatches = atoi(Mismatches.c_str());
             if (flag == "") blast.flag = 0; else if (flag == "plus") blast.flag = 0; else blast.flag = 16;
+            if (queryAligned == "") blast.queryAligned = ""; else blast.queryAligned = queryAligned;
+            if (readAligned == "") blast.readAligned = ""; else blast.readAligned = readAligned;
 
             blast.InDels = getIndels(readAligned, queryAligned);
 
