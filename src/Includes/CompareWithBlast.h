@@ -29,10 +29,10 @@ public:
  
     }
 
-    bool checkBlastEditPositions(BlastReader::Blast& blastAlignment, string query, string read, Config cfg)
+    bool checkBlastEditPositions(BlastReader::Blast& blastAlignment, Config cfg)
     {
         vector<int> editPos;
-        determineEditsLocationsAndType(read, query, editPos);
+        determineEditsLocationsAndType(blastAlignment.readAligned, blastAlignment.queryAligned, editPos);
         // if (editPos.size() != blastAlignment.Mismatches) 
         // {
         //     cout << "Error: Edit distance not equals mismatch." << endl;
@@ -88,8 +88,9 @@ public:
         numberOfBLASTbetterExceedMaxEdits = 0, numberOfBLASTbetterWithLowMatchSize = 0,  
         onlyblastFoundMatchForQuery = 0, pmReadIdNotFoundInBLAST = 0, blastReadIdNotFoundInPM = 0, 
         onlyPmFoundMatchForQuery = 0, nonePmblastFoundAlignmentForQuery = 0, numberOfBLASTbetterNotObserveOurCriteria = 0, 
-        numberOfQueryContainN = 0, queriesBLASTFoundMatch = 0, pmTotalNumberOfReadIDs = 0, blastTotalNumberOfReadIDs = 0;
-        set<uint32_t> pmReadPerQuerySet, blastReadPerQuerySet;
+        numberOfQueryContainN = 0, queriesBLASTFoundMatch = 0, pmTotalNumberOfReadIDs = 0, blastTotalNumberOfReadIDs = 0,
+        totalNumberOfBlastTruePositive = 0, totalNumberOfBlastFalsePositive = 0;
+        set<uint32_t> pmReadPerQuerySet, blastReadPerQuerySet, blastTPReadPerQuerySet;
         uint32_t pmQueriesFound = 0;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
@@ -103,8 +104,6 @@ public:
                 alnPerQ << queryInd << " 0 0"<< endl;
                 continue;
             }
-            //PM and BLAST alignments per query
-            alnPerQ << queryInd << " " << pmAlignments.container_.count(queryInd) << " " << blastAlignments.container_.count(queryInd) << endl;
 
             BlastReader::Blast blastAlignment;
             auto blRrange = blastAlignments.getRange(queryInd);
@@ -186,11 +185,11 @@ public:
                 {
                     cmp << "with more edits > " << cfg.editDistance << endl;
                     numberOfBLASTbetterExceedMaxEdits++;
-                } else if(blastMatchSize < cfg.regionSize) {
+                } else if(blastMatchSize < cfg.regionSize) {    
                     cmp << "with low match size : " << blastMatchSize << endl;
                     numberOfBLASTbetterWithLowMatchSize++;
                 } else {
-                    if (!checkBlastEditPositions(blastAlignment, query, blastRead, cfg)){
+                    if (!checkBlastEditPositions(blastAlignment, cfg)){
                         numberOfBLASTbetterNotObserveOurCriteria++;
                         cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
                     }
@@ -221,7 +220,8 @@ public:
                         cmp << "with low match size : " << blastMatchSize << endl;
                         numberOfBLASTbetterWithLowMatchSize++;
                     } else {
-                        if (!checkBlastEditPositions(blastAlignment, query, blastRead, cfg)){
+                        if (!checkBlastEditPositions(blastAlignment, cfg))
+                        {
                             numberOfBLASTbetterNotObserveOurCriteria++;
                             cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
                         }
@@ -234,59 +234,33 @@ public:
                         numberOfPMbetter++;
                     } else if (pmAlignment.numberOfSub + pmAlignment.numberOfInDel > blastAlignment.Mismatches + blastAlignment.InDels)
                     {
-                        cmp << "BLAST outperformed with fewer edits" << endl;
+                        cmp << "BLAST outperformed";
                         numberOfBLASTbetter++;
                         if (blastAlignment.Mismatches + blastAlignment.InDels > cfg.editDistance)
                         {
+                            cmp << "with more edits > " << cfg.editDistance << endl;
                             numberOfBLASTbetterExceedMaxEdits++;
-                        }  
+                        } else 
+                        {
+                            if (!checkBlastEditPositions(blastAlignment, cfg))
+                            {
+                                numberOfBLASTbetterNotObserveOurCriteria++;
+                                cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
+                            } else 
+                            {
+                                cmp << "with fewer edits" << endl;
+                            }  
+                        }
                     } else
                     {
-                        cmp << "BLAST and PM performed equal" << endl;   
-                        numberOfEqualalignment++;
-                    }
-                }
-                //check for the read id
-                bool found = false;
-                for (auto it = pmRange.first; it != pmRange.second; it++) 
-                {
-                    LevAlign aln = it->second;
-                    found = false;
-                    for (auto itt = blRrange.first; itt != blRrange.second; itt++) 
-                    {
-                        BlastReader::Blast blast = itt->second;
-                        if((uint32_t) aln.readID == blast.readId)
+                        cmp << "BLAST and PM performed equal" << endl;
+                        if (!checkBlastEditPositions(blastAlignment, cfg))
                         {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found)
-                    {
-                        pmReadIdNotFoundInBLAST++;
-                        // cmp << "pmReadIdNotFoundInBLAST = Q :" << blastAlignment.queryId << ", R : " << blastAlignment.readId << endl;
-                    }
-                }
-                for (auto itt = blRrange.first; itt != blRrange.second; itt++) 
-                {
-                    BlastReader::Blast blast = itt->second;
-                    string blastRead = reads[blast.readId];
-                    found = false;
-                    if(blastRead.find('N') == string::npos && blastRead.find('n') == string::npos)// blast read does not contain 'N'
-                    {
-                        for (auto it = pmRange.first; it != pmRange.second; it++) 
-                        {
-                            LevAlign aln = it->second;
-                            if((uint32_t) aln.readID == blast.readId)
-                            {
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found)
-                        {
-                            blastReadIdNotFoundInPM++;
-                            // cmp << "pmReadIdNotFoundInBLAST = Q :" << blastAlignment.queryId << ", R : " << blastAlignment.readId << endl;
+                            numberOfBLASTbetterNotObserveOurCriteria++;
+                            cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
+                        } else 
+                        { 
+                            numberOfEqualalignment++;
                         }
                     }
                 }
@@ -306,10 +280,65 @@ public:
                 cmp << "query " << queryInd << " not found in the PM results nor in BLAST" << endl;
                 nonePmblastFoundAlignmentForQuery++;
             }
+            //check for the read id
+            bool found = false;
+            for (auto it = pmRange.first; it != pmRange.second; it++) 
+            {
+                LevAlign aln = it->second;
+                found = false;
+                for (auto itt = blRrange.first; itt != blRrange.second; itt++) 
+                {
+                    BlastReader::Blast blast = itt->second;
+                    if((uint32_t) aln.readID == blast.readId)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    pmReadIdNotFoundInBLAST++;
+                    // cmp << "pmReadIdNotFoundInBLAST = Q :" << blastAlignment.queryId << ", R : " << blastAlignment.readId << endl;
+                }
+            }
+            auto blastTPReadPerQuery = 0;
+            for (auto itt = blRrange.first; itt != blRrange.second; itt++) 
+            {
+                BlastReader::Blast blast = itt->second;
+                string blastRead = reads[blast.readId];
+                found = false;
+                //count True positives
+                if (blast.Mismatches + blast.InDels <= cfg.editDistance && blast.AlignmentLength >= cfg.regionSize && checkBlastEditPositions(blast, cfg))
+                {
+                    blastTPReadPerQuery++;
+                    totalNumberOfBlastTruePositive++;
+                } else 
+                {
+                    totalNumberOfBlastFalsePositive++;
+                }
+                for (auto it = pmRange.first; it != pmRange.second; it++) 
+                {
+                    LevAlign aln = it->second;
+                    if((uint32_t) aln.readID == blast.readId)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    blastReadIdNotFoundInPM++;
+                    // cmp << "pmReadIdNotFoundInBLAST = Q :" << blastAlignment.queryId << ", R : " << blastAlignment.readId << endl;
+                }
+            }
+            blastTPReadPerQuerySet.insert(blastTPReadPerQuery);
+            //PM and BLAST alignments per query
+            alnPerQ << queryInd << " " << pmAlignments.container_.count(queryInd) << " " << blastTPReadPerQuery << endl;
         }
         Utilities<uint32_t> util;   
         tuple<uint32_t, uint32_t, uint32_t> pmReadPerQueryTuple = util.calculateStatistics(pmReadPerQuerySet);
         tuple<uint32_t, uint32_t, uint32_t> blastReadPerQueryTuple = util.calculateStatistics(blastReadPerQuerySet);
+        tuple<uint32_t, uint32_t, uint32_t> blastTPReadPerQueryTuple = util.calculateStatistics(blastTPReadPerQuerySet);
         cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Overall Comparison Results>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         cmp << left << setw(80) << "# Of queries : " << queryCount << endl;
         cmp << left << setw(80) << "# Of queries that PARMIK found match : " << pmQueriesFound << endl;
@@ -317,6 +346,8 @@ public:
         cmp << left << setw(80) << "# Of Matched Hits between PM and BLAST : " << numberOfEqualalignment << endl;;
         cmp << left << setw(80) << "# Of readIDs found by PARMIK (total): " << pmTotalNumberOfReadIDs << endl;
         cmp << left << setw(80) << "# Of readIDs found by BLAST (total): " << blastTotalNumberOfReadIDs << endl;
+        cmp << left << setw(80) << "# Of  BLAST TP: " << totalNumberOfBlastTruePositive << endl;
+        cmp << left << setw(80) << "# Of  BLAST FP: " << totalNumberOfBlastFalsePositive << endl;
         cmp << left << setw(80) << "# Of PM outperformed : " << numberOfPMbetter << endl;
         cmp << left << setw(80) << "# Of BLAST outperformed : " << numberOfBLASTbetter << endl;
         cmp << left << setw(80) << "# Of BLAST outperformed that Exceed Max Edits : " << numberOfBLASTbetterExceedMaxEdits << endl;
@@ -330,6 +361,7 @@ public:
         cmp << left << setw(80) << "# Of queries contains N: " << numberOfQueryContainN << endl;
         cmp << left << setw(80) << "# of Read Per Query found by PM" << "average: " <<  get<0>(pmReadPerQueryTuple) << ", median: " <<  get<1>(pmReadPerQueryTuple) << ", mean: " << get<2>(pmReadPerQueryTuple)<< endl;
         cmp << left << setw(80) << "# of Read Per Query found by BLAST" << "average: " <<  get<0>(blastReadPerQueryTuple) << ", median: " <<  get<1>(blastReadPerQueryTuple) << ", mean: " << get<2>(blastReadPerQueryTuple)<< endl;
+        cmp << left << setw(80) << "# of Read TP Per Query found by BLAST" << "average: " <<  get<0>(blastTPReadPerQueryTuple) << ", median: " <<  get<1>(blastTPReadPerQueryTuple) << ", mean: " << get<2>(blastTPReadPerQueryTuple)<< endl;
         cmp.close();
         alnPerQ.close();
     }
