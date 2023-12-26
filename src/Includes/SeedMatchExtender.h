@@ -254,7 +254,6 @@ public:
                 {
                     preLa.editPositions.push_back(editPos[i] - regionStartPos);
                 }
-                preLa.partialMatchSize = preLa.editDistanceTypes.substr(regionStartPos).size();
                 // cout << "pre regionStartPos: " << regionStartPos << endl;
                 preLa.editDistanceTypes = preLa.editDistanceTypes.substr(regionStartPos);
                 preLa.partialMatchSize = preLa.editDistanceTypes.size();
