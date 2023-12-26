@@ -32,6 +32,25 @@ public:
         return make_tuple(average, median, mean);
     }
 
+    pair<T, T> calculateStatistics2(const set<T>& data) 
+    {
+        // Calculate sum
+        T sum = 0;
+        for (T num : data) {
+            sum += num;
+        }
+        // Calculate average
+        T average = (data.size() > 0) ? sum / data.size() : 0;
+
+        // Calculate median
+        typename set<T>::const_iterator it = data.begin();
+        advance(it, data.size() / 2);
+        T median = *it;
+
+        // Return the results as a tuple
+        return make_pair(average, median);
+    }
+
     string reverseComplement(const string& genome) {
         string complement = genome;
         transform(complement.begin(), complement.end(), complement.begin(), [](char c) {

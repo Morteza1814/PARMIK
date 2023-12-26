@@ -84,17 +84,34 @@ public:
         BlastReader blastReader(cfg.otherToolOutputFileAddress);
         IndexContainer<uint32_t, BlastReader::Blast> blastAlignments;
         blastReader.parseFile(queryCount, blastAlignments);
-        uint64_t numberOfEqualalignment = 0, numberOfBLASTbetter = 0, numberOfPMbetter = 0, 
-        numberOfBLASTbetterExceedMaxEdits = 0, numberOfBLASTbetterWithLowMatchSize = 0,  
-        onlyblastFoundMatchForQuery = 0, pmReadIdNotFoundInBLAST = 0, blastReadIdNotFoundInPM = 0, 
-        onlyPmFoundMatchForQuery = 0, nonePmblastFoundAlignmentForQuery = 0, numberOfBLASTbetterNotObserveOurCriteria = 0, 
-        numberOfQueryContainN = 0, queriesBLASTFoundMatch = 0, pmTotalNumberOfReadIDs = 0, blastTotalNumberOfReadIDs = 0,
-        totalNumberOfBlastTruePositive = 0, totalNumberOfBlastFalsePositive = 0;
-        set<uint32_t> pmReadPerQuerySet, blastReadPerQuerySet, blastTPReadPerQuerySet;
-        uint32_t pmQueriesFound = 0;
+        uint64_t numberOfQueryContainN = 0, queriesBLASTFoundMatch = 0;
+        uint32_t blastTotalNumberOfReadIDs = 0, pmTotalNumberOfReadIDs = 0;
+        uint32_t queriesPMFoundMatch = 0;
+        uint32_t numberOfBlastReadsContainingN = 0;
+        uint32_t numnberOfPM_FN = 0;
+        uint32_t blastFN = 0, blastFN_noCriteriaFittedMatches = 0; // places where BLAST found no matches or none of the matches conform with the criteria
+        uint32_t totalBlastTN = 0, totalBlastTP = 0, totalBlastFP = 0;
+        uint32_t blastTP_noParmikMatches_allQ = 0, blastTP_blastOutperfomed_allQ = 0, blastTP_parmikOutperfomed_allQ = 0, blastTP_blastEqualParmik_allQ = 0;
+        uint32_t blastFP_editsExceed_allQ = 0, blastFP_lowAlnLen_allQ = 0, blastFP_editPos_allQ = 0;
+        //all query level parameters sets (if total is needed, just add all the elements in the set)
+        set<uint32_t> pmReadPerQuerySet, blastReadPerQuerySet;
+        set<uint32_t> blastTPPerQuery, blastFPPerQuery;
+        set<uint32_t> blastTP_noParmikMatches_alnLen_allQ, blastTP_blastOutperfomed_alnLen_allQ, blastTP_parmikOutperfomed_alnLen_allQ, blastTP_blastEqualParmik_alnLen_allQ; 
+        set<uint32_t> blastTP_noParmikMatches_ed_allQ, blastTP_blastOutperfomed_ed_allQ, blastTP_parmikOutperfomed_ed_allQ, blastTP_blastEqualParmik_ed_allQ; 
+        set<uint32_t> parmikTP_blastOutperfomed_alnLen_allQ, parmikTP_parmikOutperfomed_alnLen_allQ, parmikTP_blastEqualParmik_alnLen_allQ; 
+        set<uint32_t> parmikTP_blastOutperfomed_ed_allQ, parmikTP_parmikOutperfomed_ed_allQ, parmikTP_blastEqualParmik_ed_allQ; 
+        // best alignment comparisons
+        set<uint32_t> blastBest_blastOutperfomed_alnLen_allQ, blastBest_parmikOutperfomed_alnLen_allQ, blastBest_blastEqualParmik_alnLen_allQ; 
+        set<uint32_t> blastBest_blastOutperfomed_ed_allQ, blastBest_parmikOutperfomed_ed_allQ, blastBest_blastEqualParmik_ed_allQ; 
+        set<uint32_t> parmikBest_blastOutperfomed_alnLen_allQ, parmikBest_parmikOutperfomed_alnLen_allQ, parmikBest_blastEqualParmik_alnLen_allQ; 
+        set<uint32_t> parmikBest_blastOutperfomed_ed_allQ, parmikBest_parmikOutperfomed_ed_allQ, parmikBest_blastEqualParmik_ed_allQ; 
+        set<uint32_t> blastFP_editsExceed_alnLen_allQ, blastFP_lowAlnLen_alnLen_allQ, blastFP_editPos_alnLen_allQ;
+        set<uint32_t> blastFP_editsExceed_ed_allQ, blastFP_lowAlnLen_ed_allQ, blastFP_editPos_ed_allQ;
+        set<uint32_t> blastFN_parmik_alnLen_allQ, blastFN_parmik_ed_allQ;// PARMIK alignment characteristics for all queries when BLAST did not find a match
+        set<uint32_t> blastFN_noCriteria_parmik_alnLen_allQ, blastFN_noCriteria_parmik_ed_allQ;
+        set<uint32_t> pmFN_blast_alnLen_allQ, pmFN_blast_ed_allQ;// BLAST alignment characteristics for all queries when PARMIK did not find a match
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
-            bool blastFound = false, pmFound = false;
             uint32_t blastMatchSize = 0, pmMatchSize = 0;
             string query = queries[queryInd];
             if(query.find('N') != string::npos || query.find('n') != string::npos)
@@ -104,264 +121,332 @@ public:
                 alnPerQ << queryInd << " 0 0"<< endl;
                 continue;
             }
-
-            BlastReader::Blast blastAlignment;
-            auto blRrange = blastAlignments.getRange(queryInd);
-            size_t blastReadPerQuery = distance(blRrange.first, blRrange.second);
-            blastTotalNumberOfReadIDs += blastReadPerQuery;
-            blastReadPerQuerySet.insert(blastReadPerQuery);
-            for (auto it = blRrange.first; it != blRrange.second; it++) 
-            {
-                BlastReader::Blast aln = it->second;
-                string blastR = reads[aln.readId]; 
-                if(blastR.find('N') != string::npos || blastR.find('n') != string::npos)
-                    continue;
-                if (aln.Mismatches + aln.InDels <= cfg.editDistance)
-                {
-                    blastFound = true;
-                    if (aln.AlignmentLength  > blastAlignment.AlignmentLength)
-                    {
-                        blastAlignment = aln;
-                    } else if (aln.AlignmentLength == blastAlignment.AlignmentLength)
-                    {
-                        if (aln.Mismatches + aln.InDels < blastAlignment.Mismatches + blastAlignment.InDels)
-                        {
-                            blastAlignment = aln;
-                        }
-                    }
-                } 
-            }
-            string blastRead = reads[blastAlignment.readId];
+            //query level parameters
+            uint32_t blastTP = 0, blastFP = 0;
+            uint32_t blastTP_noParmikMatches = 0, blastTP_blastOutperfomed = 0, blastTP_parmikOutperfomed = 0, blastTP_blastEqualParmik = 0;
+            uint32_t blastBest_blastOutperfomed = 0, blastBest_parmikOutperfomed = 0, blastBest_blastEqualParmik = 0;
+            uint32_t blastFP_editsExceed = 0, blastFP_lowAlnLen = 0, blastFP_editPos = 0;
+            cmp << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+            cmp << "Q : " << query << ", queryInd: " << queryInd << endl;
+            BlastReader::Blast bestAlnBlast;
             auto pmRange = pmAlignments.getRange(queryInd);
             size_t pmReadPerQuery = distance(pmRange.first, pmRange.second);
             pmTotalNumberOfReadIDs += pmReadPerQuery;
             pmReadPerQuerySet.insert(pmReadPerQuery);
-            LevAlign pmAlignment;
-            for (auto it = pmRange.first; it != pmRange.second; it++) 
-            {
-                pmFound = true;
-                LevAlign aln = it->second;
-                if (aln.numberOfMatches + aln.numberOfInDel > pmAlignment.numberOfMatches + pmAlignment.numberOfInDel)
-                {
-                    pmAlignment = aln;
-                } else if (aln.numberOfMatches + aln.numberOfInDel == pmAlignment.numberOfMatches + pmAlignment.numberOfInDel)
-                {
-                    if (aln.numberOfInDel + aln.numberOfSub < pmAlignment.numberOfInDel + pmAlignment.numberOfSub) // InDel has the same wight as substitution
+            auto blRrange = blastAlignments.getRange(queryInd);
+            size_t blastReadPerQuery = distance(blRrange.first, blRrange.second);
+            blastTotalNumberOfReadIDs += blastReadPerQuery;
+            blastReadPerQuerySet.insert(blastReadPerQuery);
+            cmp << "# of reads found by BLAST : " << blastReadPerQuery << endl;
+            cmp << "# of reads found by PARMIK : " << pmReadPerQuery << endl;
+            LevAlign bestAlnPm;
+            //get the best PARMIK alignment
+            if(pmReadPerQuery > 0){
+                queriesPMFoundMatch++;
+                for (auto it = pmRange.first; it != pmRange.second; it++) {
+                    LevAlign pmAlnn = it->second;
+                    if (pmAlnn.numberOfMatches + pmAlnn.numberOfInDel > bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel) // only exact matches
                     {
-                        pmAlignment = aln;
+                        bestAlnPm = pmAlnn;
                     }
-                }
-            }
-            if (pmFound)
-            {
-                pmQueriesFound++;
-                pmMatchSize = sam.countMatches(pmAlignment.cigar);
-            }
-            if (blastFound)
-            {
-                queriesBLASTFoundMatch++;
-                blastMatchSize = blastAlignment.AlignmentLength;
-            }
-            alnPmBLASTHisto.push_back(std::make_pair(pmMatchSize, blastMatchSize));
-            if (pmFound && !blastFound)
-            {
-                cmp << "PM outperformed and BLAST did not found" << endl; 
-                numberOfPMbetter++;
-                onlyPmFoundMatchForQuery++;
-                cmp << "<<<<<<<<<<<PM alignment>>>>>>>>>>>" << endl;
-                cmp << "Q : " << query << endl;
-                cmp << "R : " << reads[pmAlignment.readID] << endl;
-                // cmp << "q : " << pmAlignment.alignedQuery << endl;
-                // cmp << "r : " << pmAlignment.alignedRead << endl;
-                // cmp << "E : " << pmAlignment.editDistanceTypes << endl;
-                cmp << "CIGAR : " << pmAlignment.cigar << ", subs : " << pmAlignment.numberOfSub << ", query id : " << queryInd << ", read id : " << pmAlignment.readID << ", flag : " << pmAlignment.flag << ", partial match size : " << pmAlignment.partialMatchSize << ", edits : " << pmAlignment.editDistance << ", R per Q : " << pmReadPerQuery << endl;
-                cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
-            } else if (!pmFound && blastFound)
-            {
-                cmp << "BLAST outperformed and PM did not found"; 
-                numberOfBLASTbetter++;
-                onlyblastFoundMatchForQuery++;
-                if (blastAlignment.Mismatches + blastAlignment.InDels > cfg.editDistance)
-                {
-                    cmp << "with more edits > " << cfg.editDistance << endl;
-                    numberOfBLASTbetterExceedMaxEdits++;
-                } else if(blastMatchSize < cfg.regionSize) {    
-                    cmp << "with low match size : " << blastMatchSize << endl;
-                    numberOfBLASTbetterWithLowMatchSize++;
-                } else {
-                    if (!checkBlastEditPositions(blastAlignment, cfg)){
-                        numberOfBLASTbetterNotObserveOurCriteria++;
-                        cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
-                    }
-                }
-                cmp << "<<<<<<<<<<<<<BLAST alignment>>>>>>>>>>>>>" << endl;
-                cmp << "Q : " << query << endl;
-                cmp << "R : " << blastRead << endl;
-                cmp << "AlignmentLength : " << blastAlignment.AlignmentLength << ", subs : " << blastAlignment.Mismatches << ", inDels : " << blastAlignment.InDels << ", query id : " << blastAlignment.queryId << ", read id : " << blastAlignment.readId << ", flag : " << blastAlignment.flag << ", query start pos : " << blastAlignment.queryS << ", read start pos : " << blastAlignment.readS << ", R per Q : " << blastReadPerQuery << endl;
-                cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";  
-            } else if (pmFound && blastFound) 
-            {
-                // int bwaInDelSize = bwaSam.countInsertions(blastAlignment.cigar) + bwaSam.countDeletions(blastAlignment.cigar);
-                cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
-               
-                if (blastMatchSize < pmMatchSize + pmAlignment.numberOfInDel)
-                {
-                    cmp << "PM outperformed "; 
-                    numberOfPMbetter++;
-                } else if (blastMatchSize > pmMatchSize + pmAlignment.numberOfInDel)
-                {
-                    cmp << "BLAST outperformed";
-                    numberOfBLASTbetter++;
-                    if (blastAlignment.Mismatches + blastAlignment.InDels > cfg.editDistance)
+                    else if (pmAlnn.numberOfMatches + pmAlnn.numberOfInDel == bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel)
                     {
-                        cmp << "with more edits > " << cfg.editDistance << endl;
-                        numberOfBLASTbetterExceedMaxEdits++;
-                    } else if(blastMatchSize < cfg.regionSize) {
-                        cmp << "with low match size : " << blastMatchSize << endl;
-                        numberOfBLASTbetterWithLowMatchSize++;
-                    } else {
-                        if (!checkBlastEditPositions(blastAlignment, cfg))
+                        if (pmAlnn.numberOfInDel + pmAlnn.numberOfSub < bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub) // InDel has the same wight as substitution
                         {
-                            numberOfBLASTbetterNotObserveOurCriteria++;
-                            cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
-                        }
-                    }
-                } else
-                {
-                    if (pmAlignment.numberOfSub + pmAlignment.numberOfInDel < blastAlignment.Mismatches + blastAlignment.InDels)
-                    {
-                        cmp << "PM outperformed with fewer edits" << endl;
-                        numberOfPMbetter++;
-                    } else if (pmAlignment.numberOfSub + pmAlignment.numberOfInDel > blastAlignment.Mismatches + blastAlignment.InDels)
-                    {
-                        cmp << "BLAST outperformed";
-                        numberOfBLASTbetter++;
-                        if (blastAlignment.Mismatches + blastAlignment.InDels > cfg.editDistance)
-                        {
-                            cmp << "with more edits > " << cfg.editDistance << endl;
-                            numberOfBLASTbetterExceedMaxEdits++;
-                        } else 
-                        {
-                            if (!checkBlastEditPositions(blastAlignment, cfg))
-                            {
-                                numberOfBLASTbetterNotObserveOurCriteria++;
-                                cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
-                            } else 
-                            {
-                                cmp << "with fewer edits" << endl;
-                            }  
-                        }
-                    } else
-                    {
-                        cmp << "BLAST and PM performed equal" << endl;
-                        if (!checkBlastEditPositions(blastAlignment, cfg))
-                        {
-                            numberOfBLASTbetterNotObserveOurCriteria++;
-                            cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
-                        } else 
-                        { 
-                            numberOfEqualalignment++;
+                            bestAlnPm = pmAlnn;
                         }
                     }
                 }
-                cmp << "<<<<<<<<<<<PM alignment>>>>>>>>>>>" << endl;
-                cmp << "Q : " << query << endl;
-                cmp << "R : " << reads[pmAlignment.readID] << endl;
-                // cmp << "q : " << pmAlignment.alignedQuery << endl;
-                // cmp << "r : " << pmAlignment.alignedRead << endl;
-                // cmp << "E : " << pmAlignment.editDistanceTypes << endl;
-                cmp << "CIGAR : " << pmAlignment.cigar << ", subs : " << pmAlignment.numberOfSub << ", query id : " << queryInd << ", read id : " << pmAlignment.readID << ", flag : " << pmAlignment.flag << ", partial match size : " << pmAlignment.partialMatchSize << ", edits : " << pmAlignment.editDistance << ", R per Q : " << pmReadPerQuery << endl;
-                cmp << "<<<<<<<<<<<<<BLAST alignment>>>>>>>>>>>>>" << endl;
-                cmp << "Q : " << query << endl;
-                cmp << "R : " << blastRead << endl;
-                cmp << "AlignmentLength : " << blastAlignment.AlignmentLength << ", subs : " << blastAlignment.Mismatches << ", inDels : " << blastAlignment.InDels << ", query id : " << blastAlignment.queryId << ", read id : " << blastAlignment.readId << ", flag : " << blastAlignment.flag << ", query start pos : " << blastAlignment.queryS << ", read start pos : " << blastAlignment.readS << ", R per Q : " << blastReadPerQuery << endl;
-                cmp << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";  
+                pmMatchSize = bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel;
+            }
+            if(blastReadPerQuery == 0 && pmReadPerQuery == 0){
+                //TN
+                totalBlastTN++;
+                cout << "TN for BLAST" << endl;
+            } else if(blastReadPerQuery == 0 && pmReadPerQuery > 0) {
+                //FN
+                blastFN++;
+                blastFN_parmik_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
+                blastFN_parmik_ed_allQ.insert(bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub);
+                cout << "FN for BLAST, PARMIK alnlen : " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", ed : " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << endl;
             } else {
-                cmp << "query " << queryInd << " not found in the PM results nor in BLAST" << endl;
-                nonePmblastFoundAlignmentForQuery++;
-            }
-            //check for the read id
-            bool found = false;
-            for (auto it = pmRange.first; it != pmRange.second; it++) 
-            {
-                LevAlign aln = it->second;
-                found = false;
-                for (auto itt = blRrange.first; itt != blRrange.second; itt++) 
+                for (auto it = blRrange.first; it != blRrange.second; it++) 
                 {
-                    BlastReader::Blast blast = itt->second;
-                    if((uint32_t) aln.readID == blast.readId)
+                    BlastReader::Blast aln = it->second;
+                    string blastR = reads[aln.readId]; 
+                    if(blastR.find('N') != string::npos || blastR.find('n') != string::npos)
                     {
-                        found = true;
-                        break;
+                        numberOfBlastReadsContainingN++;
+                        continue;
+                    }
+                    bool isFP = false;
+                    if (aln.Mismatches + aln.InDels > cfg.editDistance)
+                    {
+                        // cmp << "with edits (Indel+Subs) [" << aln.Mismatches + aln.InDels << "] > " << cfg.editDistance << endl;
+                        isFP = true;
+                        blastFP_editsExceed++;
+                        blastFP_editsExceed_alnLen_allQ.insert(aln.AlignmentLength);
+                        blastFP_editsExceed_ed_allQ.insert(aln.Mismatches + aln.InDels);
+                    } else if(aln.AlignmentLength < cfg.regionSize) {    
+                        // cmp << "with low match size : " << blastMatchSize << endl;
+                        isFP = true;
+                        blastFP_lowAlnLen++;
+                        blastFP_lowAlnLen_alnLen_allQ.insert(aln.AlignmentLength);
+                        blastFP_lowAlnLen_ed_allQ.insert(aln.Mismatches + aln.InDels);
+                    } else if (!checkBlastEditPositions(aln, cfg)){
+                        isFP = true;
+                        blastFP_editPos++;
+                        blastFP_editPos_alnLen_allQ.insert(aln.AlignmentLength);
+                        blastFP_editPos_ed_allQ.insert(aln.Mismatches + aln.InDels);
+                        // cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
+                    } 
+                    if (isFP){
+                        blastFP++;
+                    }
+                    else {
+                        blastTP++;
+                        bool pmfound = false;
+                        LevAlign pmaln;
+                        for (auto itt = pmRange.first; itt != pmRange.second; itt++) 
+                        {
+                            pmaln = itt->second;
+                            if((uint32_t) pmaln.readID == aln.readId)
+                            {
+                                pmfound = true;
+                                break;
+                            }
+                        }
+                        if (!pmfound)
+                        {
+                            blastTP_noParmikMatches++;
+                            blastTP_noParmikMatches_alnLen_allQ.insert(aln.AlignmentLength);
+                            blastTP_noParmikMatches_ed_allQ.insert(aln.Mismatches + aln.InDels);
+                        } else {
+                            if (pmaln.numberOfMatches + pmaln.numberOfInDel > aln.AlignmentLength){ //PARMIK outperformed
+                                blastTP_parmikOutperfomed++;
+                                blastTP_parmikOutperfomed_alnLen_allQ.insert(aln.AlignmentLength);
+                                blastTP_parmikOutperfomed_ed_allQ.insert(aln.Mismatches + aln.InDels);
+                                parmikTP_parmikOutperfomed_alnLen_allQ.insert(pmaln.numberOfMatches + pmaln.numberOfInDel);
+                                parmikTP_parmikOutperfomed_ed_allQ.insert(pmaln.numberOfSub + pmaln.numberOfInDel);
+                            } else if (pmaln.numberOfMatches + pmaln.numberOfInDel < aln.AlignmentLength){//BLAST outperformed
+                                blastTP_blastOutperfomed++;
+                                blastTP_blastOutperfomed_alnLen_allQ.insert(aln.AlignmentLength);
+                                blastTP_blastOutperfomed_ed_allQ.insert(aln.Mismatches + aln.InDels);
+                                parmikTP_blastOutperfomed_alnLen_allQ.insert(pmaln.numberOfMatches + pmaln.numberOfInDel);
+                                parmikTP_blastOutperfomed_ed_allQ.insert(pmaln.numberOfSub + pmaln.numberOfInDel);
+                            } else {
+                                if (pmaln.numberOfSub + pmaln.numberOfInDel < aln.Mismatches + aln.InDels)//PARMIK outperformed
+                                {
+                                    blastTP_parmikOutperfomed++;
+                                    blastTP_parmikOutperfomed_alnLen_allQ.insert(aln.AlignmentLength);
+                                    blastTP_parmikOutperfomed_ed_allQ.insert(aln.Mismatches + aln.InDels);
+                                    parmikTP_parmikOutperfomed_alnLen_allQ.insert(pmaln.numberOfMatches + pmaln.numberOfInDel);
+                                    parmikTP_parmikOutperfomed_ed_allQ.insert(pmaln.numberOfSub + pmaln.numberOfInDel);
+                                } else if (pmaln.numberOfSub + pmaln.numberOfInDel > aln.Mismatches + aln.InDels)//BLAST outperformed
+                                {
+                                    blastTP_blastOutperfomed++;
+                                    blastTP_blastOutperfomed_alnLen_allQ.insert(aln.AlignmentLength);
+                                    blastTP_blastOutperfomed_ed_allQ.insert(aln.Mismatches + aln.InDels);
+                                    parmikTP_blastOutperfomed_alnLen_allQ.insert(pmaln.numberOfMatches + pmaln.numberOfInDel);
+                                    parmikTP_blastOutperfomed_ed_allQ.insert(pmaln.numberOfSub + pmaln.numberOfInDel);
+                                } // BLAST and PARMIK performed equally
+                                else{
+                                    blastTP_blastEqualParmik++;
+                                    blastTP_blastEqualParmik_alnLen_allQ.insert(aln.AlignmentLength);
+                                    blastTP_blastEqualParmik_ed_allQ.insert(aln.Mismatches + aln.InDels);
+                                    parmikTP_blastEqualParmik_alnLen_allQ.insert(pmaln.numberOfMatches + pmaln.numberOfInDel);
+                                    parmikTP_blastEqualParmik_ed_allQ.insert(pmaln.numberOfSub + pmaln.numberOfInDel);
+                                }
+                            }
+                        }
+                        //find the best alignment for BLAST
+                        if (aln.AlignmentLength  > bestAlnBlast.AlignmentLength)
+                        {
+                            bestAlnBlast = aln;
+                        } else if (aln.AlignmentLength == bestAlnBlast.AlignmentLength)
+                        {
+                            if (aln.Mismatches + aln.InDels < bestAlnBlast.Mismatches + bestAlnBlast.InDels)
+                            {
+                                bestAlnBlast = aln;
+                            }
+                        }
                     }
                 }
-                if (!found)
-                {
-                    pmReadIdNotFoundInBLAST++;
-                    // cmp << "pmReadIdNotFoundInBLAST = Q :" << blastAlignment.queryId << ", R : " << blastAlignment.readId << endl;
+                blastMatchSize = bestAlnBlast.AlignmentLength;
+                blastTPPerQuery.insert(blastTP);
+                totalBlastTP += blastTP;
+                blastFPPerQuery.insert(blastFP);
+                totalBlastFP += blastFP;
+                if(blastTP > 0){ 
+                    queriesBLASTFoundMatch++;
                 }
-            }
-            auto blastTPReadPerQuery = 0;
-            for (auto itt = blRrange.first; itt != blRrange.second; itt++) 
-            {
-                BlastReader::Blast blast = itt->second;
-                string blastRead = reads[blast.readId];
-                found = false;
-                //count True positives
-                if (blast.Mismatches + blast.InDels <= cfg.editDistance && blast.AlignmentLength >= cfg.regionSize && checkBlastEditPositions(blast, cfg))
-                {
-                    blastTPReadPerQuery++;
-                    totalNumberOfBlastTruePositive++;
-                } else 
-                {
-                    totalNumberOfBlastFalsePositive++;
+                if(pmReadPerQuery > 0 && blastReadPerQuery > 0 && blastTP == 0){//PARMIK TP
+                    blastFN_noCriteriaFittedMatches++;
+                    blastFN_noCriteria_parmik_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
+                    blastFN_noCriteria_parmik_ed_allQ.insert(bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub);
                 }
-                for (auto it = pmRange.first; it != pmRange.second; it++) 
-                {
-                    LevAlign aln = it->second;
-                    if((uint32_t) aln.readID == blast.readId)
-                    {
-                        found = true;
-                        break;
+                if(pmReadPerQuery == 0 && blastTP > 0){//PARMIK FN
+                    pmFN_blast_alnLen_allQ.insert(bestAlnBlast.AlignmentLength);
+                    pmFN_blast_ed_allQ.insert(bestAlnBlast.Mismatches + bestAlnBlast.InDels);
+                    numnberOfPM_FN++;
+                } else if(pmReadPerQuery > 0 && blastTP > 0){//compare the best alignmnets for this queyry
+                    if (bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel > bestAlnBlast.AlignmentLength){ //PARMIK outperformed
+                        blastBest_parmikOutperfomed++;
+                        blastBest_parmikOutperfomed_alnLen_allQ.insert(bestAlnBlast.AlignmentLength);
+                        blastBest_parmikOutperfomed_ed_allQ.insert(bestAlnBlast.Mismatches + bestAlnBlast.InDels);
+                        parmikBest_parmikOutperfomed_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
+                        parmikBest_parmikOutperfomed_ed_allQ.insert(bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel);
+                    } else if (bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel < bestAlnBlast.AlignmentLength){//BLAST outperformed
+                        blastBest_blastOutperfomed++;
+                        blastBest_blastOutperfomed_alnLen_allQ.insert(bestAlnBlast.AlignmentLength);
+                        blastBest_blastOutperfomed_ed_allQ.insert(bestAlnBlast.Mismatches + bestAlnBlast.InDels);
+                        parmikBest_blastOutperfomed_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
+                        parmikBest_blastOutperfomed_ed_allQ.insert(bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel);
+                    } else {
+                        if (bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel < bestAlnBlast.Mismatches + bestAlnBlast.InDels)//PARMIK outperformed
+                        {
+                            blastBest_parmikOutperfomed++;
+                            blastBest_parmikOutperfomed_alnLen_allQ.insert(bestAlnBlast.AlignmentLength);
+                            blastBest_parmikOutperfomed_ed_allQ.insert(bestAlnBlast.Mismatches + bestAlnBlast.InDels);
+                            parmikBest_parmikOutperfomed_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
+                            parmikBest_parmikOutperfomed_ed_allQ.insert(bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel);
+                        } else if (bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel > bestAlnBlast.Mismatches + bestAlnBlast.InDels)//BLAST outperformed
+                        {
+                            blastBest_blastOutperfomed++;
+                            blastBest_blastOutperfomed_alnLen_allQ.insert(bestAlnBlast.AlignmentLength);
+                            blastBest_blastOutperfomed_ed_allQ.insert(bestAlnBlast.Mismatches + bestAlnBlast.InDels);
+                            parmikBest_blastOutperfomed_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
+                            parmikBest_blastOutperfomed_ed_allQ.insert(bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel);
+                        } // BLAST and PARMIK performed equally
+                        else{
+                            blastBest_blastEqualParmik++;
+                            blastBest_blastEqualParmik_alnLen_allQ.insert(bestAlnBlast.AlignmentLength);
+                            blastBest_blastEqualParmik_ed_allQ.insert(bestAlnBlast.Mismatches + bestAlnBlast.InDels);
+                            parmikBest_blastEqualParmik_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
+                            parmikBest_blastEqualParmik_ed_allQ.insert(bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel);
+                        }
                     }
                 }
-                if (!found)
-                {
-                    blastReadIdNotFoundInPM++;
-                    // cmp << "pmReadIdNotFoundInBLAST = Q :" << blastAlignment.queryId << ", R : " << blastAlignment.readId << endl;
-                }
             }
-            blastTPReadPerQuerySet.insert(blastTPReadPerQuery);
+            blastTP_noParmikMatches_allQ += blastTP_noParmikMatches; 
+            blastTP_blastOutperfomed_allQ += blastTP_blastOutperfomed; 
+            blastTP_parmikOutperfomed_allQ += blastTP_parmikOutperfomed;
+            blastTP_blastEqualParmik_allQ += blastTP_blastEqualParmik;
+
+            blastFP_editsExceed_allQ += blastFP_editsExceed;
+            blastFP_lowAlnLen_allQ += blastFP_lowAlnLen; 
+            blastFP_editPos_allQ += blastFP_editPos;
+            alnPmBLASTHisto.push_back(std::make_pair(pmMatchSize, blastMatchSize)); 
             //PM and BLAST alignments per query
-            alnPerQ << queryInd << " " << pmAlignments.container_.count(queryInd) << " " << blastTPReadPerQuery << endl;
+            alnPerQ << queryInd << " " << pmAlignments.container_.count(queryInd) << " " << blastTP << endl;
         }
         Utilities<uint32_t> util;   
-        tuple<uint32_t, uint32_t, uint32_t> pmReadPerQueryTuple = util.calculateStatistics(pmReadPerQuerySet);
-        tuple<uint32_t, uint32_t, uint32_t> blastReadPerQueryTuple = util.calculateStatistics(blastReadPerQuerySet);
-        tuple<uint32_t, uint32_t, uint32_t> blastTPReadPerQueryTuple = util.calculateStatistics(blastTPReadPerQuerySet);
         cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Overall Comparison Results>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         cmp << left << setw(80) << "# Of queries : " << queryCount << endl;
-        cmp << left << setw(80) << "# Of queries that PARMIK found match : " << pmQueriesFound << endl;
+        cmp << left << setw(80) << "# Of queries that PARMIK found match : " << queriesPMFoundMatch << endl;
         cmp << left << setw(80) << "# Of queries that BLAST found match : " << queriesBLASTFoundMatch << endl;
-        cmp << left << setw(80) << "# Of Matched Hits between PM and BLAST : " << numberOfEqualalignment << endl;;
+        
+        cout << "------------------------------------------------------------------------------------------" << endl;
+        cmp << left << setw(80) << "# Of queries that BLAST didn't find TN : " << totalBlastTN << endl;
+        
+        cout << "------------------------------------------------------------------------------------------" << endl;
+        cmp << left << setw(80) << "# Of queries that BLAST didn't find FN (Total) : " << blastFN + blastFN_noCriteriaFittedMatches << endl;
+        cmp << left << setw(80) << "# Of queries that BLAST didn't find any match FN : " << blastFN << endl;
+        pair<uint32_t, uint32_t> avgBlastFN_parmik_alnLen_allQ = util.calculateStatistics2(blastFN_parmik_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgBlastFN_parmik_ed_allQ = util.calculateStatistics2(blastFN_parmik_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) PARMIK's alignment length where BLAST FN: " << avgBlastFN_parmik_alnLen_allQ.first << ", " << avgBlastFN_parmik_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) PARMIK's edit distance where BLAST FN: " << avgBlastFN_parmik_ed_allQ.first << ", " << avgBlastFN_parmik_ed_allQ.second << endl;
+        cmp << left << setw(80) << "# Of queries that BLAST didn't find based on criteria FN : " << blastFN_noCriteriaFittedMatches << endl;
+        pair<uint32_t, uint32_t> avgblastFN_noCriteria_parmik_alnLen_allQ = util.calculateStatistics2(blastFN_noCriteria_parmik_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgblastFN_noCriteria_parmik_ed_allQ = util.calculateStatistics2(blastFN_noCriteria_parmik_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) PARMIK's alignment length where BLAST FN based on criteria: " << avgblastFN_noCriteria_parmik_alnLen_allQ.first << ", " << avgblastFN_noCriteria_parmik_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) PARMIK's edit distance where BLAST FN based on criteria: " << avgblastFN_noCriteria_parmik_ed_allQ.first << ", " << avgblastFN_noCriteria_parmik_ed_allQ.second << endl;
+       
+        cout << "------------------------------------------------------------------------------------------" << endl;
+        cmp << left << setw(80) << "# Of queries that PARMIK didn't find FN : " << numnberOfPM_FN << endl;
+        pair<uint32_t, uint32_t> avgPmFN_blast_alnLen_allQ = util.calculateStatistics2(pmFN_blast_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgPmFN_blast_ed_allQ = util.calculateStatistics2(pmFN_blast_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) BLAST's alignment length where PARMIK FN: " << avgPmFN_blast_alnLen_allQ.first << ", " << avgPmFN_blast_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's edit distance where PARMIK FN: " << avgPmFN_blast_ed_allQ.first << ", " << avgPmFN_blast_ed_allQ.second << endl;
+       
+        cout << "------------------------------------------------------------------------------------------" << endl;
         cmp << left << setw(80) << "# Of readIDs found by PARMIK (total): " << pmTotalNumberOfReadIDs << endl;
         cmp << left << setw(80) << "# Of readIDs found by BLAST (total): " << blastTotalNumberOfReadIDs << endl;
-        cmp << left << setw(80) << "# Of  BLAST TP: " << totalNumberOfBlastTruePositive << endl;
-        cmp << left << setw(80) << "# Of  BLAST FP: " << totalNumberOfBlastFalsePositive << endl;
-        cmp << left << setw(80) << "# Of PM outperformed : " << numberOfPMbetter << endl;
-        cmp << left << setw(80) << "# Of BLAST outperformed : " << numberOfBLASTbetter << endl;
-        cmp << left << setw(80) << "# Of BLAST outperformed that Exceed Max Edits : " << numberOfBLASTbetterExceedMaxEdits << endl;
-        cmp << left << setw(80) << "# Of BLAST outperformed that matchsize < (R - E): " << numberOfBLASTbetterWithLowMatchSize << endl;
-        cmp << left << setw(80) << "# Of BLAST outperformed that has edits in minExact-mers of region : " << numberOfBLASTbetterNotObserveOurCriteria << endl;
-        cmp << left << setw(80) << "# Of queries that BLAST found matches, not PM : " << onlyblastFoundMatchForQuery << endl;
-        cmp << left << setw(80) << "# Of queries that PM found matches, not BLAST : " << onlyPmFoundMatchForQuery << endl;
-        cmp << left << setw(80) << "# Of readIDs that PM found but BLAST did not : " << pmReadIdNotFoundInBLAST << endl;
-        cmp << left << setw(80) << "# Of readIDs that BLAST found but PM did not : " << blastReadIdNotFoundInPM << endl;
-        cmp << left << setw(80) << "# Of queries that neigther BLAST nor PM found any match : " << nonePmblastFoundAlignmentForQuery << endl;
+        cmp << left << setw(80) << "# Of readIDs found by BLAST containing N (total): " << numberOfBlastReadsContainingN << endl;
+        
+        cout << "------------------------------------------------------------------------------------------" << endl;
+        cmp << left << setw(80) << "# Of total BLAST (TP): " << totalBlastTP << endl;
+        pair<uint32_t, uint32_t> avgblastTPPerQuery = util.calculateStatistics2(blastTPPerQuery);
+        cmp << left << setw(80) << "(avg, median) BLAST's TP per query: " << avgblastTPPerQuery.first << ", " << avgblastTPPerQuery.second << endl;
+
+        cmp << left << setw(80) << "# Of BLAST (TP) where PARMIK didn't find any matches: " << blastTP_noParmikMatches_allQ << endl;
+        pair<uint32_t, uint32_t> avgBlastTP_noParmikMatches_alnLen_allQ = util.calculateStatistics2(blastTP_noParmikMatches_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgBlastTP_noParmikMatches_ed_allQ = util.calculateStatistics2(blastTP_noParmikMatches_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) BLAST's alignment length where PARMIK didn't find any matches: " << avgBlastTP_noParmikMatches_alnLen_allQ.first << ", " << avgBlastTP_noParmikMatches_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's edit distance where PARMIK didn't find any matches: " << avgBlastTP_noParmikMatches_ed_allQ.first << ", " << avgBlastTP_noParmikMatches_ed_allQ.second << endl;
+        
+        cmp << left << setw(80) << "# Of BLAST (TP) where PARMIK outperformed: " << blastTP_parmikOutperfomed_allQ << endl;
+        pair<uint32_t, uint32_t> avgblastTP_parmikOutperfomed_alnLen_allQ = util.calculateStatistics2(blastTP_parmikOutperfomed_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgblastTP_parmikOutperfomed_ed_allQ = util.calculateStatistics2(blastTP_parmikOutperfomed_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) BLAST's alignment length where PARMIK outperformed: " << avgblastTP_parmikOutperfomed_alnLen_allQ.first << ", " << avgblastTP_parmikOutperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's edit distance where PARMIK outperformed: " << avgblastTP_parmikOutperfomed_ed_allQ.first << ", " << avgblastTP_parmikOutperfomed_ed_allQ.second << endl;
+        pair<uint32_t, uint32_t> avgparmikTP_parmikOutperfomed_alnLen_allQ = util.calculateStatistics2(parmikTP_parmikOutperfomed_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgparmikTP_parmikOutperfomed_ed_allQ = util.calculateStatistics2(parmikTP_parmikOutperfomed_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) PARMIK's alignment length where PARMIK outperformed: " << avgparmikTP_parmikOutperfomed_alnLen_allQ.first << ", " << avgparmikTP_parmikOutperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) PARMIK's edit distance where PARMIK outperformed: " << avgparmikTP_parmikOutperfomed_ed_allQ.first << ", " << avgparmikTP_parmikOutperfomed_ed_allQ.second << endl;
+
+        cmp << left << setw(80) << "# Of BLAST (TP) where BLAST outperformed: " << blastTP_blastOutperfomed_allQ << endl;
+        pair<uint32_t, uint32_t> avgblastTP_blastOutperfomed_alnLen_allQ = util.calculateStatistics2(blastTP_blastOutperfomed_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgblastTP_blastOutperfomed_ed_allQ = util.calculateStatistics2(blastTP_blastOutperfomed_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) BLAST's alignment length where BLAST outperformed: " << avgblastTP_blastOutperfomed_alnLen_allQ.first << ", " << avgblastTP_blastOutperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's edit distance where BLAST outperformed: " << avgblastTP_blastOutperfomed_ed_allQ.first << ", " << avgblastTP_blastOutperfomed_ed_allQ.second << endl;
+        pair<uint32_t, uint32_t> avgparmikTP_blastOutperfomed_alnLen_allQ = util.calculateStatistics2(parmikTP_blastOutperfomed_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgparmikTP_blastOutperfomed_ed_allQ = util.calculateStatistics2(parmikTP_blastOutperfomed_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) PARMIK's alignment length where BLAST outperformed: " << avgparmikTP_blastOutperfomed_alnLen_allQ.first << ", " << avgparmikTP_blastOutperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) PARMIK's edit distance where BLAST outperformed: " << avgparmikTP_blastOutperfomed_ed_allQ.first << ", " << avgparmikTP_blastOutperfomed_ed_allQ.second << endl;
+
+        cmp << left << setw(80) << "# Of BLAST (TP) where they perfromed equaly: " << blastTP_blastEqualParmik_allQ << endl;
+        pair<uint32_t, uint32_t> avgblastTP_blastEqualParmik_alnLen_allQ = util.calculateStatistics2(blastTP_blastEqualParmik_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgblastTP_blastEqualParmik_ed_allQ = util.calculateStatistics2(blastTP_blastEqualParmik_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) BLAST's alignment length where they perfromed equaly: " << avgblastTP_blastEqualParmik_alnLen_allQ.first << ", " << avgblastTP_blastEqualParmik_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's edit distance where they perfromed equaly: " << avgblastTP_blastEqualParmik_ed_allQ.first << ", " << avgblastTP_blastEqualParmik_ed_allQ.second << endl;
+        pair<uint32_t, uint32_t> avgparmikTP_blastEqualParmik_alnLen_allQ = util.calculateStatistics2(parmikTP_blastEqualParmik_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgparmikTP_blastEqualParmik_ed_allQ = util.calculateStatistics2(parmikTP_blastEqualParmik_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) PARMIK's alignment length where they perfromed equaly: " << avgparmikTP_blastEqualParmik_alnLen_allQ.first << ", " << avgparmikTP_blastEqualParmik_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) PARMIK's edit distance where they perfromed equaly: " << avgparmikTP_blastEqualParmik_ed_allQ.first << ", " << avgparmikTP_blastEqualParmik_ed_allQ.second << endl;
+        
+        cout << "------------------------------------------------------------------------------------------" << endl;
+        cmp << left << setw(80) << "# Of total BLAST (FP): " << totalBlastFP << endl;
+        pair<uint32_t, uint32_t> avgblastFPPerQuery = util.calculateStatistics2(blastFPPerQuery);
+        cmp << left << setw(80) << "(avg, median) BLAST's FP per query: " << avgblastFPPerQuery.first << ", " << avgblastFPPerQuery.second << endl;
+
+        cmp << left << setw(80) << "# Of BLAST (FP) that exceed max edit distance: " << blastFP_editsExceed_allQ << endl;
+        pair<uint32_t, uint32_t> avgblastFP_editsExceed_alnLen_allQ = util.calculateStatistics2(blastFP_editsExceed_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgblastFP_editsExceed_ed_allQ = util.calculateStatistics2(blastFP_editsExceed_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) BLAST's alignment length where exceed max edit distance: " << avgblastFP_editsExceed_alnLen_allQ.first << ", " << avgblastFP_editsExceed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's edit distance where exceed max edit distance: " << avgblastFP_editsExceed_ed_allQ.first << ", " << avgblastFP_editsExceed_ed_allQ.second << endl;
+        
+        cmp << left << setw(80) << "# Of BLAST (FP) that alignment length < R: " << blastFP_lowAlnLen_allQ << endl;
+        pair<uint32_t, uint32_t> avgblastFP_lowAlnLen_alnLen_allQ = util.calculateStatistics2(blastFP_lowAlnLen_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgblastFP_lowAlnLen_ed_allQ = util.calculateStatistics2(blastFP_lowAlnLen_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) BLAST's alignment length where alignment length < R: " << avgblastFP_lowAlnLen_alnLen_allQ.first << ", " << avgblastFP_lowAlnLen_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's edit distance where alignment length < R: " << avgblastFP_lowAlnLen_ed_allQ.first << ", " << avgblastFP_lowAlnLen_ed_allQ.second << endl;
+        
+        cmp << left << setw(80) << "# Of BLAST (FP) that edit pos breaks criteria: " << blastFP_editPos_allQ << endl;
+        pair<uint32_t, uint32_t> avgblastFP_editPos_alnLen_allQ = util.calculateStatistics2(blastFP_editPos_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgblastFP_editPos_ed_allQ = util.calculateStatistics2(blastFP_editPos_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) BLAST's alignment length where alignment length < R: " << avgblastFP_editPos_alnLen_allQ.first << ", " << avgblastFP_editPos_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's edit distance where alignment length < R: " << avgblastFP_editPos_ed_allQ.first << ", " << avgblastFP_editPos_ed_allQ.second << endl;
+
+        cout << "------------------------------------------------------------------------------------------" << endl;
         cmp << left << setw(80) << "# Of queries contains N: " << numberOfQueryContainN << endl;
-        cmp << left << setw(80) << "# of Read Per Query found by PM" << "average: " <<  get<0>(pmReadPerQueryTuple) << ", median: " <<  get<1>(pmReadPerQueryTuple) << ", mean: " << get<2>(pmReadPerQueryTuple)<< endl;
-        cmp << left << setw(80) << "# of Read Per Query found by BLAST" << "average: " <<  get<0>(blastReadPerQueryTuple) << ", median: " <<  get<1>(blastReadPerQueryTuple) << ", mean: " << get<2>(blastReadPerQueryTuple)<< endl;
-        cmp << left << setw(80) << "# of Read TP Per Query found by BLAST" << "average: " <<  get<0>(blastTPReadPerQueryTuple) << ", median: " <<  get<1>(blastTPReadPerQueryTuple) << ", mean: " << get<2>(blastTPReadPerQueryTuple)<< endl;
+
+        cout << "------------------------------------------------------------------------------------------" << endl;
+        pair<uint32_t, uint32_t> pmReadPerQuery_allQ  = util.calculateStatistics2(pmReadPerQuerySet);
+        pair<uint32_t, uint32_t> blastReadPerQuery_allQ  = util.calculateStatistics2(blastReadPerQuerySet);
+        cmp << left << setw(80) << "(avg, median) PARMIKS's Matches per Query: " << pmReadPerQuery_allQ.first << ", " << pmReadPerQuery_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's Matches per Query: " << blastReadPerQuery_allQ.first << ", " << blastReadPerQuery_allQ.second << endl;
+
         cmp.close();
         alnPerQ.close();
     }
