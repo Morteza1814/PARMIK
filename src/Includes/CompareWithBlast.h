@@ -173,7 +173,7 @@ public:
                 blastFN++;
                 blastFN_parmik_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
                 blastFN_parmik_ed_allQ.insert(bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub);
-                cmp << "FN for BLAST, PARMIK alnlen : " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", ed : " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << endl;
+                cmp << "FN for BLAST, PARMIK alnlen : " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", ed : " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << ", readID: " <<  bestAlnPm.readID << endl;
             } else {
                 for (auto it = blRrange.first; it != blRrange.second; it++) 
                 {
@@ -227,6 +227,7 @@ public:
                             blastTP_noParmikMatches++;
                             blastTP_noParmikMatches_alnLen_allQ.insert(aln.AlignmentLength);
                             blastTP_noParmikMatches_ed_allQ.insert(aln.Mismatches + aln.InDels);
+                            cmp << "TP for BLAST, no PARMIK match, alnlen : " << aln.AlignmentLength << ", ed : " << aln.Mismatches + aln.InDels << ", readID: " <<  aln.readId << endl;
                         } else {
                             if (pmaln.numberOfMatches + pmaln.numberOfInDel > aln.AlignmentLength){ //PARMIK outperformed
                                 blastTP_parmikOutperfomed++;
@@ -240,6 +241,7 @@ public:
                                 blastTP_blastOutperfomed_ed_allQ.insert(aln.Mismatches + aln.InDels);
                                 parmikTP_blastOutperfomed_alnLen_allQ.insert(pmaln.numberOfMatches + pmaln.numberOfInDel);
                                 parmikTP_blastOutperfomed_ed_allQ.insert(pmaln.numberOfSub + pmaln.numberOfInDel);
+                                cmp << "TP for BLAST, BLAST outperformed in terms of alnlen, Blast alnlen : " << aln.AlignmentLength << ", ed : " << aln.Mismatches + aln.InDels << ", readID: " <<  aln.readId << ", PARMIK alnlen: " << pmaln.numberOfSub + pmaln.numberOfInDel << ", ed: " << pmaln.numberOfSub + pmaln.numberOfInDel << ", readID: " << pmaln.readID << endl;
                             } else {
                                 if (pmaln.numberOfSub + pmaln.numberOfInDel < aln.Mismatches + aln.InDels)//PARMIK outperformed
                                 {
@@ -255,6 +257,7 @@ public:
                                     blastTP_blastOutperfomed_ed_allQ.insert(aln.Mismatches + aln.InDels);
                                     parmikTP_blastOutperfomed_alnLen_allQ.insert(pmaln.numberOfMatches + pmaln.numberOfInDel);
                                     parmikTP_blastOutperfomed_ed_allQ.insert(pmaln.numberOfSub + pmaln.numberOfInDel);
+                                    cmp << "TP for BLAST, BLAST outperformed in terms of ed, Blast alnlen : " << aln.AlignmentLength << ", ed : " << aln.Mismatches + aln.InDels << ", readID: " <<  aln.readId << ", PARMIK alnlen: " << pmaln.numberOfSub + pmaln.numberOfInDel << ", ed: " << pmaln.numberOfSub + pmaln.numberOfInDel << ", readID: " << pmaln.readID << endl;
                                 } // BLAST and PARMIK performed equally
                                 else{
                                     blastTP_blastEqualParmik++;
@@ -312,12 +315,12 @@ public:
                     blastFN_noCriteriaFittedMatches++;
                     blastFN_noCriteria_parmik_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
                     blastFN_noCriteria_parmik_ed_allQ.insert(bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub);
-                    cmp << "BlastFN_noCriteriaFitted and PARMIK alnsize: " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", PARMIK ed: " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << endl;
+                    cmp << "BlastFN_noCriteriaFitted and PARMIK alnsize: " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", PARMIK ed: " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << ", PARMIK readID: " << bestAlnPm.readID << endl;
                 }
                 if(pmReadPerQuery == 0 && blastTP > 0){//PARMIK FN
                     pmFN_blast_alnLen_allQ.insert(bestAlnBlast.AlignmentLength);
                     pmFN_blast_ed_allQ.insert(bestAlnBlast.Mismatches + bestAlnBlast.InDels);
-                    cmp << "PARMIK FN, and BLAST alnsize: " << bestAlnBlast.AlignmentLength << ", BLAST ed: " << bestAlnBlast.Mismatches + bestAlnBlast.InDels << endl;
+                    cmp << "PARMIK FN, and BLAST alnsize: " << bestAlnBlast.AlignmentLength << ", BLAST ed: " << bestAlnBlast.Mismatches + bestAlnBlast.InDels << ", BLAST readID: " << bestAlnBlast.readId << endl;
                     numnberOfPM_FN++;
                 } else if(pmReadPerQuery > 0 && blastTP > 0){//compare the best alignmnets for this queyry
                     if (bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel > bestAlnBlast.AlignmentLength){ //PARMIK outperformed
@@ -326,14 +329,14 @@ public:
                         blastBest_parmikOutperfomed_ed_allQ.insert(bestAlnBlast.Mismatches + bestAlnBlast.InDels);
                         parmikBest_parmikOutperfomed_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
                         parmikBest_parmikOutperfomed_ed_allQ.insert(bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel);
-                        cmp << "PARMIK outperformed PARMIK, PARMIK alnsize: " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", PARMIK ed: " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << ", BLAST alnsize: " << bestAlnBlast.AlignmentLength << ", BLAST ed: " << bestAlnBlast.Mismatches + bestAlnBlast.InDels << endl;
+                        cmp << "Best: PARMIK outperformed PARMIK, PARMIK alnsize: " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", PARMIK ed: " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub <<  ", PARMIK readID: " << bestAlnPm.readID << ", BLAST alnsize: " << bestAlnBlast.AlignmentLength << ", BLAST ed: " << bestAlnBlast.Mismatches + bestAlnBlast.InDels <<  ", BLAST readID: " << bestAlnBlast.readId << endl;
                     } else if (bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel < bestAlnBlast.AlignmentLength){//BLAST outperformed
                         blastBest_blastOutperfomed++;
                         blastBest_blastOutperfomed_alnLen_allQ.insert(bestAlnBlast.AlignmentLength);
                         blastBest_blastOutperfomed_ed_allQ.insert(bestAlnBlast.Mismatches + bestAlnBlast.InDels);
                         parmikBest_blastOutperfomed_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
                         parmikBest_blastOutperfomed_ed_allQ.insert(bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel);
-                        cmp << "BLAST outperformed PARMIK, PARMIK alnsize: " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", PARMIK ed: " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << ", BLAST alnsize: " << bestAlnBlast.AlignmentLength << ", BLAST ed: " << bestAlnBlast.Mismatches + bestAlnBlast.InDels << endl;
+                        cmp << "Best: BLAST outperformed PARMIK in terms of alnlen, PARMIK alnsize: " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", PARMIK ed: " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub <<  ", PARMIK readID: " << bestAlnPm.readID << ", BLAST alnsize: " << bestAlnBlast.AlignmentLength << ", BLAST ed: " << bestAlnBlast.Mismatches + bestAlnBlast.InDels << ", BLAST readID: " << bestAlnBlast.readId << endl;
                     } else {
                         if (bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel < bestAlnBlast.Mismatches + bestAlnBlast.InDels)//PARMIK outperformed
                         {
@@ -342,7 +345,7 @@ public:
                             blastBest_parmikOutperfomed_ed_allQ.insert(bestAlnBlast.Mismatches + bestAlnBlast.InDels);
                             parmikBest_parmikOutperfomed_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
                             parmikBest_parmikOutperfomed_ed_allQ.insert(bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel);
-                            cmp << "PARMIK outperformed PARMIK, PARMIK alnsize: " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", PARMIK ed: " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << ", BLAST alnsize: " << bestAlnBlast.AlignmentLength << ", BLAST ed: " << bestAlnBlast.Mismatches + bestAlnBlast.InDels << endl;
+                            cmp << "Best: PARMIK outperformed PARMIK, PARMIK alnsize: " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", PARMIK ed: " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << ", PARMIK readID: " << bestAlnPm.readID << ", BLAST alnsize: " << bestAlnBlast.AlignmentLength << ", BLAST ed: " << bestAlnBlast.Mismatches + bestAlnBlast.InDels <<  ", BLAST readID: " << bestAlnBlast.readId << endl;
                         } else if (bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel > bestAlnBlast.Mismatches + bestAlnBlast.InDels)//BLAST outperformed
                         {
                             blastBest_blastOutperfomed++;
@@ -350,7 +353,7 @@ public:
                             blastBest_blastOutperfomed_ed_allQ.insert(bestAlnBlast.Mismatches + bestAlnBlast.InDels);
                             parmikBest_blastOutperfomed_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
                             parmikBest_blastOutperfomed_ed_allQ.insert(bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel);
-                            cmp << "BLAST outperformed PARMIK, PARMIK alnsize: " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", PARMIK ed: " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << ", BLAST alnsize: " << bestAlnBlast.AlignmentLength << ", BLAST ed: " << bestAlnBlast.Mismatches + bestAlnBlast.InDels << endl;
+                            cmp << "Best: BLAST outperformed PARMIK in terms of ed, PARMIK alnsize: " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", PARMIK ed: " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub <<  ", PARMIK readID: " << bestAlnPm.readID << ", BLAST alnsize: " << bestAlnBlast.AlignmentLength << ", BLAST ed: " << bestAlnBlast.Mismatches + bestAlnBlast.InDels <<  ", BLAST readID: " << bestAlnBlast.readId << endl;
                         } // BLAST and PARMIK performed equally
                         else{
                             blastBest_blastEqualParmik++;
@@ -358,7 +361,7 @@ public:
                             blastBest_blastEqualParmik_ed_allQ.insert(bestAlnBlast.Mismatches + bestAlnBlast.InDels);
                             parmikBest_blastEqualParmik_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
                             parmikBest_blastEqualParmik_ed_allQ.insert(bestAlnPm.numberOfSub + bestAlnPm.numberOfInDel);
-                            cmp << "BLAST & PARMIK perfromed equally, PARMIK alnsize: " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", PARMIK ed: " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << ", BLAST alnsize: " << bestAlnBlast.AlignmentLength << ", BLAST ed: " << bestAlnBlast.Mismatches + bestAlnBlast.InDels << endl;
+                            cmp << "Best: BLAST & PARMIK perfromed equally, PARMIK alnsize: " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", PARMIK ed: " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << ", PARMIK readID: " << bestAlnPm.readID << ", BLAST alnsize: " << bestAlnBlast.AlignmentLength << ", BLAST ed: " << bestAlnBlast.Mismatches + bestAlnBlast.InDels << ", BLAST readID: " << bestAlnBlast.readId << endl;
                         }
                     }
                 }
@@ -510,11 +513,11 @@ public:
         cmp << left << setw(80) << "(avg, median) BLAST's edit distance where edit pos breaks criteria: " << avgblastFP_editPos_ed_allQ.first << ", " << avgblastFP_editPos_ed_allQ.second << endl;
 
         cmp << "------------------------------------------------------------------------------------------" << endl;
-        cmp << left << setw(80) << "# Of PARMIK (TP) where BLAST didn't find any matches: " << parmikTP_noBlastMatches_allQ << endl;
+        cmp << left << setw(80) << "# Of PARMIK (TP) where BLAST didn't find match: " << parmikTP_noBlastMatches_allQ << endl;
         pair<uint32_t, uint32_t> avgparmikTP_noBlastMatches_alnLen_allQ = util.calculateStatistics2(parmikTP_noBlastMatches_alnLen_allQ);
         pair<uint32_t, uint32_t> avgparmikTP_noBlastMatches_ed_allQ = util.calculateStatistics2(parmikTP_noBlastMatches_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) PARMIK's alignment length where BLAST didn't find any matches: " << avgparmikTP_noBlastMatches_alnLen_allQ.first << ", " << avgparmikTP_noBlastMatches_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) PARMIK's edit distance where BLAST didn't find any matches: " << avgparmikTP_noBlastMatches_ed_allQ.first << ", " << avgparmikTP_noBlastMatches_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) PARMIK's alignment length where BLAST didn't find match: " << avgparmikTP_noBlastMatches_alnLen_allQ.first << ", " << avgparmikTP_noBlastMatches_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) PARMIK's edit distance where BLAST didn't find match: " << avgparmikTP_noBlastMatches_ed_allQ.first << ", " << avgparmikTP_noBlastMatches_ed_allQ.second << endl;
         
         cmp << "------------------------------------------------------------------------------------------" << endl;
         cmp << left << setw(80) << "# Of queries contains N: " << numberOfQueryContainN << endl;
