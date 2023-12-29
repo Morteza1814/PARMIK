@@ -29,54 +29,97 @@ public:
  
     }
 
+    bool hasMinConsecutiveMatches(uint32_t queryS, const string& str1, const string& str2, Config &cfg) {
+        uint32_t consecutiveMatchCount = 0;
+
+        // Ensure that both strings have the same length for exact matching
+        if (str1.length() != str2.length()) {
+            cerr << "Error: Sequences have different lengths." << endl;
+            return false;
+        }
+
+        // Iterate through each character in the strings and count consecutive exact matches
+        uint32_t startPos = 0;
+        for (size_t i = 0; i < str1.length(); i++) {
+            if (str1[i] == str2[i]) {
+                consecutiveMatchCount++;
+                if (consecutiveMatchCount >= cfg.minExactMatchLen) {
+                    if ((startPos + queryS + cfg.minExactMatchLen <= cfg.regionSize) || ((startPos + queryS >= cfg.contigSize - cfg.regionSize) && (startPos + queryS + cfg.minExactMatchLen <= cfg.contigSize))) {
+                        return true;  // Found enough consecutive matches inth front or back region
+                    }
+                }
+            } else {
+                consecutiveMatchCount = 0;  // Reset count if consecutive match is broken
+                startPos = i+1;
+            }
+        }
+
+        // Return false if the number of consecutive exact matches is less than minConsecutiveMatch
+        return false;
+    }
+
     bool checkBlastEditPositions(BlastReader::Blast& blastAlignment, Config cfg)
     {
-        vector<int> editPos;
-        determineEditsLocationsAndType(blastAlignment.readAligned, blastAlignment.queryAligned, editPos);
+        // vector<int> editPos;
+        // determineEditsLocationsAndType(blastAlignment.readAligned, blastAlignment.queryAligned, editPos);
         // if (editPos.size() != blastAlignment.Mismatches) 
         // {
         //     cout << "Error: Edit distance not equals mismatch." << endl;
         //     return false;
         // }
-        bool firstKmerInFrontRegionDismissed = false, lastKmerInFrontRegionDismissed = false,
-            firstKmerInBackRegionDismissed = false, lastKmerInBacktRegionDismissed = false;
+        // bool firstKmerInFrontRegionDismissed = false, lastKmerInFrontRegionDismissed = false,
+        //     firstKmerInBackRegionDismissed = false, lastKmerInBacktRegionDismissed = false;
         bool frontRegionDismissed = false, backRegionDismissed = false;
         uint32_t queryS = blastAlignment.queryS - 1;
-        for(auto v : editPos)
-        {
-            if(((v + queryS) >= 0 && (v + queryS) <= cfg.minExactMatchLen))
-            {
-                firstKmerInFrontRegionDismissed = true;
-            }
-            if(((v + queryS) >= (cfg.regionSize - cfg.minExactMatchLen) && (v + queryS) <= cfg.regionSize))
-            {
-                lastKmerInFrontRegionDismissed = true;
-            }
-            if(((v + queryS) >= (cfg.contigSize - cfg.regionSize)) && ((v + queryS) <= (cfg.contigSize - cfg.regionSize + cfg.minExactMatchLen)))
-            {
-                firstKmerInBackRegionDismissed = true;
-            }
-            if(((v + queryS) >= (cfg.contigSize - cfg.minExactMatchLen)) && ((v + queryS) <= cfg.contigSize))
-            {
-                lastKmerInBacktRegionDismissed = true;
-            }
-        }
-        if(firstKmerInFrontRegionDismissed && lastKmerInFrontRegionDismissed)
-            frontRegionDismissed = true;
-        if(firstKmerInBackRegionDismissed && lastKmerInBacktRegionDismissed)
-            backRegionDismissed = true;
-        if(queryS > (cfg.editDistance - 1))
-            frontRegionDismissed = true;
-        if(queryS + blastAlignment.AlignmentLength <= cfg.contigSize - cfg.editDistance) //query start position + alignment len should be larger than conig size - allowed edit
-            backRegionDismissed = true;
-        if(frontRegionDismissed && backRegionDismissed)
+        // for(auto v : editPos)
+        // {
+        //     if(((v + queryS) >= 0 && (v + queryS) <= cfg.minExactMatchLen))
+        //     {
+        //         firstKmerInFrontRegionDismissed = true;
+        //     }
+        //     if(((v + queryS) >= (cfg.regionSize - cfg.minExactMatchLen) && (v + queryS) <= cfg.regionSize))
+        //     {
+        //         lastKmerInFrontRegionDismissed = true;
+        //     }
+        //     if(((v + queryS) >= (cfg.contigSize - cfg.regionSize)) && ((v + queryS) <= (cfg.contigSize - cfg.regionSize + cfg.minExactMatchLen)))
+        //     {
+        //         firstKmerInBackRegionDismissed = true;
+        //     }
+        //     if(((v + queryS) >= (cfg.contigSize - cfg.minExactMatchLen)) && ((v + queryS) <= cfg.contigSize))
+        //     {
+        //         lastKmerInBacktRegionDismissed = true;
+        //     }
+        // }
+        //check whether the region starts at most from 100 + 2
+        if(queryS > (cfg.contigSize - cfg.regionSize + cfg.editDistance)) //first bp of back region starts from 100
             return false;
-        if(queryS > (cfg.contigSize - cfg.regionSize - 1 + cfg.editDistance)) //first bp of back region starts from 99
+        //check whether the regions has at least minExactMatchLen consecutive matches
+        if(!hasMinConsecutiveMatches(queryS, blastAlignment.queryAligned, blastAlignment.readAligned, cfg))
+            return false;
+        // if(firstKmerInFrontRegionDismissed && lastKmerInFrontRegionDismissed)
+        //     frontRegionDismissed = true;
+        // if(firstKmerInBackRegionDismissed && lastKmerInBacktRegionDismissed)
+        //     backRegionDismissed = true;
+        if(cfg.editDistance >= queryS){
+            auto editsAllwedInFrontRegion = cfg.editDistance - queryS;
+            if(blastAlignment.Mismatches + blastAlignment.InDels > editsAllwedInFrontRegion)
+                frontRegionDismissed = true;
+        } else {
+            frontRegionDismissed = true;
+        }
+        if(queryS + blastAlignment.AlignmentLength >= cfg.contigSize - cfg.editDistance){ //query start position + alignment len should be larger than conig size - allowed edit
+            auto editsAllwedInBackRegion = queryS + blastAlignment.AlignmentLength - (cfg.contigSize - cfg.editDistance);
+            if(blastAlignment.Mismatches + blastAlignment.InDels > editsAllwedInBackRegion)
+                backRegionDismissed = true;
+        }else {
+            backRegionDismissed = true;
+        }
+        if(frontRegionDismissed && backRegionDismissed)
             return false;
         return true;
     }
 
-    void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, IndexContainer<uint32_t, LevAlign>& pmAlignments, vector<std::pair<uint32_t, uint32_t>>& alnPmBLASTHisto, const uint32_t queryCount, string alnPerQueryFileAddress)
+    void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, IndexContainer<uint32_t, LevAlign>& pmAlignments, vector<pair<uint32_t, uint32_t>>& alnPmBLASTHisto, const uint32_t queryCount, string alnPerQueryFileAddress)
     {
         ofstream cmp(comparisonResultsFileAddress);
         ofstream alnPerQ(alnPerQueryFileAddress);
@@ -241,7 +284,7 @@ public:
                                 blastTP_blastOutperfomed_ed_allQ.insert(aln.Mismatches + aln.InDels);
                                 parmikTP_blastOutperfomed_alnLen_allQ.insert(pmaln.numberOfMatches + pmaln.numberOfInDel);
                                 parmikTP_blastOutperfomed_ed_allQ.insert(pmaln.numberOfSub + pmaln.numberOfInDel);
-                                cmp << "TP for BLAST, BLAST outperformed in terms of alnlen, Blast alnlen : " << aln.AlignmentLength << ", ed : " << aln.Mismatches + aln.InDels << ", readID: " <<  aln.readId << ", PARMIK alnlen: " << pmaln.numberOfSub + pmaln.numberOfInDel << ", ed: " << pmaln.numberOfSub + pmaln.numberOfInDel << ", readID: " << pmaln.readID << endl;
+                                cmp << "TP for BLAST, BLAST outperformed in terms of alnlen, Blast alnlen : " << aln.AlignmentLength << ", ed : " << aln.Mismatches + aln.InDels << ", readID: " <<  aln.readId << ", PARMIK alnlen: " << pmaln.numberOfMatches + pmaln.numberOfInDel << ", ed: " << pmaln.numberOfSub + pmaln.numberOfInDel << ", readID: " << pmaln.readID << endl;
                             } else {
                                 if (pmaln.numberOfSub + pmaln.numberOfInDel < aln.Mismatches + aln.InDels)//PARMIK outperformed
                                 {
@@ -257,7 +300,7 @@ public:
                                     blastTP_blastOutperfomed_ed_allQ.insert(aln.Mismatches + aln.InDels);
                                     parmikTP_blastOutperfomed_alnLen_allQ.insert(pmaln.numberOfMatches + pmaln.numberOfInDel);
                                     parmikTP_blastOutperfomed_ed_allQ.insert(pmaln.numberOfSub + pmaln.numberOfInDel);
-                                    cmp << "TP for BLAST, BLAST outperformed in terms of ed, Blast alnlen : " << aln.AlignmentLength << ", ed : " << aln.Mismatches + aln.InDels << ", readID: " <<  aln.readId << ", PARMIK alnlen: " << pmaln.numberOfSub + pmaln.numberOfInDel << ", ed: " << pmaln.numberOfSub + pmaln.numberOfInDel << ", readID: " << pmaln.readID << endl;
+                                    cmp << "TP for BLAST, BLAST outperformed in terms of ed, Blast alnlen : " << aln.AlignmentLength << ", ed : " << aln.Mismatches + aln.InDels << ", readID: " <<  aln.readId << ", PARMIK alnlen: " << pmaln.numberOfMatches + pmaln.numberOfInDel << ", ed: " << pmaln.numberOfSub + pmaln.numberOfInDel << ", readID: " << pmaln.readID << endl;
                                 } // BLAST and PARMIK performed equally
                                 else{
                                     blastTP_blastEqualParmik++;
@@ -379,7 +422,7 @@ public:
             blastBest_blastOutperfomed_allQ += blastBest_blastOutperfomed;
             blastBest_blastEqualParmik_allQ += blastBest_blastEqualParmik;
             cmp << "blastBest_parmikOutperfomed: " << blastBest_parmikOutperfomed << ", blastBest_blastOutperfomed: " << blastBest_blastOutperfomed << ", blastBest_blastEqualParmik: " << blastBest_blastEqualParmik << endl;
-            alnPmBLASTHisto.push_back(std::make_pair(pmMatchSize, blastMatchSize)); 
+            alnPmBLASTHisto.push_back(make_pair(pmMatchSize, blastMatchSize)); 
             //PM and BLAST alignments per query
             alnPerQ << queryInd << " " << pmAlignments.container_.count(queryInd) << " " << blastTP << endl;
         }
