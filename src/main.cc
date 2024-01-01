@@ -144,9 +144,11 @@ uint32_t sumMapValues(const map<uint32_t, uint32_t>& inputMap) {
 
 void testOnePair(int argc, char *argv[])
 {
-    SeedMatchExtender<uint32_t, uint64_t> pm(30, 50, true, 2, 150);
     string read =  argv[1];
     string query = argv[2];
+    double idPen = stod(argv[3]);
+    double subPen = stod(argv[4]);
+    SeedMatchExtender<uint32_t, uint64_t> pm(30, 50, true, 2, 150, idPen, subPen);
     cout << "read  : " << read << endl;
     cout << "query : " << query << endl;
     vector<uint64_t> frontKmers;
@@ -273,7 +275,7 @@ int run(int argc, char *argv[]) {
                     tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
                     ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
                     // ckpm50.printArrays();
-                    SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize);
+                    SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
                     pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
                     //do it again for the reverse strand
                     pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
@@ -315,7 +317,7 @@ int run(int argc, char *argv[]) {
                     tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
                     ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
                     // ckpm50.printArrays();
-                    SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize);
+                    SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
                     pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
                     //do it again for the reverse strand
                     pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
