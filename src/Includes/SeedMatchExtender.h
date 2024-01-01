@@ -27,8 +27,12 @@ private:
     bool isVerboseLog_;
     uint32_t allowedEditDistance;
     uint32_t contigSize;
+    double inDelPenalty;
+    double subPenalty;
 public:
-    SeedMatchExtender(size_t k, size_t R, bool isVerboseLog, uint32_t a, uint32_t c) : encoder_(k), k_(k), regionSize(R), isVerboseLog_(isVerboseLog), allowedEditDistance(a), contigSize(c) {}
+    SeedMatchExtender(size_t k, size_t R, bool isVerboseLog, uint32_t a, uint32_t c, double i, double s) : encoder_(k), k_(k), regionSize(R), isVerboseLog_(isVerboseLog), allowedEditDistance(a), contigSize(c), inDelPenalty(i), subPenalty(s)
+    {
+    }
 
     string readOneContig(const string &filename, contigIndT n)
     {
@@ -182,6 +186,45 @@ public:
         return commonPositions;
     }
 
+    LevAlign determineLargerAlignmenWithDifferentPenalties(LevAlign inLa)
+    {
+        LevDistanceCalculator ldc;
+        LevAlign largeInDelPenalty = inLa;
+        LevAlign shortInDelPenalty = inLa;
+        ldc.edit_distance(&largeInDelPenalty, 1, 2);
+        ldc.edit_distance(&shortInDelPenalty, 1, 1);
+        vector<unsigned int> editPosLarge = ldc.getEditDistancePositions(largeInDelPenalty.editDistanceTypes);
+        vector<unsigned int> editPosShort = ldc.getEditDistancePositions(shortInDelPenalty.editDistanceTypes);
+        // cout << "editPosLarge : " << editPosLarge.size() << ", editPosShort : " << editPosShort.size() << endl;
+        // cout << "largeInDelPenalty.editDistanceTypes : " << largeInDelPenalty.editDistanceTypes << "\nshortInDelPenalty.editDistanceTypes : " << shortInDelPenalty.editDistanceTypes << endl;
+        uint32_t largeAlnEnd = (editPosLarge.size() > allowedEditDistance) ? allowedEditDistance : editPosLarge.size() - 1;
+        uint32_t shortAlnEnd = (editPosShort.size() > allowedEditDistance) ? allowedEditDistance : editPosShort.size() - 1;
+        // cout << "largeAlnEnd = " << largeAlnEnd << ", shortAlnEnd = " << shortAlnEnd << endl;
+        unsigned int i = 0, j = 0;
+        while (true)
+        {   
+            uint32_t shortAlnEndPos = (i >= shortAlnEnd)? shortInDelPenalty.editDistanceTypes.size() : editPosShort[i+1];
+            uint32_t largeAlnEndPos = (j >= largeAlnEnd)? largeInDelPenalty.editDistanceTypes.size() : editPosLarge[j+1];
+            // cout << "shortAlnEndPos = " << shortAlnEndPos << ", largeAlnEndPos = " << largeAlnEndPos << endl;
+            // cout << "editPosShort[i] : " << editPosShort[i] << ", editPosLarge[j] : " << editPosLarge[j] << endl;
+            if (shortAlnEndPos - editPosShort[i] > largeAlnEndPos - editPosLarge[j]){
+                return shortInDelPenalty;
+            } else if (shortAlnEndPos - editPosShort[i] < largeAlnEndPos - editPosLarge[j]){
+                return largeInDelPenalty;
+            }
+            i++;
+            j++;
+            // cout << "i = " << i << ", j = " << j << endl;
+            if(i > allowedEditDistance || j > allowedEditDistance)
+                break;
+            if(i > shortAlnEnd || j > largeAlnEnd)
+                break;         
+        }
+        if(largeInDelPenalty.editDistanceTypes.size() - largeInDelPenalty.editDistance >= shortInDelPenalty.editDistanceTypes.size() - largeInDelPenalty.editDistance)
+            return largeInDelPenalty;
+        return shortInDelPenalty;
+    }
+
     LevAlign extendPreMem(int readMemStartInd, int queryMemStartInd, string read, string query)
     {
         LevDistanceCalculator ldc;
@@ -215,7 +258,9 @@ public:
             LevAlign tmpLa;tmpLa.read = preLa.read;tmpLa.query = preLa.query;
             reverse(tmpLa.read.begin(), tmpLa.read.end());
             reverse(tmpLa.query.begin(), tmpLa.query.end());
-            unsigned int preEd = ldc.edit_distance(&tmpLa);
+            tmpLa = determineLargerAlignmenWithDifferentPenalties(tmpLa);
+            unsigned int preEd = tmpLa.editDistance;
+            // unsigned int preEd = ldc.edit_distance(&tmpLa, subPenalty, inDelPenalty);
             reverse(tmpLa.alignedRead.begin(), tmpLa.alignedRead.end());
             reverse(tmpLa.alignedQuery.begin(), tmpLa.alignedQuery.end());
             reverse(tmpLa.editDistanceTypes.begin(), tmpLa.editDistanceTypes.end());
@@ -223,15 +268,6 @@ public:
             preLa.alignedQuery = tmpLa.alignedQuery;
             preLa.editDistance = tmpLa.editDistance;
             preLa.editDistanceTypes = tmpLa.editDistanceTypes;
-            // trim the InDels at the beginning
-            while(preLa.editDistanceTypes[0] == 'i' || preLa.editDistanceTypes[0] == 'd')
-            {
-                preEd--;
-                preLa.editDistanceTypes = preLa.editDistanceTypes.substr(1, preLa.editDistanceTypes.size()-1);
-                preLa.alignedQuery = preLa.alignedQuery.substr(1, preLa.alignedQuery.size()-1);
-                preLa.alignedRead = preLa.alignedRead.substr(1, preLa.alignedRead.size()-1);
-                preLa.editDistance--;
-            }
             vector<unsigned int> editPos= ldc.getEditDistancePositions(preLa.editDistanceTypes);
             // cout << "prefixRegionSize: " << prefixRegionSize << ", readMemStartInd: " << readMemStartInd << ", queryMemStartInd: " << queryMemStartInd << endl;
             // cout << "pre query: " << preLa.query << endl;
@@ -296,16 +332,9 @@ public:
             sufLa.queryRegionEndPos = queryMemEndInd + suffixRegionSize;
             sufLa.read = read.substr(readMemEndInd + 1, suffixRegionSize + readDiffBp);
             sufLa.query = query.substr(queryMemEndInd + 1, suffixRegionSize + queryDiffBp);
-            unsigned int sufEd = ldc.edit_distance(&sufLa);
-            // trim the InDels at the end
-            while(sufLa.editDistanceTypes[sufLa.editDistanceTypes.size()-1] == 'i' || sufLa.editDistanceTypes[sufLa.editDistanceTypes.size()-1] == 'd')
-            {
-                sufEd--;
-                sufLa.editDistanceTypes = sufLa.editDistanceTypes.substr(0, sufLa.editDistanceTypes.size()-1);
-                sufLa.alignedQuery = sufLa.alignedQuery.substr(0, sufLa.alignedQuery.size()-1);
-                sufLa.alignedRead = sufLa.alignedRead.substr(0, sufLa.alignedRead.size()-1);
-                sufLa.editDistance--;
-            }
+            sufLa = determineLargerAlignmenWithDifferentPenalties(sufLa);
+            unsigned int sufEd = sufLa.editDistance;
+            // unsigned int sufEd = ldc.edit_distance(&sufLa, subPenalty, inDelPenalty);
             vector<unsigned int> editPos = ldc.getEditDistancePositions(sufLa.editDistanceTypes);
             // cout << "suffixRegionSize: " << suffixRegionSize << ", readMemEndInd: " << readMemEndInd << ", queryMemEndInd: " << queryMemEndInd << endl;
             // cout << "suf query: " << sufLa.query << endl;
