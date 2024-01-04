@@ -719,7 +719,18 @@ public:
                 LevAlign preLa_InDel_1 = extendPreMem(readMemStartInd, queryMemStartInd, read, query, 1, 1);
                 LevAlign preLa_InDel_2 = extendPreMem(readMemStartInd, queryMemStartInd, read, query, 2, 1);
 
-                LevAlign preLa = (preLa_InDel_1.editDistanceTypes.size() > preLa_InDel_2.editDistanceTypes.size())? preLa_InDel_1 : preLa_InDel_2;
+                LevAlign preLa;
+                if(preLa_InDel_1.editDistanceTypes.size() > preLa_InDel_2.editDistanceTypes.size())
+                    preLa = preLa_InDel_1;
+                else if(preLa_InDel_1.editDistanceTypes.size() < preLa_InDel_2.editDistanceTypes.size())
+                    preLa = preLa_InDel_2;
+                else {
+                    if(preLa_InDel_1.numberOfInDel + preLa_InDel_1.numberOfSub < preLa_InDel_2.numberOfInDel + preLa_InDel_2.numberOfSub)
+                        preLa = preLa_InDel_1;
+                    else
+                        preLa = preLa_InDel_2;
+                }
+
                 preLa.partialMatchSize += memStr.size();
                 preLa.alignedQuery = preLa.alignedQuery + memStr;
                 preLa.alignedRead = preLa.alignedRead + memStr;
@@ -741,7 +752,17 @@ public:
                 LevAlign sufLa_InDel_1 = extendSufMem(readMemEndInd, queryMemEndInd, read, query, 1, 1);
                 LevAlign sufLa_InDel_2 = extendSufMem(readMemEndInd, queryMemEndInd, read, query, 2, 1);
 
-                LevAlign sufLa = (sufLa_InDel_1.editDistanceTypes.size() > sufLa_InDel_2.editDistanceTypes.size())? sufLa_InDel_1 : sufLa_InDel_2;
+                LevAlign sufLa;
+                if(sufLa_InDel_1.editDistanceTypes.size() > sufLa_InDel_2.editDistanceTypes.size())
+                    sufLa = sufLa_InDel_1;
+                else if(sufLa_InDel_1.editDistanceTypes.size() < sufLa_InDel_2.editDistanceTypes.size())
+                    sufLa = sufLa_InDel_2;
+                else {
+                    if(sufLa_InDel_1.numberOfInDel + sufLa_InDel_1.numberOfSub < sufLa_InDel_2.numberOfInDel + sufLa_InDel_2.numberOfSub)
+                        sufLa = sufLa_InDel_1;
+                    else
+                        sufLa = sufLa_InDel_2;
+                }
                 sufLa.partialMatchSize += memStr.size();
                 sufLa.alignedQuery = memStr + sufLa.alignedQuery;
                 sufLa.alignedRead = memStr + sufLa.alignedRead;
