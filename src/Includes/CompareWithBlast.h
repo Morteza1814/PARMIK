@@ -502,25 +502,25 @@ public:
         cmp << left << setw(80) << "(avg, median) PARMIK's edit distance where they perfromed equaly: " << avgparmikTP_blastEqualParmik_ed_allQ.first << ", " << avgparmikTP_blastEqualParmik_ed_allQ.second << endl;
         
         cmp << "------------------------------------------------------------------------------------------" << endl;
-        cmp << left << setw(80) << "# Of BLAST best where BLAST outperformed: " << blastBest_parmikOutperfomed_allQ << endl;
+        cmp << left << setw(80) << "# Of BLAST best where PARMIK outperformed: " << blastBest_parmikOutperfomed_allQ << endl;
         pair<uint32_t, uint32_t> avgblastBest_parmikOutperfomed_alnLen_allQ = util.calculateStatistics2(blastBest_parmikOutperfomed_alnLen_allQ);
         pair<uint32_t, uint32_t> avgblastBest_parmikOutperfomed_ed_allQ = util.calculateStatistics2(blastBest_parmikOutperfomed_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) BLAST's best alignment length where BLAST outperformed: " << avgblastBest_parmikOutperfomed_alnLen_allQ.first << ", " << avgblastBest_parmikOutperfomed_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) BLAST's best edit distance where BLAST outperformed: " << avgblastBest_parmikOutperfomed_ed_allQ.first << ", " << avgblastBest_parmikOutperfomed_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's best alignment length where PARMIK outperformed: " << avgblastBest_parmikOutperfomed_alnLen_allQ.first << ", " << avgblastBest_parmikOutperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's best edit distance where PARMIK outperformed: " << avgblastBest_parmikOutperfomed_ed_allQ.first << ", " << avgblastBest_parmikOutperfomed_ed_allQ.second << endl;
         pair<uint32_t, uint32_t> avgparmikBest_parmikOutperfomed_alnLen_allQ = util.calculateStatistics2(parmikBest_parmikOutperfomed_alnLen_allQ);
         pair<uint32_t, uint32_t> avgparmikBest_parmikOutperfomed_ed_allQ = util.calculateStatistics2(parmikBest_parmikOutperfomed_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) PARMIK's best alignment length where BLAST outperformed: " << avgparmikBest_parmikOutperfomed_alnLen_allQ.first << ", " << avgparmikBest_parmikOutperfomed_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) PARMIK's best edit distance where BLAST outperformed: " << avgparmikBest_parmikOutperfomed_ed_allQ.first << ", " << avgparmikBest_parmikOutperfomed_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) PARMIK's best alignment length where PARMIK outperformed: " << avgparmikBest_parmikOutperfomed_alnLen_allQ.first << ", " << avgparmikBest_parmikOutperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) PARMIK's best edit distance where PARMIK outperformed: " << avgparmikBest_parmikOutperfomed_ed_allQ.first << ", " << avgparmikBest_parmikOutperfomed_ed_allQ.second << endl;
 
-        cmp << left << setw(80) << "# Of BLAST best where PARMIK outperformed: " << blastBest_blastOutperfomed_allQ  << endl;
+        cmp << left << setw(80) << "# Of BLAST best where BLAST outperformed: " << blastBest_blastOutperfomed_allQ  << endl;
         pair<uint32_t, uint32_t> avgblastBest_blastOutperfomed_alnLen_allQ = util.calculateStatistics2(blastBest_blastOutperfomed_alnLen_allQ);
         pair<uint32_t, uint32_t> avgblastBest_blastOutperfomed_ed_allQ = util.calculateStatistics2(blastBest_blastOutperfomed_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) BLAST's best alignment length where PARMIK outperformed: " << avgblastBest_blastOutperfomed_alnLen_allQ.first << ", " << avgblastBest_blastOutperfomed_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) BLAST's best edit distance where PARMIK outperformed: " << avgblastBest_blastOutperfomed_ed_allQ.first << ", " << avgblastBest_blastOutperfomed_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's best alignment length where BLAST outperformed: " << avgblastBest_blastOutperfomed_alnLen_allQ.first << ", " << avgblastBest_blastOutperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's best edit distance where BLAST outperformed: " << avgblastBest_blastOutperfomed_ed_allQ.first << ", " << avgblastBest_blastOutperfomed_ed_allQ.second << endl;
         pair<uint32_t, uint32_t> avgparmikBest_blastOutperfomed_alnLen_allQ = util.calculateStatistics2(parmikBest_blastOutperfomed_alnLen_allQ);
         pair<uint32_t, uint32_t> avgparmikBest_blastOutperfomed_ed_allQ = util.calculateStatistics2(parmikBest_blastOutperfomed_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) PARMIK's best alignment length where PARMIK outperformed: " << avgparmikBest_blastOutperfomed_alnLen_allQ.first << ", " << avgparmikBest_blastOutperfomed_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) PARMIK's best edit distance where PARMIK outperformed: " << avgparmikBest_blastOutperfomed_ed_allQ.first << ", " << avgparmikBest_blastOutperfomed_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) PARMIK's best alignment length where BLAST outperformed: " << avgparmikBest_blastOutperfomed_alnLen_allQ.first << ", " << avgparmikBest_blastOutperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) PARMIK's best edit distance where BLAST outperformed: " << avgparmikBest_blastOutperfomed_ed_allQ.first << ", " << avgparmikBest_blastOutperfomed_ed_allQ.second << endl;
 
         cmp << left << setw(80) << "# Of BLAST best where they perfromed equaly: " << blastBest_blastEqualParmik_allQ << endl;
         pair<uint32_t, uint32_t> avgblastBest_blastEqualParmik_alnLen_allQ = util.calculateStatistics2(blastBest_blastEqualParmik_alnLen_allQ);
