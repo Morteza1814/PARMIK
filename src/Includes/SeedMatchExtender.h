@@ -716,68 +716,85 @@ public:
                 }
                 /*	Finding edits in prefix MEM region*/
                 // cout << "=====preMEM extension=====" << endl;
-                LevAlign preLa_InDel_1 = extendPreMem(readMemStartInd, queryMemStartInd, read, query, 1, 1);
-                LevAlign preLa_InDel_2 = extendPreMem(readMemStartInd, queryMemStartInd, read, query, 2, 1);
+                LevAlign preLa_Sub_1_InDel_1 = extendPreMem(readMemStartInd, queryMemStartInd, read, query, 1, 1);
+                LevAlign preLa_Sub_1_InDel_2 = extendPreMem(readMemStartInd, queryMemStartInd, read, query, 2, 1);
+                LevAlign preLa_Sub_2_InDel_1 = extendPreMem(readMemStartInd, queryMemStartInd, read, query, 1, 2);
+                vector<LevAlign> preLa_withoutMEM = {preLa_Sub_1_InDel_1, preLa_Sub_1_InDel_2, preLa_Sub_2_InDel_1};
+                LevAlign preLa = comparePartialMatchRes(preLa_withoutMEM);
 
-                LevAlign preLa;
-                if(preLa_InDel_1.editDistanceTypes.size() > preLa_InDel_2.editDistanceTypes.size())
-                    preLa = preLa_InDel_1;
-                else if(preLa_InDel_1.editDistanceTypes.size() < preLa_InDel_2.editDistanceTypes.size())
-                    preLa = preLa_InDel_2;
-                else {
-                    if(preLa_InDel_1.numberOfInDel + preLa_InDel_1.numberOfSub < preLa_InDel_2.numberOfInDel + preLa_InDel_2.numberOfSub)
-                        preLa = preLa_InDel_1;
-                    else
-                        preLa = preLa_InDel_2;
-                }
+                // if(preLa_Sub_1_InDel_1.editDistanceTypes.size() > preLa_Sub_1_InDel_2.editDistanceTypes.size() && preLa_Sub_1_InDel_1.editDistanceTypes.size() > preLa_Sub_2_InDel_1.editDistanceTypes.size())
+                //     preLa = preLa_Sub_1_InDel_1;
+                // else if(preLa_Sub_1_InDel_1.editDistanceTypes.size() < preLa_Sub_1_InDel_2.editDistanceTypes.size() && preLa_Sub_2_InDel_1.editDistanceTypes.size() < preLa_Sub_1_InDel_2.editDistanceTypes.size())
+                //     preLa = preLa_Sub_1_InDel_2;
+                // else if(preLa_Sub_1_InDel_1.editDistanceTypes.size() < preLa_Sub_2_InDel_1.editDistanceTypes.size() && preLa_Sub_2_InDel_1.editDistanceTypes.size() > preLa_Sub_1_InDel_2.editDistanceTypes.size())
+                //     preLa = preLa_Sub_2_InDel_1;
+                // else {
+                //     if(preLa_Sub_1_InDel_1.numberOfInDel + preLa_Sub_1_InDel_1.numberOfSub < preLa_Sub_1_InDel_2.numberOfInDel + preLa_Sub_1_InDel_2.numberOfSub)
+                //         preLa = preLa_Sub_1_InDel_1;
+                //     else
+                //         preLa = preLa_Sub_1_InDel_2;
+                // }
 
                 preLa.partialMatchSize += memStr.size();
                 preLa.alignedQuery = preLa.alignedQuery + memStr;
                 preLa.alignedRead = preLa.alignedRead + memStr;
                 preLa.editDistanceTypes = preLa.editDistanceTypes + memLa.editDistanceTypes;
 
-                preLa_InDel_1.partialMatchSize += memStr.size();
-                preLa_InDel_1.alignedQuery = preLa_InDel_1.alignedQuery + memStr;
-                preLa_InDel_1.alignedRead = preLa_InDel_1.alignedRead + memStr;
-                preLa_InDel_1.editDistanceTypes = preLa_InDel_1.editDistanceTypes + memLa.editDistanceTypes;
+                preLa_Sub_1_InDel_1.partialMatchSize += memStr.size();
+                preLa_Sub_1_InDel_1.alignedQuery = preLa_Sub_1_InDel_1.alignedQuery + memStr;
+                preLa_Sub_1_InDel_1.alignedRead = preLa_Sub_1_InDel_1.alignedRead + memStr;
+                preLa_Sub_1_InDel_1.editDistanceTypes = preLa_Sub_1_InDel_1.editDistanceTypes + memLa.editDistanceTypes;
                 
-                preLa_InDel_2.partialMatchSize += memStr.size();
-                preLa_InDel_2.alignedQuery = preLa_InDel_2.alignedQuery + memStr;
-                preLa_InDel_2.alignedRead = preLa_InDel_2.alignedRead + memStr;
-                preLa_InDel_2.editDistanceTypes = preLa_InDel_2.editDistanceTypes + memLa.editDistanceTypes;
-                vector<LevAlign> preLas = {preLa_InDel_1, preLa_InDel_2};
+                preLa_Sub_1_InDel_2.partialMatchSize += memStr.size();
+                preLa_Sub_1_InDel_2.alignedQuery = preLa_Sub_1_InDel_2.alignedQuery + memStr;
+                preLa_Sub_1_InDel_2.alignedRead = preLa_Sub_1_InDel_2.alignedRead + memStr;
+                preLa_Sub_1_InDel_2.editDistanceTypes = preLa_Sub_1_InDel_2.editDistanceTypes + memLa.editDistanceTypes;
+
+                preLa_Sub_2_InDel_1.partialMatchSize += memStr.size();
+                preLa_Sub_2_InDel_1.alignedQuery = preLa_Sub_2_InDel_1.alignedQuery + memStr;
+                preLa_Sub_2_InDel_1.alignedRead = preLa_Sub_2_InDel_1.alignedRead + memStr;
+                preLa_Sub_2_InDel_1.editDistanceTypes = preLa_Sub_2_InDel_1.editDistanceTypes + memLa.editDistanceTypes;
+
+                vector<LevAlign> preLas = {preLa_Sub_1_InDel_1, preLa_Sub_1_InDel_2, preLa_Sub_2_InDel_1};
                 // cout << "preLa edit: " << preLa.editDistanceTypes << endl;
                 /*	Finding edits in sudfix MEM region*/
                 // cout << "=====sufMEM extension=====" << endl;
-                LevAlign sufLa_InDel_1 = extendSufMem(readMemEndInd, queryMemEndInd, read, query, 1, 1);
-                LevAlign sufLa_InDel_2 = extendSufMem(readMemEndInd, queryMemEndInd, read, query, 2, 1);
-
-                LevAlign sufLa;
-                if(sufLa_InDel_1.editDistanceTypes.size() > sufLa_InDel_2.editDistanceTypes.size())
-                    sufLa = sufLa_InDel_1;
-                else if(sufLa_InDel_1.editDistanceTypes.size() < sufLa_InDel_2.editDistanceTypes.size())
-                    sufLa = sufLa_InDel_2;
-                else {
-                    if(sufLa_InDel_1.numberOfInDel + sufLa_InDel_1.numberOfSub < sufLa_InDel_2.numberOfInDel + sufLa_InDel_2.numberOfSub)
-                        sufLa = sufLa_InDel_1;
-                    else
-                        sufLa = sufLa_InDel_2;
-                }
+                LevAlign sufLa_Sub_1_InDel_1 = extendSufMem(readMemEndInd, queryMemEndInd, read, query, 1, 1);
+                LevAlign sufLa_Sub_1_InDel_2 = extendSufMem(readMemEndInd, queryMemEndInd, read, query, 2, 1);
+                LevAlign sufLa_Sub_2_InDel_1 = extendSufMem(readMemEndInd, queryMemEndInd, read, query, 1, 2);
+                vector<LevAlign> sufLa_withoutMEM = {sufLa_Sub_1_InDel_1, sufLa_Sub_1_InDel_2, sufLa_Sub_2_InDel_1};
+                LevAlign sufLa = comparePartialMatchRes(sufLa_withoutMEM);
+                // if(sufLa_Sub_1_InDel_1.editDistanceTypes.size() > sufLa_Sub_1_InDel_2.editDistanceTypes.size())
+                //     sufLa = sufLa_Sub_1_InDel_1;
+                // else if(sufLa_Sub_1_InDel_1.editDistanceTypes.size() < sufLa_Sub_1_InDel_2.editDistanceTypes.size())
+                //     sufLa = sufLa_Sub_1_InDel_2;
+                // else {
+                //     if(sufLa_Sub_1_InDel_1.numberOfInDel + sufLa_Sub_1_InDel_1.numberOfSub < sufLa_Sub_1_InDel_2.numberOfInDel + sufLa_Sub_1_InDel_2.numberOfSub)
+                //         sufLa = sufLa_Sub_1_InDel_1;
+                //     else
+                //         sufLa = sufLa_Sub_1_InDel_2;
+                // }
                 sufLa.partialMatchSize += memStr.size();
                 sufLa.alignedQuery = memStr + sufLa.alignedQuery;
                 sufLa.alignedRead = memStr + sufLa.alignedRead;
                 sufLa.editDistanceTypes = memLa.editDistanceTypes + sufLa.editDistanceTypes;
 
-                sufLa_InDel_1.partialMatchSize += memStr.size();
-                sufLa_InDel_1.alignedQuery = memStr + sufLa_InDel_1.alignedQuery;
-                sufLa_InDel_1.alignedRead = memStr + sufLa_InDel_1.alignedRead;
-                sufLa_InDel_1.editDistanceTypes = memLa.editDistanceTypes + sufLa_InDel_1.editDistanceTypes;
+                sufLa_Sub_1_InDel_1.partialMatchSize += memStr.size();
+                sufLa_Sub_1_InDel_1.alignedQuery = memStr + sufLa_Sub_1_InDel_1.alignedQuery;
+                sufLa_Sub_1_InDel_1.alignedRead = memStr + sufLa_Sub_1_InDel_1.alignedRead;
+                sufLa_Sub_1_InDel_1.editDistanceTypes = memLa.editDistanceTypes + sufLa_Sub_1_InDel_1.editDistanceTypes;
 
-                sufLa_InDel_2.partialMatchSize += memStr.size();
-                sufLa_InDel_2.alignedQuery = memStr + sufLa_InDel_2.alignedQuery;
-                sufLa_InDel_2.alignedRead = memStr + sufLa_InDel_2.alignedRead;
-                sufLa_InDel_2.editDistanceTypes = memLa.editDistanceTypes + sufLa_InDel_2.editDistanceTypes;
-                vector<LevAlign> sufLas = {sufLa_InDel_1, sufLa_InDel_2};
+                sufLa_Sub_1_InDel_2.partialMatchSize += memStr.size();
+                sufLa_Sub_1_InDel_2.alignedQuery = memStr + sufLa_Sub_1_InDel_2.alignedQuery;
+                sufLa_Sub_1_InDel_2.alignedRead = memStr + sufLa_Sub_1_InDel_2.alignedRead;
+                sufLa_Sub_1_InDel_2.editDistanceTypes = memLa.editDistanceTypes + sufLa_Sub_1_InDel_2.editDistanceTypes;
+
+                sufLa_Sub_2_InDel_1.partialMatchSize += memStr.size();
+                sufLa_Sub_2_InDel_1.alignedQuery = memStr + sufLa_Sub_2_InDel_1.alignedQuery;
+                sufLa_Sub_2_InDel_1.alignedRead = memStr + sufLa_Sub_2_InDel_1.alignedRead;
+                sufLa_Sub_2_InDel_1.editDistanceTypes = memLa.editDistanceTypes + sufLa_Sub_2_InDel_1.editDistanceTypes;
+
+                vector<LevAlign> sufLas = {sufLa_Sub_1_InDel_1, sufLa_Sub_1_InDel_2, sufLa_Sub_2_InDel_1};
                 // cout << "sufLa edit: " << sufLa.editDistanceTypes << endl;
                 /*	Finding edits in middle MEM region*/
                 if ((readMemStartInd == 0 || queryMemStartInd == 0) && (readMemEndInd == (contigSize - 1) || queryMemEndInd == (contigSize - 1)))
