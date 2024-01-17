@@ -64,7 +64,7 @@ public:
     void printMatrix(const vector<vector<double>>& matrix) {
         for (const auto& row : matrix) {
             for (const auto& element : row) {
-                cout << element << " ";
+                cout << element << "\t";
             }
             cout << endl;
         }
