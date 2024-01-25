@@ -113,10 +113,11 @@ public:
             cout << "blast alignment does not fit to the criteria" << endl;
     }
 
-    void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, IndexContainer<uint32_t, LevAlign>& pmAlignments, vector<pair<uint32_t, uint32_t>>& alnPmBLASTHisto, const uint32_t queryCount, string alnPerQueryFileAddress)
+    void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, IndexContainer<uint32_t, LevAlign>& pmAlignments, vector<pair<uint32_t, uint32_t>>& alnPmBLASTHisto, const uint32_t queryCount, string alnPerQueryFileAddress, string parmikFnReadsFileAddress)
     {
         ofstream cmp(comparisonResultsFileAddress);
         ofstream alnPerQ(alnPerQueryFileAddress);
+        ofstream pmFn(parmikFnReadsFileAddress);
         SamReader sam(cfg.otherToolOutputFileAddress);
         BlastReader blastReader(cfg.otherToolOutputFileAddress);
         IndexContainer<uint32_t, BlastReader::Blast> blastAlignments;
@@ -265,6 +266,7 @@ public:
                             blastTP_noParmikMatches_alnLen_allQ.insert(aln.AlignmentLength);
                             blastTP_noParmikMatches_ed_allQ.insert(aln.Mismatches + aln.InDels);
                             cmp << "TP for BLAST, no PARMIK match, alnlen : " << aln.AlignmentLength << ", ed : " << aln.Mismatches + aln.InDels << ", readID: " <<  aln.readId << endl;
+                            pmFn << queryInd << "\t" << aln.readId << endl;
                         } else {
                             if (pmaln.numberOfMatches + pmaln.numberOfInDel > aln.AlignmentLength){ //PARMIK outperformed
                                 blastTP_parmikOutperfomed++;

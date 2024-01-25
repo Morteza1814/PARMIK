@@ -356,6 +356,7 @@ int run(int argc, char *argv[]) {
             //check the alignment results with another aligner
             string comparisonResultsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/compareResults.txt";
             string alnPerQueryFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/AlignmentPerQuery.txt";
+            string parmikFnReadsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/ParmikFnReads.txt";
             vector<std::pair<uint32_t, uint32_t>> alnPmVsOtherAlnSizesMap;
             // (BWA)
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
@@ -365,7 +366,7 @@ int run(int argc, char *argv[]) {
             } else if(cfg.otherTool == "BLAST" || cfg.otherTool == "blast")
             {
                 CompareWithBlast cwb;
-                cwb.comparePmWithBlast(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress);
+                cwb.comparePmWithBlast(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress, parmikFnReadsFileAddress);
             } else if(cfg.otherTool == "GT" || cfg.otherTool == "gt")
             {
                 SamReader gtSam(cfg.otherToolOutputFileAddress);

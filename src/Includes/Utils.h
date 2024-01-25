@@ -94,7 +94,8 @@ public:
     uint32_t readContigsFromFile(string fileAddress, T numberOfEntriesToRead, tsl::robin_map <uint32_t, string>& queries)
     {
         ifstream file(fileAddress);
-        if (!file) {
+        if (!file.is_open()) {
+            cerr << "fileAddress : " << fileAddress << endl;
             throw runtime_error("Failed to open the query file.");
         }
         string line;
