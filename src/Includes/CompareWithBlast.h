@@ -266,7 +266,7 @@ public:
                             blastTP_noParmikMatches_alnLen_allQ.insert(aln.AlignmentLength);
                             blastTP_noParmikMatches_ed_allQ.insert(aln.Mismatches + aln.InDels);
                             cmp << "TP for BLAST, no PARMIK match, alnlen : " << aln.AlignmentLength << ", ed : " << aln.Mismatches + aln.InDels << ", readID: " <<  aln.readId << endl;
-                            pmFn << queryInd << "\t" << aln.readId << endl;
+                            pmFn << queryInd << "\t" << aln.readId << "\t" << aln.flag << endl;
                         } else {
                             if (pmaln.numberOfMatches + pmaln.numberOfInDel > aln.AlignmentLength){ //PARMIK outperformed
                                 blastTP_parmikOutperfomed++;
