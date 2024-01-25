@@ -14,6 +14,7 @@
 #include "Includes/CompareWithBWA.h"
 #include "Includes/CompareWithBlast.h"
 #include "Includes/CompareWithGT.h"
+#include "Includes/CheckKmersFrequency.h"
 
 #define PARMIK_MODE_INDEX   0
 #define PARMIK_MODE_ALIGN   1
@@ -436,10 +437,17 @@ void testCheckBlastEditPositionsWrapper(int argc, char *argv[]){
     cwb.testCheckBlastEditPositions(stod(argv[1]), stod(argv[2]), stod(argv[3]), stod(argv[4]), argv[5], argv[6], stod(argv[7]), stod(argv[8]), stod(argv[9]));
 }
 
+void checkParmikFNalignments(int argc, char *argv[]){
+    // checkKmerFreq(string missedMatchesFileAddress, string kmerFrequLocFileAddress, string queryFileAddress, string readFileAddress, uint32_t queryCount, uint32_t readCount);
+    CheckKmerFrequency<uint64_t> ckf(15, 50, 30);
+    ckf.checkKmerFreq(argv[1], argv[2], argv[3], argv[4], stod(argv[5]), stod(argv[6]));
+}
+
 int main(int argc, char *argv[])
 {
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // testOnePair(argc, argv);
+    // checkParmikFNalignments(argc, argv);
     run(argc, argv);
     return 0;
 }
