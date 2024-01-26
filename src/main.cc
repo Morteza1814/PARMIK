@@ -433,8 +433,8 @@ int run(int argc, char *argv[]) {
 
 void testCheckBlastEditPositionsWrapper(int argc, char *argv[]){
     CompareWithBlast cwb;
-    // testCheckBlastEditPositions(uint32_t contigSize, uint32_t regionSize, uint32_t editDistance, uint32_t queryS, string qAln, sting readAln, uint32_t blastMismatches, uint32_t blastInDel);
-    cwb.testCheckBlastEditPositions(stod(argv[1]), stod(argv[2]), stod(argv[3]), stod(argv[4]), argv[5], argv[6], stod(argv[7]), stod(argv[8]), stod(argv[9]));
+    // testCheckBlastEditPositions(uint32_t contigSize, uint32_t regionSize, uint32_t editDistance, uint32_t minExactMatchLen, uint32_t queryS, string qAln, sting readAln, uint32_t blastMismatches, uint32_t blastInDel);
+    cwb.testCheckBlastEditPositions(stod(argv[1]), stod(argv[2]), stod(argv[3]), stod(argv[4]), stod(argv[5]), argv[6], argv[7], stod(argv[8]), stod(argv[9]), stod(argv[10]));
 }
 
 void checkParmikFNalignments(int argc, char *argv[]){
@@ -447,7 +447,7 @@ int main(int argc, char *argv[])
 {
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // testOnePair(argc, argv);
-    checkParmikFNalignments(argc, argv);
-    // run(argc, argv);
+    // checkParmikFNalignments(argc, argv);
+    run(argc, argv);
     return 0;
 }

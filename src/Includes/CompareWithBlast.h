@@ -31,7 +31,7 @@ public:
 
     bool hasMinConsecutiveMatches(uint32_t queryS, const string& str1, const string& str2, Config &cfg) {
         uint32_t consecutiveMatchCount = 0;
-
+    
         // Ensure that both strings have the same length for exact matching
         if (str1.length() != str2.length()) {
             cerr << "Error: Sequences have different lengths." << endl;
@@ -44,7 +44,7 @@ public:
             if (str1[i] == str2[i]) {
                 consecutiveMatchCount++;
                 if (consecutiveMatchCount >= cfg.minExactMatchLen) {
-                    if ((startPos + queryS + cfg.minExactMatchLen <= cfg.regionSize) || ((startPos + queryS >= cfg.contigSize - cfg.regionSize) && (startPos + queryS + cfg.minExactMatchLen <= cfg.contigSize))) {
+                    if ((startPos + queryS + cfg.minExactMatchLen <= cfg.regionSize) || ((startPos + queryS - 1 >= cfg.contigSize - cfg.regionSize) && (startPos + queryS + cfg.minExactMatchLen <= cfg.contigSize))) {
                         return true;  // Found enough consecutive matches inth front or back region
                     }else{
                         startPos++;
@@ -73,6 +73,7 @@ public:
         }
         //check whether the regions has at least minExactMatchLen consecutive matches
         if(!hasMinConsecutiveMatches(queryS, blastAlignment.queryAligned, blastAlignment.readAligned, cfg)){
+            // cout << "!hasMinConsecutiveMatches" << endl;
             return false;
         }
         if(cfg.editDistance >= queryS){
@@ -94,13 +95,14 @@ public:
         return true;
     }
 
-    void testCheckBlastEditPositions(uint32_t contigSize, uint32_t regionSize, uint32_t editDistance,
+    void testCheckBlastEditPositions(uint32_t contigSize, uint32_t regionSize, uint32_t editDistance, uint32_t minExactMatchLen,
     uint32_t queryS, string qAln, string readAln, uint32_t alnLen, uint32_t blastMismatches, uint32_t blastInDel){
         BlastReader::Blast blastAlignment;
         Config cfg;
         cfg.contigSize = contigSize;
         cfg.regionSize = regionSize;
         cfg.editDistance = editDistance;
+        cfg.minExactMatchLen = minExactMatchLen;
         blastAlignment.queryAligned = qAln;
         blastAlignment.readAligned = readAln;
         blastAlignment.Mismatches = blastMismatches;
@@ -243,6 +245,7 @@ public:
                         blastFP_editPos_ed_allQ.insert(aln.Mismatches + aln.InDels);
                         // cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
                     } 
+        
                     if (isFP){
                         blastFP++;
                     }
