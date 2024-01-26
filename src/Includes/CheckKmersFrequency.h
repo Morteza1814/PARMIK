@@ -126,28 +126,21 @@ public:
             string query = queries[queryId]; 
             string read = reads[readId]; 
             if (strand == 16)
-                reverse(query.begin(), query.end());
+                query = util.reverseComplement(query);
             vector<kmerT> readKmers = extractReadKmers(read);
             //check front region
             vector<kmerT> frontKmers;
             extractKmersFromRegions(query, frontKmers, frontRegion);
             outputFile << "Q: " << queryId << "\t R:" << readId << "\n front region: " << endl;
-            uint16_t consecutiveMatchCount = 0;
             for (unsigned int i = 0; i < frontKmers.size(); i++)
             {
                 for (unsigned int j = 0; j < readKmers.size(); j++)
                 {
                     if (frontKmers[i] == readKmers[j])
                     {
-                        consecutiveMatchCount++;
                         uint64_t freq =  invertedIndex.container_.count(frontKmers[i]);
-                        outputFile <<"(" << i << ", " << j << ", "<< freq <<"), " << endl;
-                        if(consecutiveMatchCount >= minExactMatchLen - k_ + 1)
-                            outputFile << ", [min exact match = " << consecutiveMatchCount << "] ";
-                    } else 
-                    {
-                        consecutiveMatchCount = 0;
-                    }
+                        outputFile <<"(" << i << ", " << j << ", " << freq << "), " << endl;
+                    } 
                 }
                 outputFile << endl;
             }
@@ -156,7 +149,6 @@ public:
             vector<kmerT> backKmers;
             extractKmersFromRegions(query, backKmers, backRegion);
             outputFile << "\n back region: " << endl;
-            consecutiveMatchCount = 0;
             for (unsigned int i = 0; i < backKmers.size(); i++)
             {
                 for (unsigned int j = 0; j < readKmers.size(); j++)
@@ -164,13 +156,8 @@ public:
                     if (backKmers[i] == readKmers[j])
                     {
                         uint64_t freq =  invertedIndex.container_.count(backKmers[i]);
-                        outputFile <<"(" << i << ", " << j << ", "<< freq <<"), " << endl;
-                        if(consecutiveMatchCount >= minExactMatchLen - k_ + 1)
-                            outputFile << ", [min exact match = " << consecutiveMatchCount << "] ";
-                    } else
-                    {
-                        consecutiveMatchCount = 0;
-                    }
+                        outputFile << "(" << i << ", " << j << ", " << freq << "), " << endl;
+                    } 
                 }
                 outputFile << endl;
             }

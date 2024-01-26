@@ -447,7 +447,7 @@ int main(int argc, char *argv[])
 {
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // testOnePair(argc, argv);
-    // checkParmikFNalignments(argc, argv);
-    run(argc, argv);
+    checkParmikFNalignments(argc, argv);
+    // run(argc, argv);
     return 0;
 }
