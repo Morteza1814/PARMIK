@@ -118,6 +118,9 @@ public:
     void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, IndexContainer<uint32_t, LevAlign>& pmAlignments, vector<pair<uint32_t, uint32_t>>& alnPmBLASTHisto, const uint32_t queryCount, string alnPerQueryFileAddress, string parmikFnReadsFileAddress)
     {
         ofstream cmp(comparisonResultsFileAddress);
+        cout << "cmp file address: " << comparisonResultsFileAddress << endl;
+        if(!cmp.is_open())
+            cout << "cmp file not opened" << endl;
         ofstream alnPerQ(alnPerQueryFileAddress);
         ofstream pmFn(parmikFnReadsFileAddress);
         SamReader sam(cfg.otherToolOutputFileAddress);
