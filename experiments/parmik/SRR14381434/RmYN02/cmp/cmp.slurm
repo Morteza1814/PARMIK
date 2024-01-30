@@ -1,0 +1,9 @@
+#!/bin/bash
+#SBATCH --job-name="parmikcmp"
+#SBATCH --error="cmp.err"
+#SBATCH --output="cmp.out"
+#SBATCH --mem=400G
+#SBATCH --time=960
+#SBATCH --nodelist=cortado04
+#SBATCH --partition=main
+/u/rgq5aw/GIT/PARMIK/src/parmik -a 2 -l blast -x -m 30 -s 50 -c 150 -e 2 -t 500 -k 15 -z 14 -i 17000000 -j 30000 -r /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR14381434/SRR14381434_reads -q /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/RmYN02_queries -f /p/lava/parmik/partialMatcherProject/tools/parmik/SRR14381434/index/ -o /p/lava/parmik/partialMatcherProject/tools/parmik/SRR14381434/RmYN02 -b /p/lava/parmik/partialMatcherProject/tools/blast/SRR14381434/RmYN02/blastn_ws30_results.out
