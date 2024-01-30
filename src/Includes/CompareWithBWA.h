@@ -193,15 +193,8 @@ public:
                 alnPerQ << queryInd << " 0 0"<< endl;
                 continue;
             }
-
-            for(auto it = bwaAlignments.begin(); it != bwaAlignments.end(); it++)
-            {
-                if(it->queryId == queryInd)
-                {
-                    bwaQueriesFound++;
-                    break;
-                }
-            }
+            cmp << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+            cmp << "Q : " << query << ", queryInd: " << queryInd << endl;
 
             for (const SamReader::Sam& aln : bwaAlignments) 
             {
@@ -210,6 +203,7 @@ public:
                     string bwaR = reads[bwaAlignment.readId];
                     if(bwaR.find('N') != string::npos || bwaR.find('n') != string::npos)
                         break;
+                    bwaQueriesFound++;
                     bwaFound = true;
                     bwaAlignment = aln;
                     bwaMatchSize = bwaSam.countMatches(bwaAlignment.cigar);
@@ -226,30 +220,71 @@ public:
             if(bwaFound)
                 bwaRead = reads[bwaAlignment.readId];
             auto range = pmAlignments.getRange(queryInd);
-            LevAlign pmAlignment;
+            size_t pmReadPerQuery = distance(pmRange.first, pmRange.second);
+            size_t bwaReadPerQuery = bwaFound ? 1 : 0 ;
+            cmp << "# of reads found by BWA : " << bwaReadPerQuery << endl;
+            cmp << "# of reads found by PARMIK : " << pmReadPerQuery << endl;
+            LevAlign bestAlnPm;
             for (auto it = range.first; it != range.second; it++) 
             {
                 pmFound = true;
                 LevAlign aln = it->second;
-                if (aln.numberOfMatches + aln.numberOfInDel > pmAlignment.numberOfMatches + pmAlignment.numberOfInDel)
+                if (aln.numberOfMatches + aln.numberOfInDel > bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel)
                 {
-                    pmAlignment = aln;
-                } else if (aln.numberOfMatches + aln.numberOfInDel == pmAlignment.numberOfMatches + pmAlignment.numberOfInDel)
+                    bestAlnPm = aln;
+                } else if (aln.numberOfMatches + aln.numberOfInDel == bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel)
                 {
-                    if (aln.numberOfInDel + aln.numberOfSub < pmAlignment.numberOfInDel + pmAlignment.numberOfSub) // InDel has the same wight as substitution
+                    if (aln.numberOfInDel + aln.numberOfSub < bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub) // InDel has the same wight as substitution
                     {
-                        pmAlignment = aln;
+                        bestAlnPm = aln;
                     }
                 }
             }
             string pmRead = "";
             if (pmFound)
             {
-                pmRead = reads[pmAlignment.readID];
+                pmRead = reads[bestAlnPm.readID];
                 pmQueriesFound++;
-                pmMatchSize = bwaSam.countMatches(pmAlignment.cigar);
+                pmMatchSize = bwaSam.countMatches(bestAlnPm.cigar);
             }
             alnPmBwaHisto.push_back(std::make_pair(pmMatchSize, bwaMatchSize));
+            if(bwaReadPerQuery == 0 && pmReadPerQuery == 0){
+                //TN
+                totalBWATN++;
+                cmp << "TN for BWA" << endl;
+            } else if(bwaReadPerQuery == 0 && pmReadPerQuery > 0) {
+                //FN
+                bwaFN++;
+                bwaFN_parmik_alnLen_allQ.insert(bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel);
+                bwaFN_parmik_ed_allQ.insert(bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub);
+                cmp << "FN for BWA, PARMIK alnlen : " << bestAlnPm.numberOfMatches + bestAlnPm.numberOfInDel << ", ed : " << bestAlnPm.numberOfInDel + bestAlnPm.numberOfSub << ", readID: " <<  bestAlnPm.readID << endl;
+            } else {
+                bool isFP = false;
+                if (bwaAlignment.editDistance + bwaAlignment.InDels > cfg.editDistance)
+                {
+                    // cmp << "with edits (Indel+Subs) [" << aln.Mismatches + aln.InDels << "] > " << cfg.editDistance << endl;
+                    isFP = true;
+                    bwaFP_editsExceed++;
+                    bwaFP_editsExceed_alnLen_allQ.insert(bwaMatchSize + bwaInDels);
+                    bwaFP_editsExceed_ed_allQ.insert(bwaAlignment.editDistance + bwaInDels);
+                } else if(bwaMatchSize + bwaInDels < cfg.regionSize) {    
+                    // cmp << "with low match size : " << blastMatchSize << endl;
+                    isFP = true;
+                    bwaFP_lowAlnLen++;
+                    bwaFP_lowAlnLen_alnLen_allQ.insert(bwaMatchSize + bwaInDels);
+                    bwaFP_lowAlnLen_ed_allQ.insert(bwaAlignment.editDistance + bwaInDels);
+                } else if (!checkBwaEditPositions(bwaAlignment, cfg)){
+                    isFP = true;
+                    bwaFP_editPos++;
+                    bwaFP_editPos_alnLen_allQ.insert(bwaMatchSize + bwaInDels);
+                    bwaFP_editPos_ed_allQ.insert(bwaAlignment.editDistance + bwaInDels);
+                    // cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
+                } 
+            }
+
+
+
+
             if (pmFound && !bwaFound)
             {
                 cmp << "PM outperformed and BWA did not found" << endl; 
