@@ -25,11 +25,8 @@ public:
         advance(it, data.size() / 2);
         T median = *it;
 
-        // Calculate mean
-        T mean = (data.size() > 0) ? sum / data.size() : 0;
-
         // Return the results as a tuple
-        return make_tuple(average, median, mean);
+        return make_tuple(average, median, sum);
     }
 
     pair<T, T> calculateStatistics2(const set<T>& data) 

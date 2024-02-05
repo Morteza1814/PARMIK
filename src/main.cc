@@ -23,7 +23,7 @@
 int argParse(int argc, char** argv, Config &cfg){
 	args::ArgumentParser parser("=========================Arguments===========================", "======================================================");
     args::ValueFlag<int> parmikModeArg(parser, "", "PARMIK mode",                              {'a', "mode"});
-    args::ValueFlag<string> bwaSamAddressArg(parser, "", "BWA MEM SAM output",              {'b', "bwa"});
+    args::ValueFlag<string> bwaSamAddressArg(parser, "", "Other tool output",              {'b', "tool"});
 	args::ValueFlag<int> contigSizeArg(parser, "", "Contig Size",                           {'c', "contigSize"});
 	args::ValueFlag<int> editDistanceArg(parser, "", "Edit Distance (i/d/s)",               {'e', "editDistance"});
 	args::ValueFlag<string> offlineIndexAddressArg(parser, "", "Offline Index Address",     {'f', "offlineIndex"});
@@ -363,7 +363,7 @@ int run(int argc, char *argv[]) {
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
             {
                 ComparatorWithBWA cwb;
-                cwb.comparePmWithBWA(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress);
+                // cwb.comparePmWithBWA(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress);
             } else if(cfg.otherTool == "BLAST" || cfg.otherTool == "blast")
             {
                 CompareWithBlast cwb;
