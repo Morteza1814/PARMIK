@@ -254,8 +254,8 @@ public:
         cmp << left << setw(80) << "# Of readIDs that GT found but PM did not : " << gtReadIdNotFoundInPM << endl;
         cmp << left << setw(80) << "# Of queries that neigther GT nor PM found any match : " << nonePmGTFoundAlignmentForQuery << endl;
         cmp << left << setw(80) << "# Of queries contains N: " << numberOfQueryContainN << endl;
-        cmp << left << setw(80) << "# of Read Per Query found by PM" << "average: " <<  get<0>(pmReadPerQueryTuple) << ", median: " <<  get<1>(pmReadPerQueryTuple) << ", mean: " << get<2>(pmReadPerQueryTuple)<< endl;
-        cmp << left << setw(80) << "# of Read Per Query found by GT" << "average: " <<  get<0>(gtReadPerQueryTuple) << ", median: " <<  get<1>(gtReadPerQueryTuple) << ", mean: " << get<2>(gtReadPerQueryTuple)<< endl;
+        cmp << left << setw(80) << "# of Read Per Query found by PM" << "average: " <<  get<0>(pmReadPerQueryTuple) << ", median: " <<  get<1>(pmReadPerQueryTuple) << ", sum: " << get<2>(pmReadPerQueryTuple)<< endl;
+        cmp << left << setw(80) << "# of Read Per Query found by GT" << "average: " <<  get<0>(gtReadPerQueryTuple) << ", median: " <<  get<1>(gtReadPerQueryTuple) << ", sum: " << get<2>(gtReadPerQueryTuple)<< endl;
         cmp.close();
         alnPerQ.close();
     }

@@ -1039,7 +1039,7 @@ public:
             }
         }
         tuple<double, double, double> seedAndExtend_timesTuple = utildouble.calculateStatistics(seedAndExtend_times);
-        printf("seed find and extension time (micro second) for queries up to q(%d) => [average: %f, median: %f, mean: %f]\n", queryCount, get<0>(seedAndExtend_timesTuple), get<1>(seedAndExtend_timesTuple), get<2>(seedAndExtend_timesTuple));
+        printf("seed find and extension time (micro second) for queries up to q(%d) => [average: %f, median: %f, sum: %f]\n", queryCount, get<0>(seedAndExtend_timesTuple), get<1>(seedAndExtend_timesTuple), get<2>(seedAndExtend_timesTuple));
         cout << "# of queries that pm did not find match : " << pmNotFoundMatchQueries << endl;
         pAln.close();
     }
