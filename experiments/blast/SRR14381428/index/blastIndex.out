@@ -1,0 +1,11 @@
+
+
+Building a new DB, current time: 01/27/2024 11:32:23
+New DB name:   /p/lava/parmik/partialMatcherProject/tools/blast/SRR14381428/index/blastIndex
+New DB title:  /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR14381428/SRR14381428_reads
+Sequence type: Nucleotide
+Keep MBits: T
+Maximum file size: 3000000000B
+Adding sequences from FASTA; added 31525405 sequences in 490.107 seconds.
+
+

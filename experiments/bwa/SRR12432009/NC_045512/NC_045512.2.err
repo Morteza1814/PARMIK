@@ -1,0 +1,6 @@
+[M::bwa_idx_load_from_disk] read 0 ALT contigs
+[M::process] read 29754 sequences (4463100 bp)...
+[M::mem_process_seqs] Processed 29754 reads in 46.655 CPU sec, 46.673 real sec
+[main] Version: 0.7.17-r1198-dirty
+[main] CMD: /p/lava/parmik/bwa/bwa mem /p/lava/parmik/partialMatcherProject/tools/bwa/SRR12432009/index/index /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries
+[main] Real time: 102.723 sec; CPU: 65.126 sec

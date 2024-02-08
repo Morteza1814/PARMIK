@@ -1,0 +1,6 @@
+[M::bwa_idx_load_from_disk] read 0 ALT contigs
+[M::process] read 18810 sequences (2821500 bp)...
+[M::mem_process_seqs] Processed 18810 reads in 2.070 CPU sec, 2.070 real sec
+[main] Version: 0.7.17-r1198-dirty
+[main] CMD: /u/rgq5aw/GIT/GenomePartialMatching/bwa/bwa mem /bigtemp/rgq5aw/partialMatcherProject/tools/bwa/Index/SRR14381428/SRR14381428_unique /bigtemp/rgq5aw/partialMatcherProject/datasets/queryFiles/ebolaGenome/query_150_AF086833.fasta
+[main] Real time: 108.310 sec; CPU: 41.460 sec
