@@ -362,7 +362,7 @@ int run(int argc, char *argv[]) {
             // (BWA)
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
             {
-                ComparatorWithBWA cwb;
+                // ComparatorWithBWA cwb;
                 // cwb.comparePmWithBWA(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress);
             } else if(cfg.otherTool == "BLAST" || cfg.otherTool == "blast")
             {
