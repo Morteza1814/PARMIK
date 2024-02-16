@@ -9,12 +9,11 @@
 #include <regex>
 #include <map>
 #include "Utils.h"
+#include "sw/ssw_cpp.h"
 
 using namespace std;
 
-class Aligner {
-public:
-  typedef struct Alignment
+typedef struct Alignment
   {
       int readID = -1;            //read ID of the alignment
       int queryID = -1;            //query ID of the alignment
@@ -27,9 +26,9 @@ public:
       int partialMatchSize = 0;       //partial match region size
       vector<unsigned int> editPositions;  //the positions of the edit distances in the partial match region
       string cigar;               //CIGAR string of the alignment
-      uint32_t numberOfSub = 0;       //number of substitutions
-      uint32_t numberOfInDel = 0;       //number of InDel
-      uint32_t numberOfMatches = 0;       //number of matched bp
+      uint16_t substitutions = 0;       //number of substitutions
+      uint16_t inDels = 0;       //number of InDel
+      uint16_t matches = 0;       //number of matched bp
       uint16_t readRegionStartPos = 0;
       uint16_t readRegionEndPos = 0;
       uint16_t queryRegionStartPos = 0;
@@ -37,6 +36,61 @@ public:
       uint16_t flag = 0;                  // determines the strand for now
       uint16_t score = 0;
   } Alignment;
+
+class Aligner {
+public:
+
+  void parseCigar(const std::string& cigar, uint16_t& matches, uint16_t& substitutions, uint16_t& inDels, std::vector<unsigned int>& editLocations) {
+    substitutions = inDels = 0;
+    int currentPos = 0; // Current position in the read
+    int len = cigar.length();
+
+    for (int i = 0; i < len; ++i) {
+        // Parse the numeric part of CIGAR operation
+        int num = 0;
+        while (i < len && isdigit(cigar[i])) {
+            num = num * 10 + (cigar[i] - '0');
+            ++i;
+        }
+
+        // Extract the CIGAR operation
+        char op = cigar[i];
+
+        // Perform actions based on CIGAR operation
+        switch (op) {
+            case '=':
+                // Match or mismatch (substitution)
+                currentPos += num;
+                matches += num;
+                break;
+            case 'X':
+                // Substitution
+                substitutions += num;
+                for (int j = 0; j < num; ++j) {
+                    editLocations.push_back(currentPos + j);
+                }
+                currentPos += num;
+                break;
+            case 'I':
+            case 'D':
+                // Insertion
+                inDels += num;
+                for (int j = 0; j < num; ++j) {
+                    editLocations.push_back(currentPos + j);
+                }
+                currentPos += num;
+                break;
+            case 'S':
+                // Soft clipping
+                currentPos += num;
+                break;
+            default:
+                // Unsupported CIGAR operation
+                std::cerr << "Unsupported CIGAR operation: " << op << std::endl;
+                break;
+        }
+    }
+}
 
   void smithWatermanAligner(Alignment &aln)
   {
@@ -59,6 +113,7 @@ public:
     aln.cigar = alignment.cigar_string;
     aln.editDistance = alignment.mismatches;
     aln.score = alignment.sw_score;
+    parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editPositions);
   }
 
 };

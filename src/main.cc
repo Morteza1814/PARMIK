@@ -15,6 +15,7 @@
 #include "Includes/CompareWithBlast.h"
 #include "Includes/CompareWithGT.h"
 #include "Includes/CheckKmersFrequency.h"
+#include "Includes/Aligner.h"
 
 #define PARMIK_MODE_INDEX   0
 #define PARMIK_MODE_ALIGN   1
@@ -443,11 +444,35 @@ void checkParmikFNalignments(int argc, char *argv[]){
     ckf.checkKmerFreq(argv[1], argv[2], argv[3], argv[4], stod(argv[5]), stod(argv[6]));
 }
 
+void testAligner(int argc, char *argv[]){
+    Alignment aln;
+    aln.query = argv[1];
+    aln.read = argv[2];
+    Aligner aligner;
+    aligner.smithWatermanAligner(aln);
+    cout << "Score: " << aln.score << endl;
+    cout << "cigar: " << aln.cigar << endl;
+    cout << "read start pos: " << aln.readRegionStartPos << endl;
+    cout << "read end pos: " << aln.readRegionEndPos << endl;
+    cout << "query start pos: " << aln.queryRegionStartPos << endl;
+    cout << "query end pos: " << aln.queryRegionEndPos << endl;
+    cout << "substitutions: " << aln.substitutions << endl;
+    cout << "inDels: " << aln.inDels << endl;
+    cout << "matches: " << aln.matches << endl;
+    cout << "editDistance: " << aln.editDistance << endl;
+    cout << "edit pos: ";
+    for(auto it = aln.editPositions.begin(); it!= aln.editPositions.end(); it++){
+        cout << *it << " ";
+    }
+    cout << endl;
+}
+
 int main(int argc, char *argv[])
 {
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // testOnePair(argc, argv);
     // checkParmikFNalignments(argc, argv);
-    run(argc, argv);
+    testAligner(argc, argv);
+    // run(argc, argv);
     return 0;
 }
