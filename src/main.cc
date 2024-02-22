@@ -449,7 +449,7 @@ void testAligner(int argc, char *argv[]){
     aln.query = argv[1];
     aln.read = argv[2];
     Aligner aligner;
-    aligner.smithWatermanAligner(aln);
+    aligner.smithWatermanAligner(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
     cout << "Score: " << aln.score << endl;
     cout << "cigar: " << aln.cigar << endl;
     cout << "read start pos: " << aln.readRegionStartPos << endl;
@@ -472,7 +472,7 @@ int main(int argc, char *argv[])
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // testOnePair(argc, argv);
     // checkParmikFNalignments(argc, argv);
-    testAligner(argc, argv);
-    // run(argc, argv);
+    // testAligner(argc, argv);
+    run(argc, argv);
     return 0;
 }
