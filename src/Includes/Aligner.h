@@ -45,10 +45,75 @@ private:
 public:
     Aligner(size_t R, uint32_t a, uint32_t c) : regionSize(R), allowedEditDistance(a), contigSize(c){}
 
+    string convertCigarToStr(const string& cigar) {
+        stringstream simplifiedCigar;
+        int len = cigar.length();
+
+        for (int i = 0; i < len; ++i) {
+            // Parse the numeric part of CIGAR operation
+            int num = 0;
+            while (i < len && isdigit(cigar[i])) {
+                num = num * 10 + (cigar[i] - '0');
+                ++i;
+            }
+
+            // Extract the CIGAR operation
+            char op = cigar[i];
+
+            // Perform actions based on CIGAR operation
+            switch (op) {
+                case '=':
+                    // Match or mismatch (substitution)
+                    simplifiedCigar << string(num, '=');
+                    break;
+                case 'X':
+                    // Match or mismatch (substitution)
+                    simplifiedCigar << string(num, 'X');
+                    break;
+                case 'I':
+                    // Insertion
+                    simplifiedCigar << string(num, 'I');
+                    break;
+                case 'D':
+                    // Deletion
+                    simplifiedCigar << string(num, 'D');
+                    break;
+                case 'S':
+                    // Soft clipping
+                    simplifiedCigar << string(num, 'S');
+                    break;
+                default:
+                    // Handle other CIGAR operations if needed
+                    break;
+            }
+        }
+
+        return simplifiedCigar.str();
+    }
+
+    string convertCigarToStr(const string cigarStr) {
+        stringstream cigar;
+        int len = cigarStr.length();
+        char prev = cigarStr[0];
+        uint16_t num = 0;
+        for (int i = 0; i < len; ++i) {
+            char cur = cigarStr[i];
+            if (prev != cur)
+            {
+                num = 0;
+                cigar << num << prev;
+            }
+            num++;
+        }
+        cigar << num << prev;
+        return cigar.str();
+    }
+
     void findMemAndExtend(Alignment & aln){
         uint16_t memSize = aln.editLocations[0];
         int start = -1, end = 0;
         int memStart = -1, memEnd = -1;
+        string cigarStr = convertCigarToStr(aln.cigar);
         //find MEM
         uint16_t memSize = 0, maxMemSize = 0;
         for (int i = 0; i < aln.editLocations.size(); ++i) {
@@ -161,24 +226,47 @@ public:
             maxAlnStartPos = 0;
         } else {
             maxAlnStartPos = aln.editLocations[maxAlnStart] + 1;
+            for (int i = 0; i <= maxAlnStart; ++i) {
+                aln.editLocations.erase(aln.editLocations.begin() + i);
+            }
         }
         if (maxAlnEnd == -1) {
             maxAlnEndPos = aln.queryRegionEndPos - aln.queryRegionStartPos;
         } else {
             maxAlnEndPos = aln.editLocations[maxAlnEnd] - 1;
+            for (int i = maxAlnEnd; i < aln.editLocations.size(); ++i) {
+                aln.editLocations.erase(aln.editLocations.begin() + i);
+            }
         }
+        //Update aln
+        aln.editDistance = 0;
+        // uint16_t s=0,e=0;
+        // if (maxAlnStart < 0 && maxAlnEnd < 0) {
+        //     //no change in edit locations
+        // } else if (maxAlnStart < 0 && maxAlnEnd >= 0) {
+        //     aln.editDistance -= (aln.editLocations.size() - 1) - (maxAlnEnd - 1);
+        // } else if (maxAlnStart >= 0 && maxAlnEnd < 0) {
+        //     aln.editDistance -= (maxAlnStart + 1);
+        // } else {
+        //     aln.editDistance -= (maxAlnStart + 1);
+        //     aln.editDistance -= (aln.editLocations.size() - 1) - (maxAlnEnd - 1);
+        // }
         // set the region start and end in R and Q
         aln.readRegionStartPos = maxAlnStartPos + aln.readRegionStartPos;
         aln.readRegionEndPos = maxAlnEndPos + aln.readRegionStartPos;
         aln.queryRegionStartPos = maxAlnStartPos + aln.queryRegionStartPos;
         aln.queryRegionEndPos = maxAlnEndPos + aln.queryRegionStartPos;
         //change the cigar based on the new region
-        std::string newCigar = "";            
+        cigarStr = cigarStr.substr(maxAlnStartPos, maxAlnEndPos + 1);
+        aln.cigar = convertCigarToStr(cigarStr);
+        aln.matches = 0;
+        aln.substitutions = 0;
+        aln.inDels = 0;
+        parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels);
     }  
 
-    Alignment align(uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
+    void align(Alignment &aln,uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
     {
-        Alignment aln;
         //prepare the aln
         smithWatermanAligner(aln, matchPen, subPen, gapoPen, gapextPen);
         if (aln.editDistance <= allowedEditDistance) {
@@ -193,8 +281,35 @@ public:
 
     }
 
-    void parseCigar(const std::string& cigar, uint16_t& matches, uint16_t& substitutions, uint16_t& inDels, std::vector<unsigned int>& editLocations) {
+    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, map<contigIndT, LevAlign> &pmres, bool isForwardStrand, string parmikAlignments)
+    {
+        for (size_t i = 0; i < queryCount; i++)
+        {
+            auto itq = queries.find(i);
+            if (itq == queries.end())
+                continue;
+            string query = itq->second;
+            if (query.find('n') != string::npos || query.find('N') != string::npos)
+                continue;
+            // read the candidate reads of cheap k-mer filter of front
+            auto frontReadSet = frontMinThCheapSeedReads.get(i);
+            map<contigIndT, string> frontCandidateReads = readContigsFromMap(reads, frontReadSet);
+            for (auto it = frontCandidateReads.begin(); it != frontCandidateReads.end(); it++)
+            {
+                Alignment aln;
+                aln.query = query;
+                aln.read = it->second;
+                align(aln, 1, 1, 1, 1);
+                aln.queryID = i;
+                aln.readID = it->first;
+                if (!isForwardStrand) aln.flag = 16;
+            }
+        }
+    }
+
+    vector<unsigned int> parseCigar(const string& cigar, uint16_t& matches, uint16_t& substitutions, uint16_t& inDels) {
         substitutions = inDels = 0;
+        vector<unsigned int> editLocations
         int currentPos = 0; // Current position in the read
         int len = cigar.length();
 
@@ -239,10 +354,11 @@ public:
                     break;
                 default:
                     // Unsupported CIGAR operation
-                    std::cerr << "Unsupported CIGAR operation: " << op << std::endl;
+                    cerr << "Unsupported CIGAR operation: " << op << endl;
                     break;
             }
         }
+        return editLocations;
     }
 
     void smithWatermanAligner(Alignment &aln, uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
@@ -266,7 +382,7 @@ public:
         aln.cigar = alignment.cigar_string;
         aln.editDistance = alignment.mismatches;
         aln.score = alignment.sw_score;
-        parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
+        aln.editLocations = parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
     }
 
 };
