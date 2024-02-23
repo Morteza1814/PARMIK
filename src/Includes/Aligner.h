@@ -239,7 +239,6 @@ public:
             }
         }
         //Update aln
-        aln.editDistance = 0;
         // uint16_t s=0,e=0;
         // if (maxAlnStart < 0 && maxAlnEnd < 0) {
         //     //no change in edit locations
@@ -262,23 +261,27 @@ public:
         aln.matches = 0;
         aln.substitutions = 0;
         aln.inDels = 0;
+        aln.partialMatchSize = aln.readRegionEndPos - aln.readRegionStartPos + 1;
         parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels);
+        aln.editDistance = aln.substitutions + aln.inDels;
     }  
 
-    void align(Alignment &aln,uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
+    bool align(Alignment &aln,uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
     {
         //prepare the aln
         smithWatermanAligner(aln, matchPen, subPen, gapoPen, gapextPen);
         if (aln.editDistance <= allowedEditDistance) {
-            //if (checkAlnBasedOnCriteria(aln)) 
-            // return aln;
+            if (checkAlnBasedOnCriteria(aln)) 
+                return true;
             //else return NuLL
         } else {
             //find the mem
             findMemAndExtend(aln);
-
-        }
-
+            //check the alignment based on the criteria
+            if (checkAlnBasedOnCriteria(aln))
+                return true;
+        }  
+        return false;
     }
 
     void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, map<contigIndT, LevAlign> &pmres, bool isForwardStrand, string parmikAlignments)
@@ -299,7 +302,7 @@ public:
                 Alignment aln;
                 aln.query = query;
                 aln.read = it->second;
-                align(aln, 1, 1, 1, 1);
+                bool frontFound = align(aln, 1, 1, 1, 1);
                 aln.queryID = i;
                 aln.readID = it->first;
                 if (!isForwardStrand) aln.flag = 16;
