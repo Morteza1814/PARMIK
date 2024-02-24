@@ -277,10 +277,13 @@ int run(int argc, char *argv[]) {
                     tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
                     ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
                     // ckpm50.printArrays();
-                    SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
-                    pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
+                    // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
+                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.minExactMatchLen);
+                    // pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
+                    aligner.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, true, parmikAlignmentsAddress);
                     //do it again for the reverse strand
-                    pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
+                    // pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
+                    aligner.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress);
                 }
             } else
             {
@@ -319,10 +322,13 @@ int run(int argc, char *argv[]) {
                     tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
                     ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
                     // ckpm50.printArrays();
-                    SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
-                    pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
+                    // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
+                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.minExactMatchLen);
+                    // pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
+                    aligner.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, true, parmikAlignmentsAddress);
                     //do it again for the reverse strand
-                    pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
+                    // pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
+                    aligner.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress);
                 }
             }
         
@@ -448,7 +454,7 @@ void testAligner(int argc, char *argv[]){
     Alignment aln;
     aln.query = argv[1];
     aln.read = argv[2];
-    Aligner aligner;
+    Aligner <uint32_t> aligner(50,2,150,30);
     aligner.smithWatermanAligner(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
     cout << "Score: " << aln.score << endl;
     cout << "cigar: " << aln.cigar << endl;
@@ -461,7 +467,7 @@ void testAligner(int argc, char *argv[]){
     cout << "matches: " << aln.matches << endl;
     cout << "editDistance: " << aln.editDistance << endl;
     cout << "edit pos: ";
-    for(auto it = aln.editPositions.begin(); it!= aln.editPositions.end(); it++){
+    for(auto it = aln.editLocations.begin(); it!= aln.editLocations.end(); it++){
         cout << *it << " ";
     }
     cout << endl;

@@ -22,28 +22,30 @@ typedef struct Alignment
     string alignedRead;         //the region in read aligned for the partial match
     string alignedQuery;        //the region in query aligned for the partial match
     string editDistanceTypes;   //edit distance types of the region of the partial match
-    unsigned int editDistance = 0;           //number of edit distances detected in the region
-    int partialMatchSize = 0;       //partial match region size
+    size_t editDistance = 0;           //number of edit distances detected in the region
+    size_t partialMatchSize = 0;       //partial match region size
     vector<unsigned int> editLocations;  //the positions of the edit distances in the partial match region
     string cigar;               //CIGAR string of the alignment
-    uint16_t substitutions = 0;       //number of substitutions
-    uint16_t inDels = 0;       //number of InDel
-    uint16_t matches = 0;       //number of matched bp
-    uint16_t readRegionStartPos = 0;
-    uint16_t readRegionEndPos = 0;
-    uint16_t queryRegionStartPos = 0;
-    uint16_t queryRegionEndPos = 0;
-    uint16_t flag = 0;                  // determines the strand for now
-    uint16_t score = 0;
+    size_t substitutions = 0;       //number of substitutions
+    size_t inDels = 0;       //number of InDel
+    size_t matches = 0;       //number of matched bp
+    size_t readRegionStartPos = 0;
+    size_t readRegionEndPos = 0;
+    size_t queryRegionStartPos = 0;
+    size_t queryRegionEndPos = 0;
+    size_t flag = 0;                  // determines the strand for now
+    size_t score = 0;
 } Alignment;
 
+template <typename contigIndT>
 class Aligner {
 private:
     size_t regionSize;
-    uint32_t allowedEditDistance;
-    uint32_t contigSize;
+    size_t allowedEditDistance;
+    size_t contigSize;
+    size_t minExactMatchLength;
 public:
-    Aligner(size_t R, uint32_t a, uint32_t c) : regionSize(R), allowedEditDistance(a), contigSize(c){}
+    Aligner(size_t R, size_t a, size_t c, size_t m) : regionSize(R), allowedEditDistance(a), contigSize(c), minExactMatchLength(m) {}
 
     string convertCigarToStr(const string& cigar) {
         stringstream simplifiedCigar;
@@ -91,7 +93,7 @@ public:
         return simplifiedCigar.str();
     }
 
-    string convertCigarToStr(const string cigarStr) {
+    string convertStrToCigar(const string cigarStr) {
         stringstream cigar;
         int len = cigarStr.length();
         char prev = cigarStr[0];
@@ -109,14 +111,13 @@ public:
         return cigar.str();
     }
 
-    void findMemAndExtend(Alignment & aln){
-        uint16_t memSize = aln.editLocations[0];
+    void findMemAndExtend(Alignment &aln){
         int start = -1, end = 0;
         int memStart = -1, memEnd = -1;
         string cigarStr = convertCigarToStr(aln.cigar);
         //find MEM
         uint16_t memSize = 0, maxMemSize = 0;
-        for (int i = 0; i < aln.editLocations.size(); ++i) {
+        for (size_t i = 0; i < aln.editLocations.size(); ++i) {
             if (i == 0) {
                 end = i;
                 memSize = aln.editLocations[i];
@@ -163,7 +164,7 @@ public:
         //extend to the right as far as possible
         if (ed < allowedEditDistance)
         {
-            while (end < aln.editLocations.size() && ed < allowedEditDistance)
+            while ((uint32_t) end < aln.editLocations.size() && ed < allowedEditDistance)
             {
                 end++;
                 ed++;
@@ -171,7 +172,7 @@ public:
             if (ed >= allowedEditDistance)
             {
                 ed = allowedEditDistance;
-                if (end >= aln.editLocations.size())
+                if ((uint32_t) end >= aln.editLocations.size())
                 {
                     end = -1;
                 }
@@ -182,7 +183,7 @@ public:
             }
         }
         // calculate the largest aligment
-        uint16_t maxAlnSize = 0, uint16_t alnSize = 0;
+        uint16_t maxAlnSize = 0, alnSize = 0;
         if (end == -1 && start == -1) {
             alnSize = aln.queryRegionEndPos - aln.queryRegionStartPos;
         } else if (end == -1 && start > -1) {
@@ -196,9 +197,9 @@ public:
         int maxAlnStart = start, maxAlnEnd = end;
         start++;
         end++;
-        while (start < memStart && end <= aln.editLocations.size())
+        while (start < memStart && (uint32_t) end <= aln.editLocations.size())
         {
-            if (end >= aln.editLocations.size())
+            if ((uint32_t) end >= aln.editLocations.size())
             {
                 end = -1;
             }
@@ -234,7 +235,7 @@ public:
             maxAlnEndPos = aln.queryRegionEndPos - aln.queryRegionStartPos;
         } else {
             maxAlnEndPos = aln.editLocations[maxAlnEnd] - 1;
-            for (int i = maxAlnEnd; i < aln.editLocations.size(); ++i) {
+            for (size_t i = maxAlnEnd; i < aln.editLocations.size(); ++i) {
                 aln.editLocations.erase(aln.editLocations.begin() + i);
             }
         }
@@ -257,7 +258,7 @@ public:
         aln.queryRegionEndPos = maxAlnEndPos + aln.queryRegionStartPos;
         //change the cigar based on the new region
         cigarStr = cigarStr.substr(maxAlnStartPos, maxAlnEndPos + 1);
-        aln.cigar = convertCigarToStr(cigarStr);
+        aln.cigar = convertStrToCigar(cigarStr);
         aln.matches = 0;
         aln.substitutions = 0;
         aln.inDels = 0;
@@ -266,26 +267,79 @@ public:
         aln.editDistance = aln.substitutions + aln.inDels;
     }  
 
-    bool align(Alignment &aln,uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
+    void align(Alignment &aln,uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
     {
-        //prepare the aln
+        //do the alignment using smith waterman
         smithWatermanAligner(aln, matchPen, subPen, gapoPen, gapextPen);
-        if (aln.editDistance <= allowedEditDistance) {
-            if (checkAlnBasedOnCriteria(aln)) 
-                return true;
-            //else return NuLL
-        } else {
-            //find the mem
+        if (aln.editDistance > allowedEditDistance) {
+            // exclude the additional edit distance
             findMemAndExtend(aln);
-            //check the alignment based on the criteria
-            if (checkAlnBasedOnCriteria(aln))
-                return true;
         }  
+    }
+
+     void dumpSam(ofstream &oSam, Alignment l)
+    {
+        oSam << l.queryID << '\t' << l.flag << '\t' << l.readID << '\t' << "*" << '\t'
+                << "*" << '\t' << l.cigar << '\t' << "*" << '\t' << "*" << '\t' << "*" << '\t' << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.substitutions) << '\n';
+    }
+
+    bool checkAlingmentCriteria(Alignment l)
+    {
+        //TODO: did not check whether there is a min exact match region in the partial match region
+        bool frontRegionDismissed = false, backRegionDismissed = false;
+        if(allowedEditDistance >= l.queryRegionStartPos){
+            auto editsAllwedInFrontRegion = allowedEditDistance - l.queryRegionStartPos ;
+            if(l.substitutions + l.inDels > editsAllwedInFrontRegion)
+                frontRegionDismissed = true;
+        } else {
+            frontRegionDismissed = true;
+        }
+        if(l.queryRegionStartPos + l.partialMatchSize >= contigSize - allowedEditDistance){ //query start position + alignment len should be larger than conig size - allowed edit
+            auto editsAllwedInBackRegion = l.queryRegionStartPos + l.partialMatchSize - (contigSize - allowedEditDistance);
+            if(l.substitutions + l.inDels > editsAllwedInBackRegion)
+                backRegionDismissed = true;
+        }else {
+            backRegionDismissed = true;
+        }
+        if(frontRegionDismissed && backRegionDismissed)
+            return false;
+        if(l.queryRegionStartPos > (contigSize - regionSize + allowedEditDistance)){ //first bp of back region starts from 100
+            return false;
+        }
+        if((l.editDistance <= allowedEditDistance) && (((uint32_t)l.partialMatchSize >= (uint32_t)regionSize)))
+        {
+            if(l.queryRegionStartPos + minExactMatchLength <= regionSize || l.queryRegionEndPos - minExactMatchLength >= contigSize - regionSize)
+                return true;
+        }
         return false;
     }
 
-    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, map<contigIndT, LevAlign> &pmres, bool isForwardStrand, string parmikAlignments)
+    map<contigIndT, string> readContigsFromMap(tsl::robin_map<uint32_t, string>& reads,  set<contigIndT>& contigIdSet)
     {
+        contigIndT setElement;
+        unsigned int setInd = 0;
+        map<contigIndT, string> readContigs;
+        while (true)
+        {        
+            if (setInd >= 0 && setInd < contigIdSet.size())
+            {
+                auto it = contigIdSet.begin();
+                advance(it, setInd);
+                setElement = *it;
+                setInd++;
+                readContigs[setElement] = reads[setElement];
+            }
+            else
+            {
+                break;
+            }
+        }
+        return readContigs;
+    }
+
+    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, bool isForwardStrand, string parmikAlignments)
+    {
+        ofstream pAln(parmikAlignments, ios::app);
         for (size_t i = 0; i < queryCount; i++)
         {
             auto itq = queries.find(i);
@@ -297,22 +351,50 @@ public:
             // read the candidate reads of cheap k-mer filter of front
             auto frontReadSet = frontMinThCheapSeedReads.get(i);
             map<contigIndT, string> frontCandidateReads = readContigsFromMap(reads, frontReadSet);
+            tsl::robin_map <uint32_t, Alignment> alignments;
             for (auto it = frontCandidateReads.begin(); it != frontCandidateReads.end(); it++)
             {
                 Alignment aln;
                 aln.query = query;
                 aln.read = it->second;
-                bool frontFound = align(aln, 1, 1, 1, 1);
+                align(aln, 1, 1, 1, 1);
+                //check the alignment based on the criteria
                 aln.queryID = i;
                 aln.readID = it->first;
                 if (!isForwardStrand) aln.flag = 16;
+                if (checkAlingmentCriteria(aln))
+                    alignments.insert(make_pair(it->first, aln));
+            }
+            auto backReadSet = backMinThCheapSeedReads.get(i);
+            map<contigIndT, string> backCandidateReads = readContigsFromMap(reads, backReadSet);
+            for (auto it = backCandidateReads.begin(); it != backCandidateReads.end(); it++)
+            {
+                Alignment aln;
+                aln.query = query;
+                aln.read = it->second;
+                align(aln, 1, 1, 1, 1);
+                //check the alignment based on the criteria
+                aln.queryID = i;
+                aln.readID = it->first;
+                if (!isForwardStrand) aln.flag = 16;
+                if (checkAlingmentCriteria(aln))
+                {
+                    auto ita = alignments.find(it->first);
+                    if (ita== alignments.end()){
+                        alignments.insert(make_pair(it->first, aln));
+                    }
+                }
+            }
+            for (auto it = alignments.begin(); it!= alignments.end(); it++)
+            {
+                dumpSam(pAln, it->second);
             }
         }
     }
 
-    vector<unsigned int> parseCigar(const string& cigar, uint16_t& matches, uint16_t& substitutions, uint16_t& inDels) {
+    vector<unsigned int> parseCigar(const string& cigar, size_t& matches, size_t& substitutions, size_t& inDels) {
         substitutions = inDels = 0;
-        vector<unsigned int> editLocations
+        vector<unsigned int> editLocations;
         int currentPos = 0; // Current position in the read
         int len = cigar.length();
 
@@ -385,7 +467,7 @@ public:
         aln.cigar = alignment.cigar_string;
         aln.editDistance = alignment.mismatches;
         aln.score = alignment.sw_score;
-        aln.editLocations = parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
+        aln.editLocations = parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels);
     }
 
 };
