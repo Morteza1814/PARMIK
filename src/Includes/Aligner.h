@@ -95,18 +95,19 @@ public:
 
     string convertStrToCigar(const string cigarStr) {
         stringstream cigar;
-        int len = cigarStr.length();
         char prev = cigarStr[0];
         uint16_t num = 0;
-        for (int i = 0; i < len; ++i) {
+        for (size_t i = 1; i < cigarStr.length(); ++i) {
             char cur = cigarStr[i];
+            num++;
             if (prev != cur)
             {
-                num = 0;
                 cigar << num << prev;
+                num = 0;
+                prev = cur;
             }
-            num++;
         }
+        num++;
         cigar << num << prev;
         return cigar.str();
     }
@@ -115,6 +116,7 @@ public:
         int start = -1, end = 0;
         int memStart = -1, memEnd = -1;
         string cigarStr = convertCigarToStr(aln.cigar);
+        // cout << "cigarStr: " << cigarStr << endl;
         //find MEM
         uint16_t memSize = 0, maxMemSize = 0;
         for (size_t i = 0; i < aln.editLocations.size(); ++i) {
@@ -138,6 +140,7 @@ public:
             memStart = aln.editLocations.size() - 1;
             memEnd = -1;
         }
+        cout << "MEM start: " << memStart << " end: " << memEnd << " maxMemSize: " << maxMemSize << endl;
         //extend to the left as far as possible
         start = memStart;
         end = memEnd;
@@ -252,12 +255,15 @@ public:
         //     aln.editDistance -= (aln.editLocations.size() - 1) - (maxAlnEnd - 1);
         // }
         // set the region start and end in R and Q
-        aln.readRegionStartPos = maxAlnStartPos + aln.readRegionStartPos;
+        cout << "maxAlnStart: " << maxAlnStart << " maxAlnEnd: " << maxAlnEnd << endl;
+        cout << "maxAlnStartPos: " << maxAlnStartPos << " maxAlnEndPos: " << maxAlnEndPos << endl;
         aln.readRegionEndPos = maxAlnEndPos + aln.readRegionStartPos;
-        aln.queryRegionStartPos = maxAlnStartPos + aln.queryRegionStartPos;
+        aln.readRegionStartPos = maxAlnStartPos + aln.readRegionStartPos;
         aln.queryRegionEndPos = maxAlnEndPos + aln.queryRegionStartPos;
+        aln.queryRegionStartPos = maxAlnStartPos + aln.queryRegionStartPos;
         //change the cigar based on the new region
-        cigarStr = cigarStr.substr(maxAlnStartPos, maxAlnEndPos + 1);
+        cigarStr = cigarStr.substr(maxAlnStartPos, maxAlnEndPos - maxAlnStartPos + 1);
+        cout << "new cigar: " << cigarStr << endl;
         aln.cigar = convertStrToCigar(cigarStr);
         aln.matches = 0;
         aln.substitutions = 0;
@@ -271,10 +277,40 @@ public:
     {
         //do the alignment using smith waterman
         smithWatermanAligner(aln, matchPen, subPen, gapoPen, gapextPen);
+        cout << "---------- before -------" << endl;
+        cout << "Score: " << aln.score << endl;
+        cout << "cigar: " << aln.cigar << endl;
+        cout << "read start pos: " << aln.readRegionStartPos << endl;
+        cout << "read end pos: " << aln.readRegionEndPos << endl;
+        cout << "query start pos: " << aln.queryRegionStartPos << endl;
+        cout << "query end pos: " << aln.queryRegionEndPos << endl;
+        cout << "substitutions: " << aln.substitutions << endl;
+        cout << "inDels: " << aln.inDels << endl;
+        cout << "matches: " << aln.matches << endl;
+        cout << "editDistance: " << aln.editDistance << endl;
+        cout << "edit pos: ";
+        for(auto it = aln.editLocations.begin(); it!= aln.editLocations.end(); it++){
+            cout << *it << " ";
+        }
         if (aln.editDistance > allowedEditDistance) {
             // exclude the additional edit distance
             findMemAndExtend(aln);
         }  
+        cout << "---------- after -------" << endl;
+        cout << "Score: " << aln.score << endl;
+        cout << "cigar: " << aln.cigar << endl;
+        cout << "read start pos: " << aln.readRegionStartPos << endl;
+        cout << "read end pos: " << aln.readRegionEndPos << endl;
+        cout << "query start pos: " << aln.queryRegionStartPos << endl;
+        cout << "query end pos: " << aln.queryRegionEndPos << endl;
+        cout << "substitutions: " << aln.substitutions << endl;
+        cout << "inDels: " << aln.inDels << endl;
+        cout << "matches: " << aln.matches << endl;
+        cout << "editDistance: " << aln.editDistance << endl;
+        cout << "edit pos: ";
+        for(auto it = aln.editLocations.begin(); it!= aln.editLocations.end(); it++){
+            cout << *it << " ";
+        }
     }
 
      void dumpSam(ofstream &oSam, Alignment l)
@@ -290,27 +326,38 @@ public:
         if(allowedEditDistance >= l.queryRegionStartPos){
             auto editsAllwedInFrontRegion = allowedEditDistance - l.queryRegionStartPos ;
             if(l.substitutions + l.inDels > editsAllwedInFrontRegion)
+            {
                 frontRegionDismissed = true;
+                cout << "1- front region dismissed" << endl;
+            }
         } else {
             frontRegionDismissed = true;
+            cout << "2- front region dismissed" << endl;
         }
         if(l.queryRegionStartPos + l.partialMatchSize >= contigSize - allowedEditDistance){ //query start position + alignment len should be larger than conig size - allowed edit
             auto editsAllwedInBackRegion = l.queryRegionStartPos + l.partialMatchSize - (contigSize - allowedEditDistance);
             if(l.substitutions + l.inDels > editsAllwedInBackRegion)
+            {
                 backRegionDismissed = true;
+                cout << "3- back region dismissed" << endl;
+            }
         }else {
             backRegionDismissed = true;
+            cout << "4- back region dismissed" << endl;
         }
         if(frontRegionDismissed && backRegionDismissed)
             return false;
         if(l.queryRegionStartPos > (contigSize - regionSize + allowedEditDistance)){ //first bp of back region starts from 100
+            cout << "5- first bp of back region starts from 100" << endl;
             return false;
         }
         if((l.editDistance <= allowedEditDistance) && (((uint32_t)l.partialMatchSize >= (uint32_t)regionSize)))
         {
+            cout << "6- edit distance <= allowed edit distance" << endl;
             if(l.queryRegionStartPos + minExactMatchLength <= regionSize || l.queryRegionEndPos - minExactMatchLength >= contigSize - regionSize)
                 return true;
         }
+        cout << "7- not meet criteria" << endl;
         return false;
     }
 

@@ -454,23 +454,9 @@ void testAligner(int argc, char *argv[]){
     Alignment aln;
     aln.query = argv[1];
     aln.read = argv[2];
-    Aligner <uint32_t> aligner(50,2,150,30);
-    aligner.smithWatermanAligner(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
-    cout << "Score: " << aln.score << endl;
-    cout << "cigar: " << aln.cigar << endl;
-    cout << "read start pos: " << aln.readRegionStartPos << endl;
-    cout << "read end pos: " << aln.readRegionEndPos << endl;
-    cout << "query start pos: " << aln.queryRegionStartPos << endl;
-    cout << "query end pos: " << aln.queryRegionEndPos << endl;
-    cout << "substitutions: " << aln.substitutions << endl;
-    cout << "inDels: " << aln.inDels << endl;
-    cout << "matches: " << aln.matches << endl;
-    cout << "editDistance: " << aln.editDistance << endl;
-    cout << "edit pos: ";
-    for(auto it = aln.editLocations.begin(); it!= aln.editLocations.end(); it++){
-        cout << *it << " ";
-    }
-    cout << endl;
+    Aligner <uint32_t> aligner(50, 2, 150, 30);
+    aligner.align(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
+    cout << ((aligner.checkAlingmentCriteria(aln) == true) ? "aln meets criteria" : "aln not meet criteria") << endl;
 }
 
 int main(int argc, char *argv[])
@@ -478,7 +464,7 @@ int main(int argc, char *argv[])
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // testOnePair(argc, argv);
     // checkParmikFNalignments(argc, argv);
-    // testAligner(argc, argv);
-    run(argc, argv);
+    testAligner(argc, argv);
+    // run(argc, argv);
     return 0;
 }
