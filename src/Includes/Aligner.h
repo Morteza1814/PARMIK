@@ -35,6 +35,7 @@ typedef struct Alignment
     size_t queryRegionEndPos = 0;
     size_t flag = 0;                  // determines the strand for now
     size_t score = 0;
+    size_t criteriaCode = 0;     // criteria code for the alignment
 } Alignment;
 
 template <typename contigIndT>
@@ -140,7 +141,7 @@ public:
             memStart = aln.editLocations.size() - 1;
             memEnd = -1;
         }
-        cout << "MEM start: " << memStart << " end: " << memEnd << " maxMemSize: " << maxMemSize << endl;
+        // cout << "MEM start: " << memStart << " end: " << memEnd << " maxMemSize: " << maxMemSize << endl;
         //extend to the left as far as possible
         start = memStart;
         end = memEnd;
@@ -255,15 +256,15 @@ public:
         //     aln.editDistance -= (aln.editLocations.size() - 1) - (maxAlnEnd - 1);
         // }
         // set the region start and end in R and Q
-        cout << "maxAlnStart: " << maxAlnStart << " maxAlnEnd: " << maxAlnEnd << endl;
-        cout << "maxAlnStartPos: " << maxAlnStartPos << " maxAlnEndPos: " << maxAlnEndPos << endl;
+        // cout << "maxAlnStart: " << maxAlnStart << " maxAlnEnd: " << maxAlnEnd << endl;
+        // cout << "maxAlnStartPos: " << maxAlnStartPos << " maxAlnEndPos: " << maxAlnEndPos << endl;
         aln.readRegionEndPos = maxAlnEndPos + aln.readRegionStartPos;
         aln.readRegionStartPos = maxAlnStartPos + aln.readRegionStartPos;
         aln.queryRegionEndPos = maxAlnEndPos + aln.queryRegionStartPos;
         aln.queryRegionStartPos = maxAlnStartPos + aln.queryRegionStartPos;
         //change the cigar based on the new region
         cigarStr = cigarStr.substr(maxAlnStartPos, maxAlnEndPos - maxAlnStartPos + 1);
-        cout << "new cigar: " << cigarStr << endl;
+        // cout << "new cigar: " << cigarStr << endl;
         aln.cigar = convertStrToCigar(cigarStr);
         aln.matches = 0;
         aln.substitutions = 0;
@@ -277,88 +278,105 @@ public:
     {
         //do the alignment using smith waterman
         smithWatermanAligner(aln, matchPen, subPen, gapoPen, gapextPen);
-        cout << "---------- before -------" << endl;
-        cout << "Score: " << aln.score << endl;
-        cout << "cigar: " << aln.cigar << endl;
-        cout << "read start pos: " << aln.readRegionStartPos << endl;
-        cout << "read end pos: " << aln.readRegionEndPos << endl;
-        cout << "query start pos: " << aln.queryRegionStartPos << endl;
-        cout << "query end pos: " << aln.queryRegionEndPos << endl;
-        cout << "substitutions: " << aln.substitutions << endl;
-        cout << "inDels: " << aln.inDels << endl;
-        cout << "matches: " << aln.matches << endl;
-        cout << "editDistance: " << aln.editDistance << endl;
-        cout << "edit pos: ";
-        for(auto it = aln.editLocations.begin(); it!= aln.editLocations.end(); it++){
-            cout << *it << " ";
-        }
+        // cout << "---------- before -------" << endl;
+        // cout << "Score: " << aln.score << endl;
+        // cout << "cigar: " << aln.cigar << endl;
+        // cout << "read start pos: " << aln.readRegionStartPos << endl;
+        // cout << "read end pos: " << aln.readRegionEndPos << endl;
+        // cout << "query start pos: " << aln.queryRegionStartPos << endl;
+        // cout << "query end pos: " << aln.queryRegionEndPos << endl;
+        // cout << "substitutions: " << aln.substitutions << endl;
+        // cout << "inDels: " << aln.inDels << endl;
+        // cout << "matches: " << aln.matches << endl;
+        // cout << "editDistance: " << aln.editDistance << endl;
+        // cout << "edit pos: ";
+        // for(auto it = aln.editLocations.begin(); it!= aln.editLocations.end(); it++){
+        //     cout << *it << " ";
+        // }
         if (aln.editDistance > allowedEditDistance) {
             // exclude the additional edit distance
             findMemAndExtend(aln);
         }  
-        cout << "---------- after -------" << endl;
-        cout << "Score: " << aln.score << endl;
-        cout << "cigar: " << aln.cigar << endl;
-        cout << "read start pos: " << aln.readRegionStartPos << endl;
-        cout << "read end pos: " << aln.readRegionEndPos << endl;
-        cout << "query start pos: " << aln.queryRegionStartPos << endl;
-        cout << "query end pos: " << aln.queryRegionEndPos << endl;
-        cout << "substitutions: " << aln.substitutions << endl;
-        cout << "inDels: " << aln.inDels << endl;
-        cout << "matches: " << aln.matches << endl;
-        cout << "editDistance: " << aln.editDistance << endl;
-        cout << "edit pos: ";
-        for(auto it = aln.editLocations.begin(); it!= aln.editLocations.end(); it++){
-            cout << *it << " ";
-        }
+        // cout << "---------- after -------" << endl;
+        // cout << "Score: " << aln.score << endl;
+        // cout << "cigar: " << aln.cigar << endl;
+        // cout << "read start pos: " << aln.readRegionStartPos << endl;
+        // cout << "read end pos: " << aln.readRegionEndPos << endl;
+        // cout << "query start pos: " << aln.queryRegionStartPos << endl;
+        // cout << "query end pos: " << aln.queryRegionEndPos << endl;
+        // cout << "substitutions: " << aln.substitutions << endl;
+        // cout << "inDels: " << aln.inDels << endl;
+        // cout << "matches: " << aln.matches << endl;
+        // cout << "editDistance: " << aln.editDistance << endl;
+        // cout << "edit pos: ";
+        // for(auto it = aln.editLocations.begin(); it!= aln.editLocations.end(); it++){
+        //     cout << *it << " ";
+        // }
     }
 
      void dumpSam(ofstream &oSam, Alignment l)
     {
-        oSam << l.queryID << '\t' << l.flag << '\t' << l.readID << '\t' << "*" << '\t'
-                << "*" << '\t' << l.cigar << '\t' << "*" << '\t' << "*" << '\t' << "*" << '\t' << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.substitutions) << '\n';
+        oSam << l.queryID << '\t' << l.flag << '\t' << l.readID << '\t' << l.readRegionStartPos << '\t'
+                << "*" << '\t' << l.cigar << '\t' << "*" << '\t' << "*" << '\t' << "*" << '\t' 
+                << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.substitutions) << '\t' << "CC" << l.criteriaCode << '\n';
     }
 
     bool checkAlingmentCriteria(Alignment l)
     {
-        //TODO: did not check whether there is a min exact match region in the partial match region
+        /*criteriaCode
+        0000 -> accepted
+        0x01 -> front region dismissed because region's starting position higher than 0 (each missed bp is 1 edit distance)
+        0x02 -> back region dismissed because region's starting position lower than contigSize - regionSize (each missed bp is 1 edit distance)
+        0x04 -> region starts from 100 + allowedEditDistance
+        0x08 -> Either alignment len or edit distance does not match the criteria
+        */
+        //check the alignment len and edit distance
+        if((l.editDistance > allowedEditDistance) || (((uint32_t)l.partialMatchSize < (uint32_t)regionSize)))
+        {
+            // cout << "0- edit distance[" << l.editDistance << "] > allowed edit distance or partial match size [" << l.partialMatchSize <<"] < region size" << endl;
+            //TODO: did not check whether there is a min exact match region in the partial match region
+            // if(l.queryRegionStartPos + minExactMatchLength <= regionSize || l.queryRegionEndPos - minExactMatchLength >= contigSize - regionSize)
+            l.criteriaCode |= 0x08;
+            return false;
+        }
         bool frontRegionDismissed = false, backRegionDismissed = false;
+        //check the starting position of the alignment for the front region
         if(allowedEditDistance >= l.queryRegionStartPos){
             auto editsAllwedInFrontRegion = allowedEditDistance - l.queryRegionStartPos ;
             if(l.substitutions + l.inDels > editsAllwedInFrontRegion)
             {
                 frontRegionDismissed = true;
-                cout << "1- front region dismissed" << endl;
+                // cout << "1- front region dismissed" << endl;
             }
         } else {
             frontRegionDismissed = true;
-            cout << "2- front region dismissed" << endl;
+            // cout << "2- front region dismissed" << endl;
         }
+        if(frontRegionDismissed)
+            l.criteriaCode |= 0x01;
+        //check the starting position of the alignment for the back region
         if(l.queryRegionStartPos + l.partialMatchSize >= contigSize - allowedEditDistance){ //query start position + alignment len should be larger than conig size - allowed edit
             auto editsAllwedInBackRegion = l.queryRegionStartPos + l.partialMatchSize - (contigSize - allowedEditDistance);
             if(l.substitutions + l.inDels > editsAllwedInBackRegion)
             {
                 backRegionDismissed = true;
-                cout << "3- back region dismissed" << endl;
+                // cout << "3- back region dismissed" << endl;
             }
         }else {
             backRegionDismissed = true;
-            cout << "4- back region dismissed" << endl;
+            // cout << "4- back region dismissed" << endl;
         }
+        if(backRegionDismissed)
+            l.criteriaCode |= 0x02;
         if(frontRegionDismissed && backRegionDismissed)
             return false;
-        if(l.queryRegionStartPos > (contigSize - regionSize + allowedEditDistance)){ //first bp of back region starts from 100
-            cout << "5- first bp of back region starts from 100" << endl;
+        if(l.queryRegionStartPos > (contigSize - regionSize + allowedEditDistance)){ //first bp of back region starts from 100 + allowed edit distance
+            // cout << "5- first bp of back region starts from 100" << endl;
+            l.criteriaCode |= 0x04;
             return false;
         }
-        if((l.editDistance <= allowedEditDistance) && (((uint32_t)l.partialMatchSize >= (uint32_t)regionSize)))
-        {
-            cout << "6- edit distance <= allowed edit distance" << endl;
-            if(l.queryRegionStartPos + minExactMatchLength <= regionSize || l.queryRegionEndPos - minExactMatchLength >= contigSize - regionSize)
-                return true;
-        }
-        cout << "7- not meet criteria" << endl;
-        return false;
+        // cout << "6- not meet criteria" << endl;
+        return true;
     }
 
     map<contigIndT, string> readContigsFromMap(tsl::robin_map<uint32_t, string>& reads,  set<contigIndT>& contigIdSet)
@@ -387,8 +405,11 @@ public:
     void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, bool isForwardStrand, string parmikAlignments)
     {
         ofstream pAln(parmikAlignments, ios::app);
+        cout << "Starting alignment for all queries [" << (isForwardStrand ? ("fwd"):("rev")) << "]..." << endl;
         for (size_t i = 0; i < queryCount; i++)
         {
+            if(i % 1000 == 0)
+                cout << i << " queries processed..." << endl;
             auto itq = queries.find(i);
             if (itq == queries.end())
                 continue;
@@ -409,7 +430,8 @@ public:
                 aln.queryID = i;
                 aln.readID = it->first;
                 if (!isForwardStrand) aln.flag = 16;
-                if (checkAlingmentCriteria(aln))
+                bool criteriaCheck = checkAlingmentCriteria(aln);
+                if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3)))
                     alignments.insert(make_pair(it->first, aln));
             }
             auto backReadSet = backMinThCheapSeedReads.get(i);
@@ -424,18 +446,22 @@ public:
                 aln.queryID = i;
                 aln.readID = it->first;
                 if (!isForwardStrand) aln.flag = 16;
-                if (checkAlingmentCriteria(aln))
-                {
+                bool criteriaCheck = checkAlingmentCriteria(aln);
+                if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3))){
                     auto ita = alignments.find(it->first);
                     if (ita== alignments.end()){
                         alignments.insert(make_pair(it->first, aln));
                     }
                 }
             }
+            //dump the alignments
+            size_t alignmentsAccepted = 0, alignmentsPassedWithStartingPosOverED = 0;
             for (auto it = alignments.begin(); it!= alignments.end(); it++)
             {
-                dumpSam(pAln, it->second);
+                if (it->second.criteriaCode <= 3) // 00, 01, 02, 04
+                    dumpSam(pAln, it->second);
             }
+            cout << "queryID: " << i << ", " << (isForwardStrand ? ("fwd"):("rev")) <<", total matches" << alignments.size() << i << ", matches accepted: " << alignmentsAccepted << ", matches passed with starting pos over ED: " << alignmentsPassedWithStartingPosOverED << endl;
         }
     }
 
