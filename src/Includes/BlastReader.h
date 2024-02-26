@@ -27,6 +27,7 @@ public:
         uint32_t InDels = 0;
         string queryAligned;
         string readAligned;
+        uint32_t criteriaCode = 0;     // criteria code for the alignment
     };
 
     BlastReader(const string& filename) : filename_(filename) {}

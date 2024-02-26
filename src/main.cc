@@ -189,6 +189,19 @@ void convertSamToLev(SamReader::Sam parmikSamAlignment, LevAlign& parmikAlignmen
     parmikAlignment.flag = parmikSamAlignment.flag;                
 }
 
+void convertSamToAln(SamReader::Sam parmikSamAlignment, Alignment& parmikAlignment)
+{
+    SamReader sam("");
+    parmikAlignment.readID = parmikSamAlignment.readId;
+    parmikAlignment.queryID = parmikSamAlignment.queryId;
+    parmikAlignment.cigar = parmikSamAlignment.cigar;
+    parmikAlignment.substitutions = sam.countSubstitutions(parmikSamAlignment.cigar);
+    parmikAlignment.matches = sam.countMatches(parmikSamAlignment.cigar);
+    parmikAlignment.inDels = sam.countInsertions(parmikSamAlignment.cigar) + sam.countDeletions(parmikSamAlignment.cigar);
+    parmikAlignment.editDistance  = parmikAlignment.substitutions + parmikAlignment.inDels;
+    parmikAlignment.flag = parmikSamAlignment.flag;                
+}
+
 int run(int argc, char *argv[]) {
     Config cfg;
 	ofstream out;
@@ -353,11 +366,14 @@ int run(int argc, char *argv[]) {
             //load the parmik alignments from the sam formatted file
             SamReader parmikSam(parmikAlignmentsAddress);
             vector<SamReader::Sam> parmikSamAlignments = parmikSam.parseFile(queryCount);
-            IndexContainer<uint32_t, LevAlign> parmikMultiAlignments;
+            // IndexContainer<uint32_t, LevAlign> parmikMultiAlignments;
+            IndexContainer<uint32_t, Alignment> parmikMultiAlignments;
             for (const SamReader::Sam& aln : parmikSamAlignments) 
             {
-                LevAlign l;
-                convertSamToLev(aln, l);
+                // LevAlign l;
+                Alignment l;
+                // convertSamToLev(aln, l);
+                convertSamToAln(aln, l);
                 parmikMultiAlignments.put(aln.queryId, l);
             }
             // cout<<"finished \n";
@@ -386,8 +402,8 @@ int run(int argc, char *argv[]) {
                     convertSamToLev(aln, l);
                     gtMultiAlignments.put(aln.queryId, l);
                 }
-                CompareWithGroundTruth cwgt;
-                cwgt.comparePmWithGroundTruth(gtMultiAlignments, cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress);
+                // CompareWithGroundTruth cwgt;
+                // cwgt.comparePmWithGroundTruth(gtMultiAlignments, cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress);
             
             }
          
