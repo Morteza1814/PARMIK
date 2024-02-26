@@ -33,6 +33,7 @@ public:
 
     struct EditCounts {
         uint32_t matchCount = 0;
+        uint32_t subCount = 0;
         uint32_t insertCount = 0;
         uint32_t deleteCount = 0;
         uint32_t clipCount = 0;
@@ -50,7 +51,11 @@ public:
             char op = (*iter)[2].str()[0];
             int length = stoi((*iter)[1].str());
             switch (op) {
+                case 'X':
+                    counts.subCount += length;
+                    break;
                 case 'M':
+                case '=':
                     counts.matchCount += length;
                     break;
                 case 'I':
@@ -73,6 +78,10 @@ public:
 
     uint32_t countMatches(const string& cigar) const {
         return extractEditTypes(cigar).matchCount;
+    }
+
+    uint32_t countSubstitutions(const string& cigar) const {
+        return extractEditTypes(cigar).subCount;
     }
 
     uint32_t countInsertions(const string& cigar) const {
