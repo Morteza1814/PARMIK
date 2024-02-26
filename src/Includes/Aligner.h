@@ -24,7 +24,7 @@ typedef struct Alignment
     string editDistanceTypes;   //edit distance types of the region of the partial match
     size_t editDistance = 0;           //number of edit distances detected in the region
     size_t partialMatchSize = 0;       //partial match region size
-    vector<unsigned int> editLocations;  //the positions of the edit distances in the partial match region
+    vector<uint16_t> editLocations;  //the positions of the edit distances in the partial match region
     string cigar;               //CIGAR string of the alignment
     size_t substitutions = 0;       //number of substitutions
     size_t inDels = 0;       //number of InDel
@@ -118,9 +118,6 @@ public:
         int memStart = -1, memEnd = -1;
         string cigarStr = convertCigarToStr(aln.cigar);
         size_t alignmentOffset = (cigarStr.size() > contigSize) ? cigarStr.size() - contigSize : 0; // if the alignment size goes over 150bp
-        cout << "Q: " << aln.queryID << endl;
-        cout << "R: " << aln.readID << endl;
-        cout << "cigar: " << aln.cigar << ", cigarStr: " << cigarStr << endl;
         //find MEM
         uint16_t memSize = 0, maxMemSize = 0;
         for (size_t i = 0; i < aln.editLocations.size(); ++i) {
@@ -143,9 +140,8 @@ public:
             maxMemSize = aln.queryRegionEndPos - aln.queryRegionStartPos + alignmentOffset - aln.editLocations[aln.editLocations.size()-1];
             memStart = aln.editLocations.size() - 1;
             memEnd = -1;
-            cout << "aln.queryRegionEndPos: " << aln.queryRegionEndPos << " aln.queryRegionStartPos: " << aln.queryRegionStartPos << " aln.editLocations[aln.editLocations.size()-1]: " << aln.editLocations[aln.editLocations.size()-1] << endl;
         }
-        cout << "MEM start: " << memStart << " end: " << memEnd << " maxMemSize: " << maxMemSize << endl;
+        // cout << "MEM start: " << memStart << " end: " << memEnd << " maxMemSize: " << maxMemSize << endl;
         //extend to the left as far as possible
         start = memStart;
         end = memEnd;
@@ -229,33 +225,22 @@ public:
             maxAlnStartPos = 0;
         } else {
             maxAlnStartPos = aln.editLocations[maxAlnStart] + 1;
-            for (int i = 0; i <= maxAlnStart; ++i) {
-                aln.editLocations.erase(aln.editLocations.begin() + i);
-            }
+            // for (int i = 0; i <= maxAlnStart; ++i) {
+            //     aln.editLocations.erase(aln.editLocations.begin() + i);
+            // }
         }
         if (maxAlnEnd == -1) {
             maxAlnEndPos = aln.queryRegionEndPos - aln.queryRegionStartPos + alignmentOffset;
         } else {
             maxAlnEndPos = aln.editLocations[maxAlnEnd] - 1;
-            for (size_t i = maxAlnEnd; i < aln.editLocations.size(); ++i) {
-                aln.editLocations.erase(aln.editLocations.begin() + i);
-            }
+            // for (size_t i = maxAlnEnd; i < aln.editLocations.size(); ++i) {
+            //     aln.editLocations.erase(aln.editLocations.begin() + i);
+            // }
         }
         //Update aln
-        // uint16_t s=0,e=0;
-        // if (maxAlnStart < 0 && maxAlnEnd < 0) {
-        //     //no change in edit locations
-        // } else if (maxAlnStart < 0 && maxAlnEnd >= 0) {
-        //     aln.editDistance -= (aln.editLocations.size() - 1) - (maxAlnEnd - 1);
-        // } else if (maxAlnStart >= 0 && maxAlnEnd < 0) {
-        //     aln.editDistance -= (maxAlnStart + 1);
-        // } else {
-        //     aln.editDistance -= (maxAlnStart + 1);
-        //     aln.editDistance -= (aln.editLocations.size() - 1) - (maxAlnEnd - 1);
-        // }
         // set the region start and end in R and Q
-        cout << "maxAlnStart: " << maxAlnStart << " maxAlnEnd: " << maxAlnEnd << endl;
-        cout << "maxAlnStartPos: " << maxAlnStartPos << " maxAlnEndPos: " << maxAlnEndPos << endl;
+        // cout << "maxAlnStart: " << maxAlnStart << " maxAlnEnd: " << maxAlnEnd << endl;
+        // cout << "maxAlnStartPos: " << maxAlnStartPos << " maxAlnEndPos: " << maxAlnEndPos << endl;
         aln.readRegionEndPos = maxAlnEndPos + aln.readRegionStartPos - alignmentOffset;
         aln.readRegionStartPos = maxAlnStartPos + aln.readRegionStartPos;
         aln.queryRegionEndPos = maxAlnEndPos + aln.queryRegionStartPos - alignmentOffset;
@@ -264,16 +249,11 @@ public:
         aln.substitutions = 0;
         aln.inDels = 0;
         aln.partialMatchSize = maxAlnEndPos - maxAlnStartPos + 1;
-        cout << "aln.partialMatchSize: " << aln.partialMatchSize << endl;
         //change the cigar based on the new region
-        cout << "old cigar: " << cigarStr << endl;
-        cout << "cigarStr.size : " << cigarStr.size() << endl; 
-        cout << "aln.queryRegionStartPos: " << aln.queryRegionStartPos << endl;
         string newCigarStr = cigarStr.substr(aln.queryRegionStartPos, aln.partialMatchSize);
-        cout << "new cigar: " << newCigarStr << endl;
         aln.cigar = convertStrToCigar(newCigarStr);
-        cout << "new cigar: " << aln.cigar << endl;
-        parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels);
+        vector<uint16_t> edits;
+        parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, edits);
         aln.editDistance = aln.substitutions + aln.inDels;
     }  
 
@@ -458,22 +438,28 @@ public:
                 }
             }
             //dump the alignments
-            size_t alignmentsAccepted = 0, alignmentsPassedWithStartingPosOverED = 0;
+            size_t matchesAccepted = 0, matchesPassedWithStartingPosOverED = 0;
             for (auto it = alignments.begin(); it!= alignments.end(); it++)
             {
-                if (it->second.criteriaCode <= 3) // 00, 01, 02, 04
+                if (it->second.criteriaCode <= 3) // 00, 01, 02, 03
+                {
                     dumpSam(pAln, it->second);
+                    matchesAccepted++;
+                }
+                if (it->second.criteriaCode > 0 && it->second.criteriaCode <= 3 ) // 00
+                {
+                    matchesPassedWithStartingPosOverED++;
+                }
+
             }
-            cout << "queryID: " << i << ", " << (isForwardStrand ? ("fwd"):("rev")) <<", total matches" << alignments.size() << i << ", matches accepted: " << alignmentsAccepted << ", matches passed with starting pos over ED: " << alignmentsPassedWithStartingPosOverED << endl;
+            cout << "queryID: " << i << ", " << (isForwardStrand ? ("fwd"):("rev")) <<", total matches: " << alignments.size() << i << ", matches accepted: " << matchesAccepted << ", matches passed with starting pos over ED: " << matchesPassedWithStartingPosOverED << endl;
         }
     }
 
-    vector<unsigned int> parseCigar(const string& cigar, size_t& matches, size_t& substitutions, size_t& inDels) {
+    void parseCigar(const string& cigar, size_t& matches, size_t& substitutions, size_t& inDels, vector<uint16_t> &editLocations) {
         substitutions = inDels = 0;
-        vector<unsigned int> editLocations;
         int currentPos = 0; // Current position in the read
         int len = cigar.length();
-
         for (int i = 0; i < len; ++i) {
             // Parse the numeric part of CIGAR operation
             int num = 0;
@@ -481,10 +467,8 @@ public:
                 num = num * 10 + (cigar[i] - '0');
                 ++i;
             }
-
             // Extract the CIGAR operation
             char op = cigar[i];
-
             // Perform actions based on CIGAR operation
             switch (op) {
                 case '=':
@@ -519,7 +503,6 @@ public:
                     break;
             }
         }
-        return editLocations;
     }
 
     void smithWatermanAligner(Alignment &aln, uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
@@ -544,7 +527,7 @@ public:
         aln.editDistance = alignment.mismatches;
         aln.score = alignment.sw_score;
         // cout << "aln.query_begin: " << alignment.query_begin << ", aln.query_end: " << alignment.query_end << ", aln.ref_begin: " << alignment.ref_begin << ", aln.ref_end: " << alignment.ref_end << ", cigar_string: " << alignment.cigar_string << endl;
-        aln.editLocations = parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels);
+        parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
         // for(auto it = aln.editLocations.begin(); it!= aln.editLocations.end(); it++){
         //     cout << *it << " ";
         // }

@@ -225,7 +225,7 @@ int run(int argc, char *argv[]) {
         // blpm.constructBaseline(cfg.readDatabaseAddress, cfg.readsCount, cfg.queryFileAddress, cfg.queryCount,cfg.minExactMatchLen, cfg.cheapKmerThreshold, baselineQueriesFrontSeeds, baselineQueriesBackSeeds, cfg.isIndexOffline, cfg.offlineIndexAddress);
         // run the experiment
         IndexContainer<uint32_t, uint32_t> frontMinThCheapSeedReads, backMinThCheapSeedReads, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads;
-        map<uint32_t, LevAlign> pmr;
+        // map<uint32_t, LevAlign> pmr;
         string parmikAlignmentsAddress = cfg.outputDir + "/aln/parmikAlignments.txt";
         tsl::robin_map <uint32_t, string> reads, queries;
         uint32_t queryCount = 0;
@@ -333,16 +333,16 @@ int run(int argc, char *argv[]) {
             }
         
             //report the histogram of the alignments
-            if(cfg.parmikMode == PARMIK_MODE_ALIGN && !cfg.noOutputFileDump)
-            {
-                ofstream matches(cfg.outputDir + "/aln/PM_best_matches.txt");
-                //report PM final best match results
-                matches << "Q , R" << endl;
-                for (const auto& pair : pmr) {
-                    matches << pair.first << " , " << pair.second.readID << endl;
-                }
-                matches.close();
-            }
+            // if(cfg.parmikMode == PARMIK_MODE_ALIGN && !cfg.noOutputFileDump)
+            // {
+            //     ofstream matches(cfg.outputDir + "/aln/PM_best_matches.txt");
+            //     //report PM final best match results
+            //     matches << "Q , R" << endl;
+            //     for (const auto& pair : pmr) {
+            //         matches << pair.first << " , " << pair.second.readID << endl;
+            //     }
+            //     matches.close();
+            // }
         } else
         {
             if(cfg.noOutputFileDump)
@@ -464,7 +464,7 @@ int main(int argc, char *argv[])
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // testOnePair(argc, argv);
     // checkParmikFNalignments(argc, argv);
-    testAligner(argc, argv);
-    // run(argc, argv);
+    // testAligner(argc, argv);
+    run(argc, argv);
     return 0;
 }
