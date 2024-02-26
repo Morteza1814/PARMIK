@@ -472,7 +472,12 @@ void testAligner(int argc, char *argv[]){
     aln.read = argv[2];
     Aligner <uint32_t> aligner(50, 2, 150, 30);
     aligner.align(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
-    cout << ((aligner.checkAlingmentCriteria(aln) == true) ? "aln meets criteria" : "aln not meet criteria") << endl;
+    bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
+    cout << ((criteriaCheck == true) ? "aln meets criteria" : "aln not meet criteria") << endl;
+    cout << "criteriaCode: " << aln.criteriaCode << endl;
+    if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3)))
+        cout << "dump it!!!" << endl;
+
 }
 
 int main(int argc, char *argv[])
