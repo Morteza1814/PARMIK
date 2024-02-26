@@ -526,6 +526,7 @@ public:
         aln.cigar = alignment.cigar_string;
         aln.editDistance = alignment.mismatches;
         aln.score = alignment.sw_score;
+        aln.partialMatchSize = alignment.query_end - alignment.query_begin + 1;
         // cout << "aln.query_begin: " << alignment.query_begin << ", aln.query_end: " << alignment.query_end << ", aln.ref_begin: " << alignment.ref_begin << ", aln.ref_end: " << alignment.ref_end << ", cigar_string: " << alignment.cigar_string << endl;
         parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
         // for(auto it = aln.editLocations.begin(); it!= aln.editLocations.end(); it++){
