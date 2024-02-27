@@ -280,6 +280,43 @@ public:
         aln.editDistance = aln.substitutions + aln.inDels;
     }  
 
+    Alignment alignDifferentPenaltyScores(string query, string read, bool isForwardStrand)
+    {
+        Alignment equalPenaltyAln; // m=1, s=1, go=1, ge=1
+        equalPenaltyAln.read = read;
+        equalPenaltyAln.query = query;
+        if (!isForwardStrand) equalPenaltyAln.flag = 16;
+        align(equalPenaltyAln, 1, 1, 1, 1);
+        //check the alignment based on the criteria
+        bool equalPenaltyAlnCriteriaCheck = checkAlingmentCriteria(equalPenaltyAln);
+        bool equalPenaltyAlnPassedCriteria = false;
+        if (equalPenaltyAlnCriteriaCheck || (!equalPenaltyAlnCriteriaCheck && (equalPenaltyAln.criteriaCode <= 3))){
+            equalPenaltyAlnPassedCriteria = true;
+        }
+        
+        Alignment moreGapOpenPenaltyAln; // m=1, s=1, go=2, ge=1
+        moreGapOpenPenaltyAln.read = read;
+        moreGapOpenPenaltyAln.query = query;
+        if (!isForwardStrand) moreGapOpenPenaltyAln.flag = 16;
+        align(moreGapOpenPenaltyAln, 1, 1, 2, 1);
+        //check the alignment based on the criteria
+        bool moreGapOpenPenaltyCriteriaCheck = checkAlingmentCriteria(moreGapOpenPenaltyAln);
+        bool moreGapOpenPenaltyAlnPassedCriteria = false;
+        if (moreGapOpenPenaltyCriteriaCheck || (!moreGapOpenPenaltyCriteriaCheck && (moreGapOpenPenaltyAln.criteriaCode <= 3))){
+            moreGapOpenPenaltyAlnPassedCriteria = true;
+        }
+
+        if (equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria) {
+            return equalPenaltyAln.partialMatchSize >= moreGapOpenPenaltyAln.partialMatchSize? equalPenaltyAln : moreGapOpenPenaltyAln;
+        } else if (equalPenaltyAlnPassedCriteria && !moreGapOpenPenaltyAlnPassedCriteria) {
+            return equalPenaltyAln;
+        } else if (!equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria) {
+            return moreGapOpenPenaltyAln;
+        }
+        equalPenaltyAln.partialMatchSize = 0;
+        return equalPenaltyAln;
+    }
+
     void align(Alignment &aln,uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
     {
         //do the alignment using smith waterman
@@ -428,34 +465,39 @@ public:
             tsl::robin_map <uint32_t, Alignment> alignments;
             for (auto it = frontCandidateReads.begin(); it != frontCandidateReads.end(); it++)
             {
-                Alignment aln;
-                aln.query = query;
-                aln.read = it->second;
+                // Alignment aln;
+                // aln.query = query;
+                // aln.read = it->second;
+                // align(aln, 1, 1, 2, 1);
+                Alignment aln = alignDifferentPenaltyScores(query, it->second, isForwardStrand);
                 aln.queryID = i;
                 aln.readID = it->first;
-                align(aln, 1, 1, 2, 1);
                 //check the alignment based on the criteria
-                if (!isForwardStrand) aln.flag = 16;
-                bool criteriaCheck = checkAlingmentCriteria(aln);
-                if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3)))
+                // if (!isForwardStrand) aln.flag = 16;
+                // bool criteriaCheck = checkAlingmentCriteria(aln);
+                // if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3)))
+                if (aln.partialMatchSize > 0){
                     alignments.insert(make_pair(it->first, aln));
+                }
             }
             auto backReadSet = backMinThCheapSeedReads.get(i);
             map<contigIndT, string> backCandidateReads = readContigsFromMap(reads, backReadSet);
             for (auto it = backCandidateReads.begin(); it != backCandidateReads.end(); it++)
             {
-                Alignment aln;
-                aln.query = query;
-                aln.read = it->second;
+                // Alignment aln;
+                // aln.query = query;
+                // aln.read = it->second;
+                // align(aln, 1, 1, 2, 1);
+                Alignment aln = alignDifferentPenaltyScores(query, it->second, isForwardStrand);
                 aln.queryID = i;
                 aln.readID = it->first;
-                align(aln, 1, 1, 2, 1);
                 //check the alignment based on the criteria
-                if (!isForwardStrand) aln.flag = 16;
-                bool criteriaCheck = checkAlingmentCriteria(aln);
-                if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3))){
+                // if (!isForwardStrand) aln.flag = 16;
+                // bool criteriaCheck = checkAlingmentCriteria(aln);
+                // if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3))){
+                if (aln.partialMatchSize > 0){
                     auto ita = alignments.find(it->first);
-                    if (ita== alignments.end()){
+                    if (ita == alignments.end() || (ita != alignments.end() && ita->second.partialMatchSize < aln.partialMatchSize)){
                         alignments.insert(make_pair(it->first, aln));
                     }
                 }
