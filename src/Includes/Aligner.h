@@ -117,6 +117,8 @@ public:
         int start = -1, end = -1;
         int memStart = -1, memEnd = -1;
         string cigarStr = convertCigarToStr(aln.cigar);
+        // cout << "CIGAR str: " << cigarStr << endl;
+        // insertions adds to the read positions and deletions adds to the query positions
         size_t alignmentOffset = (cigarStr.size() > contigSize) ? cigarStr.size() - contigSize : 0; // if the alignment size goes over 150bp
         //find MEM
         uint16_t memSize = 0, maxMemSize = 0;
@@ -146,13 +148,11 @@ public:
         start = memStart;
         end = memEnd;
         uint16_t ed = 0;
-        // cout << "22start: " << start << " end: " << end << " ed: " << ed << endl;
         while (start >= 0 && ed < allowedEditDistance)
         {
             start--;
             ed++;
         }
-        // cout << "33start: " << start << " end: " << end << " ed: " << ed << endl;
         if (ed >= allowedEditDistance) 
             ed = allowedEditDistance;
 
@@ -239,18 +239,41 @@ public:
         }
         //Update aln
         // set the region start and end in R and Q
+        size_t queryClips = aln.queryRegionStartPos;
+        // cout << "queryClips: " << queryClips << endl;
+        size_t insertionsBeforeStart = 0, deletionsBeforeStart = 0;
+        for (size_t i = queryClips; i < queryClips + maxAlnStartPos; i++) {
+            if (cigarStr[i] == 'I') {
+                insertionsBeforeStart++;
+            } else if (cigarStr[i] == 'D') {
+                deletionsBeforeStart++;
+            }
+        }
+        size_t insertionsBeforeEnd = 0, deletionsBeforeEnd = 0;
+        for (size_t i = queryClips; i < queryClips + maxAlnEndPos; i++) {
+            if (cigarStr[i] == 'I') {
+                insertionsBeforeEnd++;
+            } else if (cigarStr[i] == 'D') {
+                deletionsBeforeEnd++;
+            }
+        }
         // cout << "maxAlnStart: " << maxAlnStart << " maxAlnEnd: " << maxAlnEnd << endl;
         // cout << "maxAlnStartPos: " << maxAlnStartPos << " maxAlnEndPos: " << maxAlnEndPos << endl;
-        aln.readRegionEndPos = maxAlnEndPos + aln.readRegionStartPos - alignmentOffset;
-        aln.readRegionStartPos = maxAlnStartPos + aln.readRegionStartPos;
-        aln.queryRegionEndPos = maxAlnEndPos + aln.queryRegionStartPos - alignmentOffset;
-        aln.queryRegionStartPos = maxAlnStartPos + aln.queryRegionStartPos;
+        aln.readRegionEndPos = maxAlnEndPos + aln.readRegionStartPos - insertionsBeforeEnd;
+        aln.readRegionStartPos = maxAlnStartPos + aln.readRegionStartPos - insertionsBeforeStart;
+        aln.queryRegionEndPos = maxAlnEndPos + aln.queryRegionStartPos - deletionsBeforeEnd;
+        aln.queryRegionStartPos = maxAlnStartPos + aln.queryRegionStartPos - deletionsBeforeStart;
+        // cout << "deletionsBeforeStart: " << deletionsBeforeStart << " deletionsBeforeEnd: " << deletionsBeforeEnd << endl;
+        // cout << "insertionsBeforeStart: " << insertionsBeforeStart << " insertionsBeforeEnd: " << insertionsBeforeEnd << endl;
+        // cout << "aln.queryRegionEndPos: " << aln.queryRegionEndPos << " aln.queryRegionStartPos: " << aln.queryRegionStartPos << endl;
+        // cout << "aln.readRegionEndPos: " << aln.readRegionEndPos << " aln.readRegionStartPos: " << aln.readRegionStartPos << endl;
         aln.matches = 0;
         aln.substitutions = 0;
         aln.inDels = 0;
         aln.partialMatchSize = maxAlnEndPos - maxAlnStartPos + 1;
         //change the cigar based on the new region
-        string newCigarStr = cigarStr.substr(aln.queryRegionStartPos, aln.partialMatchSize);
+        string newCigarStr = cigarStr.substr(maxAlnStartPos + queryClips, aln.partialMatchSize);
+        // cout << "newCigarStr: " << newCigarStr << endl;
         aln.cigar = convertStrToCigar(newCigarStr);
         vector<uint16_t> edits;
         parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, edits);
@@ -410,7 +433,7 @@ public:
                 aln.read = it->second;
                 aln.queryID = i;
                 aln.readID = it->first;
-                align(aln, 1, 1, 1, 1);
+                align(aln, 1, 1, 2, 1);
                 //check the alignment based on the criteria
                 if (!isForwardStrand) aln.flag = 16;
                 bool criteriaCheck = checkAlingmentCriteria(aln);
@@ -426,7 +449,7 @@ public:
                 aln.read = it->second;
                 aln.queryID = i;
                 aln.readID = it->first;
-                align(aln, 1, 1, 1, 1);
+                align(aln, 1, 1, 2, 1);
                 //check the alignment based on the criteria
                 if (!isForwardStrand) aln.flag = 16;
                 bool criteriaCheck = checkAlingmentCriteria(aln);
