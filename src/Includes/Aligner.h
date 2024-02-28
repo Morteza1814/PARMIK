@@ -306,15 +306,58 @@ public:
             moreGapOpenPenaltyAlnPassedCriteria = true;
         }
 
-        if (equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria) {
-            return equalPenaltyAln.partialMatchSize >= moreGapOpenPenaltyAln.partialMatchSize? equalPenaltyAln : moreGapOpenPenaltyAln;
-        } else if (equalPenaltyAlnPassedCriteria && !moreGapOpenPenaltyAlnPassedCriteria) {
-            return equalPenaltyAln;
-        } else if (!equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria) {
-            return moreGapOpenPenaltyAln;
+        Alignment moreSubGapOpenPenaltyAln; // m=1, s=2, go=2, ge=1
+        moreSubGapOpenPenaltyAln.read = read;
+        moreSubGapOpenPenaltyAln.query = query;
+        if (!isForwardStrand) moreSubGapOpenPenaltyAln.flag = 16;
+        align(moreSubGapOpenPenaltyAln, 1, 2, 2, 1);
+        //check the alignment based on the criteria
+        bool moreSubGapOpenPenaltyCriteriaCheck = checkAlingmentCriteria(moreSubGapOpenPenaltyAln);
+        bool moreSubGapOpenPenaltyAlnPassedCriteria = false;
+        if (moreSubGapOpenPenaltyCriteriaCheck || (!moreSubGapOpenPenaltyCriteriaCheck && (moreSubGapOpenPenaltyAln.criteriaCode <= 3))){
+            moreSubGapOpenPenaltyAlnPassedCriteria = true;
         }
-        equalPenaltyAln.partialMatchSize = 0;
-        return equalPenaltyAln;
+
+        //     if (equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria) {
+        //     return equalPenaltyAln.partialMatchSize >= moreGapOpenPenaltyAln.partialMatchSize? equalPenaltyAln : moreGapOpenPenaltyAln;
+        // } else if (equalPenaltyAlnPassedCriteria && !moreGapOpenPenaltyAlnPassedCriteria) {
+        //     return equalPenaltyAln;
+        // } else if (!equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria) {
+        //     return moreGapOpenPenaltyAln;
+        // }
+
+        if (equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria && moreSubGapOpenPenaltyAlnPassedCriteria) {
+            if (equalPenaltyAln.partialMatchSize >= moreGapOpenPenaltyAln.partialMatchSize && equalPenaltyAln.partialMatchSize >= moreSubGapOpenPenaltyAln.partialMatchSize)
+                return equalPenaltyAln;
+            else if (moreSubGapOpenPenaltyAln.partialMatchSize >= equalPenaltyAln.partialMatchSize && moreSubGapOpenPenaltyAln.partialMatchSize >= moreGapOpenPenaltyAln.partialMatchSize)
+                return moreSubGapOpenPenaltyAln;
+            else if (moreGapOpenPenaltyAln.partialMatchSize >= equalPenaltyAln.partialMatchSize && moreGapOpenPenaltyAln.partialMatchSize >= moreSubGapOpenPenaltyAln.partialMatchSize)
+                return moreGapOpenPenaltyAln;
+        } else if (equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria && !moreSubGapOpenPenaltyAlnPassedCriteria) {
+            if (equalPenaltyAln.partialMatchSize >= moreGapOpenPenaltyAln.partialMatchSize)
+                return equalPenaltyAln;
+            else if (moreGapOpenPenaltyAln.partialMatchSize > equalPenaltyAln.partialMatchSize)
+                return moreGapOpenPenaltyAln;
+        } else if (equalPenaltyAlnPassedCriteria && !moreGapOpenPenaltyAlnPassedCriteria && moreSubGapOpenPenaltyAlnPassedCriteria) {
+            if (equalPenaltyAln.partialMatchSize >= moreSubGapOpenPenaltyAln.partialMatchSize)
+                return equalPenaltyAln;
+            else if (moreSubGapOpenPenaltyAln.partialMatchSize >= equalPenaltyAln.partialMatchSize)
+                return moreSubGapOpenPenaltyAln;
+        } else if (!equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria && moreSubGapOpenPenaltyAlnPassedCriteria) {
+            if (moreGapOpenPenaltyAln.partialMatchSize >= moreSubGapOpenPenaltyAln.partialMatchSize)
+                return moreGapOpenPenaltyAln;
+            else if (moreSubGapOpenPenaltyAln.partialMatchSize >= moreGapOpenPenaltyAln.partialMatchSize)
+                return moreSubGapOpenPenaltyAln;
+        } else if (!equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria && !moreSubGapOpenPenaltyAlnPassedCriteria) {
+            return moreGapOpenPenaltyAln;
+        } else if (!equalPenaltyAlnPassedCriteria && !moreGapOpenPenaltyAlnPassedCriteria && moreSubGapOpenPenaltyAlnPassedCriteria) {
+            return moreSubGapOpenPenaltyAln;
+        } else if (equalPenaltyAlnPassedCriteria && !moreGapOpenPenaltyAlnPassedCriteria &&!moreSubGapOpenPenaltyAlnPassedCriteria) {
+            return equalPenaltyAln;
+        }
+       
+        moreGapOpenPenaltyAln.partialMatchSize = 0;
+        return moreGapOpenPenaltyAln;
     }
 
     void align(Alignment &aln,uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)

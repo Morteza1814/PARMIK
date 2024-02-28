@@ -211,11 +211,11 @@ public:
                 queriesPMFoundMatch++;
                 for (auto it = pmRange.first; it != pmRange.second; it++) {
                     Alignment pmAlnn = it->second;
-                    if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions > bestAlnPm.matches + bestAlnPm.inDels + pmAlnn.substitutions) // only exact matches
+                    if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
                     {
                         bestAlnPm = pmAlnn;
                     }
-                    else if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions == bestAlnPm.matches + bestAlnPm.inDels + pmAlnn.substitutions)
+                    else if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
                     {
                         if (pmAlnn.inDels + pmAlnn.substitutions < bestAlnPm.inDels + bestAlnPm.substitutions) // InDel has the same wight as substitution
                         {
