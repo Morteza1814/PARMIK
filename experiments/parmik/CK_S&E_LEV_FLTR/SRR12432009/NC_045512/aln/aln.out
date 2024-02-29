@@ -1,0 +1,58 @@
+no otherToolArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  1
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads
+readFileName:                 SRR12432009_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries
+queryFileName:                NC_045512_queries
+otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR12432009/NC_045512/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/parmik/SRR12432009/NC_045512
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   15
+regionSize:                   50
+minExactMatchLen:             30
+overlapsize:                  14
+cheapKmerThreshold:           500
+minNumExactMatchKmer:         16
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/SRR12432009/index/
+isVeboseLog:                  0
+**********************CONFIGURATIONS*****************************
+numberOfReadsWithN : 0
+queryCount : 29754
+numberOfReadsWithN : 0
+readCount : 16344647
+Cheap Kmers Deserialization Time: 5352.97 seconds
+k-mer max size : 16, stringSize = 15
+<<<<<<<<<<<<<<<<< Partial Matcher based on Cheap Kmers Started!! >>>>>>>>>>>>>>>>>>
+Partial Mathing based on Cheap Kmer took: 118.99 seconds
+------------more partial matching statistics-------------
+Number of cheap seeds per query up to q (29754) => Front [average: 0, median: 0, sum: 0] - Back [average: 0, median: 0, sum: 0]
+Number of cheap seeds in matched read per query up to q (29754) => [average: 18, median: 19, sum: 666]
+Number of reads with at least 1 similar cheap seed per query up to q (29754) => Front [average: 249, median: 235, sum: 116925] - Back [average: 249, median: 234, sum: 116653]
+Number of matches with at least min threshold (16) seeds per query up to q (29754) => Front [average: 118, median: 116, sum: 27026] - Back [average: 106, median: 107, sum: 22629]
+Query time for queries up to q(29754) => [average: 0.003657, median: 0.003583, sum: 108.527572]
+--------------------------------------------------------
+------------partial matching timing details-------------
+extractKmersFromRegions_totalExeTime =  4749620053 nanoseconds, 4.75 seconds, 4749.62 milliseconds
+collectCheapSeeds_totalExeTime =        75472176666 nanoseconds, 75.47 seconds, 75472.18 milliseconds
+findMatchedReadWithHihestSeeds_totalExeTime = 1420824031 nanoseconds, 1.42 seconds, 1420.82 milliseconds
+--------------------------------------------------------
+<<<<<<<<<<<<<<<<< Partial Matcher based on Cheap Kmers  Ended!! >>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<< Partial Matcher based on Cheap Kmers Started!! >>>>>>>>>>>>>>>>>>
+Partial Mathing based on Cheap Kmer took: 107.75 seconds
+------------more partial matching statistics-------------
+Number of cheap seeds per query up to q (29754) => Front [average: 0, median: 0, sum: 0] - Back [average: 0, median: 0, sum: 0]
+Number of cheap seeds in matched read per query up to q (29754) => [average: 18, median: 19, sum: 666]
+Number of reads with at least 1 similar cheap seed per query up to q (29754) => Front [average: 263, median: 243, sum: 128325] - Back [average: 263, median: 243, sum: 128325]
+Number of matches with at least min threshold (16) seeds per query up to q (29754) => Front [average: 114, median: 115, sum: 25440] - Back [average: 114, median: 115, sum: 25447]
+Query time for queries up to q(29754) => [average: 0.003304, median: 0.003227, sum: 97.989003]
+--------------------------------------------------------
+------------partial matching timing details-------------
+extractKmersFromRegions_totalExeTime =  4739109536 nanoseconds, 4.74 seconds, 4739.11 milliseconds
+collectCheapSeeds_totalExeTime =        67201984621 nanoseconds, 67.20 seconds, 67201.98 milliseconds
+findMatchedReadWithHihestSeeds_totalExeTime = 1353486321 nanoseconds, 1.35 seconds, 1353.49 milliseconds
+--------------------------------------------------------
+<<<<<<<<<<<<<<<<< Partial Matcher based on Cheap Kmers  Ended!! >>>>>>>>>>>>>>>>>>
+k-mer max size : 32, stringSize = 30

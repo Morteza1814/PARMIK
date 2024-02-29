@@ -35,6 +35,7 @@ int argParse(int argc, char** argv, Config &cfg){
     args::ValueFlag<string> otherToolArg(parser, "", "The Other Tool  (bwa, blast, etc)",   {'l', "otherTool"});
 	args::ValueFlag<int> minExactMatchLenArg(parser, "", "Minimum Exact Match Len",         {'m', "minExactMatchLen"});
 	args::ValueFlag<string> outputDirArg(parser, "", "OutputDir",                           {'o', "outputDir"});
+    args::ValueFlag<string> penaltyFileAddressArg(parser, "", "Penalty File Address",       {'p', "penaltyFileAddress"});
 	args::ValueFlag<string> queryFileAddressArg(parser, "", "Query File Address",           {'q', "query"});
 	args::ValueFlag<string> readDatabaseAddressArg(parser, "", "Read Data Base Address",    {'r', "read"});
 	args::ValueFlag<int> regionSizeArg(parser, "", "Region Size",                           {'s', "regionSize"});
@@ -67,6 +68,7 @@ int argParse(int argc, char** argv, Config &cfg){
     }
 	if (readDatabaseAddressArg) {cfg.readDatabaseAddress = args::get(readDatabaseAddressArg); } else {cout << "no readDatabaseAddress!"<< endl; return 0;}
 	if (queryFileAddressArg) {cfg.queryFileAddress = args::get(queryFileAddressArg);} else {cout << "no queryFileAddress!"<< endl; return 0;}
+    if (penaltyFileAddressArg) {cfg.penaltyFileAddress = args::get(penaltyFileAddressArg);} else {cfg.penaltyFileAddress = ""; cout << "no penaltyFileAddress!"<< endl;}
 	if (outputDirArg) {cfg.outputDir = args::get(outputDirArg);} else {cout << "no outputDirArg!"<< endl; cfg.noOutputFileDump = true;}
 	if (readsCountArg) {cfg.readsCount = args::get(readsCountArg); } else {cfg.readsCount = NUMBER_OF_READS;}
 	if (queryCountArg) {cfg.queryCount = args::get(queryCountArg); } else {cfg.queryCount = NUMBER_OF_QUERIES;}
@@ -202,6 +204,54 @@ void convertSamToAln(SamReader::Sam parmikSamAlignment, Alignment& parmikAlignme
     parmikAlignment.flag = parmikSamAlignment.flag;                
 }
 
+vector<Penalty> readPenalties(string& readPenaltiesFileAddress)
+{
+    vector<Penalty> penalties;
+    ifstream readPenaltiesFile(readPenaltiesFileAddress);
+    if (!readPenaltiesFile.is_open())
+    {
+        cout << "Error opening file " << readPenaltiesFileAddress << endl;
+        Penalty p;
+        penalties.push_back(p);
+        cout << "--------------Penalties--------------" << endl;
+        cout << "m: " << p.matchPenalty << ", s: " << p.mismatchPenalty << ", go: " << p.gapOpenPenalty << ", ge: " << p.gapExtendPenalty << endl;
+        cout << "------------------------------------" << endl;
+        return penalties;
+    }
+    string line;
+    cout << "--------------Penalties--------------" << endl;
+    while (getline(readPenaltiesFile, line))
+    {
+        Penalty p;
+        stringstream ss(line);
+        ss >> p.matchPenalty;
+        ss >> p.mismatchPenalty;
+        ss >> p.gapOpenPenalty;
+        ss >> p.gapExtendPenalty;
+        cout << "m: " << p.matchPenalty << ", s: " << p.mismatchPenalty << ", go: " << p.gapOpenPenalty << ", ge: " << p.gapExtendPenalty << endl;
+        penalties.push_back(p);
+    }
+    readPenaltiesFile.close();
+    if (penalties.size() == 0)
+    {
+        Penalty p;
+        cout << "m: " << p.matchPenalty << ", s: " << p.mismatchPenalty << ", go: " << p.gapOpenPenalty << ", ge: " << p.gapExtendPenalty << endl;
+        penalties.push_back(p);
+    }
+    cout << "------------------------------------" << endl;
+    return penalties;
+}
+
+string getPenaltiesSubstr(vector<Penalty> penalties)
+{
+    string substr = "";
+    for (auto p : penalties)
+    {
+        substr += "_" + to_string(p.matchPenalty) + "" + to_string(p.mismatchPenalty) + "" + to_string(p.gapOpenPenalty) + "" + to_string(p.gapExtendPenalty) + "";
+    }
+    return substr;
+}
+
 int run(int argc, char *argv[]) {
     Config cfg;
 	ofstream out;
@@ -216,6 +266,7 @@ int run(int argc, char *argv[]) {
 	cout << left << setw(30) << "queryFileName: " << cfg.queryFileName << endl;
     cout << left << setw(30) << "otherToolOutputFileAddress: " << cfg.otherToolOutputFileAddress << endl;
 	cout << left << setw(30) << "outputDir: " << cfg.outputDir << endl;
+    cout << left << setw(30) << "penaltyFileAddress: " << cfg.penaltyFileAddress << endl;
 	cout << left << setw(30) << "readsCount: " << cfg.readsCount << endl; 
 	cout << left << setw(30) << "queryCount: " << cfg.queryCount << endl;
 	cout << left << setw(30) << "kmerLength: " << cfg.kmerLength << endl;
@@ -239,18 +290,20 @@ int run(int argc, char *argv[]) {
         // run the experiment
         IndexContainer<uint32_t, uint32_t> frontMinThCheapSeedReads, backMinThCheapSeedReads, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads;
         // map<uint32_t, LevAlign> pmr;
-        string parmikAlignmentsAddress = cfg.outputDir + "/aln/parmikAlignments.txt";
         tsl::robin_map <uint32_t, string> reads, queries;
         uint32_t queryCount = 0;
+        vector<Penalty> penalties = readPenalties(cfg.penaltyFileAddress);
         if (cfg.parmikMode != PARMIK_MODE_INDEX)
         {
             queryCount = util.readContigsFromFile(cfg.queryFileAddress, cfg.queryCount, queries);
             cout << "queryCount : " << queryCount << endl;
+            // read the penalties
         }
         uint32_t readCount = util.readContigsFromFile(cfg.readDatabaseAddress, cfg.readsCount, reads);
         cout << "readCount : " << readCount << endl;
         // unordered_map<uint32_t, unordered_set<LevAlign>> alignments;
-        string offlineCheapIndexAddress = cfg.offlineIndexAddress + "cheapKmers_" + to_string(cfg.cheapKmerThreshold) + "_" + to_string(cfg.readsCount);
+        string offlineCheapIndexAddress = cfg.offlineIndexAddress + "ck_T" + to_string(cfg.cheapKmerThreshold) + "_K"+ to_string(cfg.kmerLength) + "_r" + to_string(cfg.readsCount);
+        string parmikAlignmentsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_M" + to_string(cfg.minExactMatchLen) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
         if (cfg.parmikMode != PARMIK_MODE_COMPARE)
         {
             if (cfg.kmerLength <= 16)
@@ -293,10 +346,10 @@ int run(int argc, char *argv[]) {
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
                     Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.minExactMatchLen);
                     // pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
-                    aligner.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, true, parmikAlignmentsAddress);
+                    aligner.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
                     // pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
-                    aligner.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress);
+                    aligner.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
                 }
             } else
             {
@@ -338,10 +391,10 @@ int run(int argc, char *argv[]) {
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
                     Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.minExactMatchLen);
                     // pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
-                    aligner.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, true, parmikAlignmentsAddress);
+                    aligner.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
                     // pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
-                    aligner.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress);
+                    aligner.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
                 }
             }
         
@@ -378,9 +431,9 @@ int run(int argc, char *argv[]) {
             }
             // cout<<"finished \n";
             //check the alignment results with another aligner
-            string comparisonResultsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/compareResults.txt";
-            string alnPerQueryFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/AlignmentPerQuery.txt";
-            string parmikFnReadsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/ParmikFnReads.txt";
+            string comparisonResultsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/cmp_" + "R" + to_string(cfg.regionSize) + "_M" + to_string(cfg.minExactMatchLen) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+            string alnPerQueryFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/AlnPerQ_" + "R" + to_string(cfg.regionSize) + "_M" + to_string(cfg.minExactMatchLen) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+            string parmikFnReadsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/ParmikFnReads_" + "R" + to_string(cfg.regionSize) + "_M" + to_string(cfg.minExactMatchLen) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
             vector<std::pair<uint32_t, uint32_t>> alnPmVsOtherAlnSizesMap;
             // (BWA)
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")

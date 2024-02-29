@@ -1,0 +1,27 @@
+==2184975== Cachegrind, a cache and branch-prediction profiler
+==2184975== Copyright (C) 2002-2017, and GNU GPL'd, by Nicholas Nethercote et al.
+==2184975== Using Valgrind-3.20.0 and LibVEX; rerun with -h for copyright info
+==2184975== Command: /u/rgq5aw/GIT/PARMIK/src/parmik -a 1 -x -m 30 -s 50 -c 150 -e 2 -t 500 -k 15 -z 14 -i 17000000 -j 30000 -r /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads -q /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries -f /p/lava/parmik/partialMatcherProject/tools/parmik/SRR12432009/index/ -o /p/lava/parmik/partialMatcherProject/tools/parmik/SRR12432009/NC_045512 -b /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR12432009/NC_045512/blastn_ws30_results.out
+==2184975== 
+--2184975-- warning: L3 cache found, using its data for the LL simulation.
+--2184975-- warning: specified LL cache: line_size 64  assoc 11  total_size 17,301,504
+--2184975-- warning: simulated LL cache: line_size 64  assoc 17  total_size 17,825,792
+==2184975== brk segment overflow in thread #1: can't grow to 0x487f000
+==2184975== (see section Limitations in user manual)
+==2184975== NOTE: further instances of this message will not be shown
+slurmstepd: error: *** JOB 3565395 ON cortado01 CANCELLED AT 2024-02-16T00:43:37 DUE TO TIME LIMIT ***
+==2184975== 
+==2184975== Process terminating with default action of signal 15 (SIGTERM)
+==2184975==    at 0x4B423E0: free (malloc.c:3352)
+==2184975==    by 0x15FB40: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, false, false>::_M_ready() (in /u/rgq5aw/GIT/PARMIK/src/parmik)
+==2184975==    by 0x1690E4: void std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M_insert_bracket_matcher<false, false>(bool) (in /u/rgq5aw/GIT/PARMIK/src/parmik)
+==2184975==    by 0x16C00B: std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M_bracket_expression() (in /u/rgq5aw/GIT/PARMIK/src/parmik)
+==2184975==    by 0x16CAF7: std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M_alternative() (in /u/rgq5aw/GIT/PARMIK/src/parmik)
+==2184975==    by 0x16CDDF: std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M_disjunction() (in /u/rgq5aw/GIT/PARMIK/src/parmik)
+==2184975==    by 0x16C54A: std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M_atom() (in /u/rgq5aw/GIT/PARMIK/src/parmik)
+==2184975==    by 0x16CAF7: std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M_alternative() (in /u/rgq5aw/GIT/PARMIK/src/parmik)
+==2184975==    by 0x16CDDF: std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M_disjunction() (in /u/rgq5aw/GIT/PARMIK/src/parmik)
+==2184975==    by 0x16D6CD: std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_Compiler(char const*, char const*, std::locale const&, std::regex_constants::syntax_option_type) (in /u/rgq5aw/GIT/PARMIK/src/parmik)
+==2184975==    by 0x11F5D2: SamReader::extractEditTypes(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [clone .isra.0] (in /u/rgq5aw/GIT/PARMIK/src/parmik)
+==2184975==    by 0x16F418: SeedMatchExtender<unsigned int, unsigned long>::comparePartialMatchRes(std::vector<LevenshteinDistanceAlignment, std::allocator<LevenshteinDistanceAlignment> >&) (in /u/rgq5aw/GIT/PARMIK/src/parmik)
+==2184975== 
