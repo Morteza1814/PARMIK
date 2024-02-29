@@ -4,7 +4,7 @@ readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/meta
 readFileName:                 SRR12432009_reads
 queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries
 queryFileName:                NC_045512_queries
-otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR12432009/NC_045512/blastn_ws30_results.out
+otherToolOutputFileAddress:   /p/lava/parmik/partialMatcherProject/tools/blast/SRR12432009/NC_045512/blastn_ws30_results.out
 outputDir:                    /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_FLTR/SRR12432009/NC_045512
 penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_FLTR/PenaltySets/1221
 readsCount:                   17000000
@@ -26,3 +26,4 @@ numberOfReadsWithN : 0
 queryCount : 29754
 numberOfReadsWithN : 0
 readCount : 16344647
+cmp file address: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_FLTR/SRR12432009/NC_045512/cmp/blast/cmp_R50_M30_E2_K15_T500_P_1221.txt

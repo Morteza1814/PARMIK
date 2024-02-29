@@ -1,0 +1,30 @@
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  2
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads
+readFileName:                 SRR12432009_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries
+queryFileName:                NC_045512_queries
+otherToolOutputFileAddress:   /p/lava/parmik/partialMatcherProject/tools/blast/SRR12432009/NC_045512/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_FLTR/SRR12432009/NC_045512
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_FLTR/PenaltySets/1111_1121
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   15
+regionSize:                   50
+minExactMatchLen:             30
+overlapsize:                  14
+cheapKmerThreshold:           1200
+minNumExactMatchKmer:         16
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/
+isVeboseLog:                  0
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 1, s: 1, go: 1, ge: 1
+m: 1, s: 1, go: 2, ge: 1
+------------------------------------
+numberOfReadsWithN : 0
+queryCount : 29754
+numberOfReadsWithN : 0
+readCount : 16344647
+cmp file address: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_FLTR/SRR12432009/NC_045512/cmp/blast/cmp_R50_M30_E2_K15_T1200_P_1111_1121.txt
