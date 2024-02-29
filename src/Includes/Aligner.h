@@ -13,6 +13,14 @@
 
 using namespace std;
 
+typedef struct Penalty
+{
+    int matchPenalty = 1;
+    int mismatchPenalty = 1;
+    int gapOpenPenalty = 1;
+    int gapExtendPenalty = 1;
+} Penalty;
+
 typedef struct Alignment
 {
     int readID = -1;            //read ID of the alignment
@@ -280,84 +288,36 @@ public:
         aln.editDistance = aln.substitutions + aln.inDels;
     }  
 
-    Alignment alignDifferentPenaltyScores(string query, string read, bool isForwardStrand)
+    Alignment alignDifferentPenaltyScores(string query, string read, bool isForwardStran, vector<Penalty> &penalties)
     {
-        Alignment equalPenaltyAln; // m=1, s=1, go=1, ge=1
-        equalPenaltyAln.read = read;
-        equalPenaltyAln.query = query;
-        if (!isForwardStrand) equalPenaltyAln.flag = 16;
-        align(equalPenaltyAln, 1, 1, 1, 1);
-        //check the alignment based on the criteria
-        bool equalPenaltyAlnCriteriaCheck = checkAlingmentCriteria(equalPenaltyAln);
-        bool equalPenaltyAlnPassedCriteria = false;
-        if (equalPenaltyAlnCriteriaCheck || (!equalPenaltyAlnCriteriaCheck && (equalPenaltyAln.criteriaCode <= 3))){
-            equalPenaltyAlnPassedCriteria = true;
+        Alignment bestAlignment;
+        if (penalties.size() == 0)
+        {
+            bestAlignment.read = read;
+            bestAlignment.query = query;
+            if (!isForwardStran) bestAlignment.flag = 16;
+            align(bestAlignment, 1, 1, 1, 1);
+            //check the alignment based on the criteria
+            bool criteriaCheck = checkAlingmentCriteria(bestAlignment);
+            if (criteriaCheck || (!criteriaCheck && (bestAlignment.criteriaCode <= 3))){
+                return bestAlignment;
+            }
         }
-        
-        Alignment moreGapOpenPenaltyAln; // m=1, s=1, go=2, ge=1
-        moreGapOpenPenaltyAln.read = read;
-        moreGapOpenPenaltyAln.query = query;
-        if (!isForwardStrand) moreGapOpenPenaltyAln.flag = 16;
-        align(moreGapOpenPenaltyAln, 1, 1, 2, 1);
-        //check the alignment based on the criteria
-        bool moreGapOpenPenaltyCriteriaCheck = checkAlingmentCriteria(moreGapOpenPenaltyAln);
-        bool moreGapOpenPenaltyAlnPassedCriteria = false;
-        if (moreGapOpenPenaltyCriteriaCheck || (!moreGapOpenPenaltyCriteriaCheck && (moreGapOpenPenaltyAln.criteriaCode <= 3))){
-            moreGapOpenPenaltyAlnPassedCriteria = true;
+        for (auto penalty : penalties)
+        {
+            Alignment aln;
+            aln.read = read;
+            aln.query = query;
+            if (!isForwardStran) aln.flag = 16;
+            align(aln, penalty.matchPenalty, penalty.mismatchPenalty, penalty.gapOpenPenalty, penalty.gapExtendPenalty);
+            //check the alignment based on the criteria
+            bool criteriaCheck = checkAlingmentCriteria(aln);
+            if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3))){
+                 if (aln.partialMatchSize > bestAlignment.partialMatchSize)
+                    bestAlignment = aln;
+            }
         }
-
-        Alignment moreSubGapOpenPenaltyAln; // m=1, s=2, go=2, ge=1
-        moreSubGapOpenPenaltyAln.read = read;
-        moreSubGapOpenPenaltyAln.query = query;
-        if (!isForwardStrand) moreSubGapOpenPenaltyAln.flag = 16;
-        align(moreSubGapOpenPenaltyAln, 1, 2, 2, 1);
-        //check the alignment based on the criteria
-        bool moreSubGapOpenPenaltyCriteriaCheck = checkAlingmentCriteria(moreSubGapOpenPenaltyAln);
-        bool moreSubGapOpenPenaltyAlnPassedCriteria = false;
-        if (moreSubGapOpenPenaltyCriteriaCheck || (!moreSubGapOpenPenaltyCriteriaCheck && (moreSubGapOpenPenaltyAln.criteriaCode <= 3))){
-            moreSubGapOpenPenaltyAlnPassedCriteria = true;
-        }
-
-        //     if (equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria) {
-        //     return equalPenaltyAln.partialMatchSize >= moreGapOpenPenaltyAln.partialMatchSize? equalPenaltyAln : moreGapOpenPenaltyAln;
-        // } else if (equalPenaltyAlnPassedCriteria && !moreGapOpenPenaltyAlnPassedCriteria) {
-        //     return equalPenaltyAln;
-        // } else if (!equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria) {
-        //     return moreGapOpenPenaltyAln;
-        // }
-
-        if (equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria && moreSubGapOpenPenaltyAlnPassedCriteria) {
-            if (equalPenaltyAln.partialMatchSize >= moreGapOpenPenaltyAln.partialMatchSize && equalPenaltyAln.partialMatchSize >= moreSubGapOpenPenaltyAln.partialMatchSize)
-                return equalPenaltyAln;
-            else if (moreSubGapOpenPenaltyAln.partialMatchSize >= equalPenaltyAln.partialMatchSize && moreSubGapOpenPenaltyAln.partialMatchSize >= moreGapOpenPenaltyAln.partialMatchSize)
-                return moreSubGapOpenPenaltyAln;
-            else if (moreGapOpenPenaltyAln.partialMatchSize >= equalPenaltyAln.partialMatchSize && moreGapOpenPenaltyAln.partialMatchSize >= moreSubGapOpenPenaltyAln.partialMatchSize)
-                return moreGapOpenPenaltyAln;
-        } else if (equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria && !moreSubGapOpenPenaltyAlnPassedCriteria) {
-            if (equalPenaltyAln.partialMatchSize >= moreGapOpenPenaltyAln.partialMatchSize)
-                return equalPenaltyAln;
-            else if (moreGapOpenPenaltyAln.partialMatchSize > equalPenaltyAln.partialMatchSize)
-                return moreGapOpenPenaltyAln;
-        } else if (equalPenaltyAlnPassedCriteria && !moreGapOpenPenaltyAlnPassedCriteria && moreSubGapOpenPenaltyAlnPassedCriteria) {
-            if (equalPenaltyAln.partialMatchSize >= moreSubGapOpenPenaltyAln.partialMatchSize)
-                return equalPenaltyAln;
-            else if (moreSubGapOpenPenaltyAln.partialMatchSize >= equalPenaltyAln.partialMatchSize)
-                return moreSubGapOpenPenaltyAln;
-        } else if (!equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria && moreSubGapOpenPenaltyAlnPassedCriteria) {
-            if (moreGapOpenPenaltyAln.partialMatchSize >= moreSubGapOpenPenaltyAln.partialMatchSize)
-                return moreGapOpenPenaltyAln;
-            else if (moreSubGapOpenPenaltyAln.partialMatchSize >= moreGapOpenPenaltyAln.partialMatchSize)
-                return moreSubGapOpenPenaltyAln;
-        } else if (!equalPenaltyAlnPassedCriteria && moreGapOpenPenaltyAlnPassedCriteria && !moreSubGapOpenPenaltyAlnPassedCriteria) {
-            return moreGapOpenPenaltyAln;
-        } else if (!equalPenaltyAlnPassedCriteria && !moreGapOpenPenaltyAlnPassedCriteria && moreSubGapOpenPenaltyAlnPassedCriteria) {
-            return moreSubGapOpenPenaltyAln;
-        } else if (equalPenaltyAlnPassedCriteria && !moreGapOpenPenaltyAlnPassedCriteria &&!moreSubGapOpenPenaltyAlnPassedCriteria) {
-            return equalPenaltyAln;
-        }
-       
-        moreGapOpenPenaltyAln.partialMatchSize = 0;
-        return moreGapOpenPenaltyAln;
+        return bestAlignment;
     }
 
     void align(Alignment &aln,uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
@@ -488,7 +448,7 @@ public:
         return readContigs;
     }
 
-    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, bool isForwardStrand, string parmikAlignments)
+    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, bool isForwardStrand, string parmikAlignments, vector<Penalty> penalties)
     {
         ofstream pAln(parmikAlignments, ios::app);
         cout << "Starting alignment for all queries [" << (isForwardStrand ? ("fwd"):("rev")) << "]..." << endl;
@@ -512,7 +472,7 @@ public:
                 // aln.query = query;
                 // aln.read = it->second;
                 // align(aln, 1, 1, 2, 1);
-                Alignment aln = alignDifferentPenaltyScores(query, it->second, isForwardStrand);
+                Alignment aln = alignDifferentPenaltyScores(query, it->second, isForwardStrand, penalties);
                 aln.queryID = i;
                 aln.readID = it->first;
                 //check the alignment based on the criteria
@@ -531,7 +491,7 @@ public:
                 // aln.query = query;
                 // aln.read = it->second;
                 // align(aln, 1, 1, 2, 1);
-                Alignment aln = alignDifferentPenaltyScores(query, it->second, isForwardStrand);
+                Alignment aln = alignDifferentPenaltyScores(query, it->second, isForwardStrand, penalties);
                 aln.queryID = i;
                 aln.readID = it->first;
                 //check the alignment based on the criteria
