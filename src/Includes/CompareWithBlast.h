@@ -280,11 +280,18 @@ public:
                         Alignment pmaln;
                         for (auto itt = pmRange.first; itt != pmRange.second; itt++) 
                         {
-                            pmaln = itt->second;
-                            if((uint32_t) pmaln.readID == aln.readId)
+                            Alignment tmpAln = itt->second;
+                            if((uint32_t) tmpAln.readID == aln.readId)
                             {
+                                if (!pmfound)
+                                    pmaln = itt->second;
                                 pmfound = true;
-                                break;
+                                if ((tmpAln.matches + tmpAln.inDels + tmpAln.substitutions > pmaln.matches + pmaln.inDels + pmaln.substitutions) || 
+                                ((tmpAln.matches + tmpAln.inDels + tmpAln.substitutions == pmaln.matches + pmaln.inDels + pmaln.substitutions) && 
+                                (tmpAln.inDels + tmpAln.substitutions <  pmaln.inDels + pmaln.substitutions))) 
+                                {
+                                    pmaln = tmpAln;
+                                }
                             }
                         }
                         if (!pmfound)
