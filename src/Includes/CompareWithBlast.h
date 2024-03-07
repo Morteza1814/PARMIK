@@ -323,6 +323,7 @@ public:
                                     blastTP_parmikOutperfomed_ed_allQ.insert(aln.Mismatches + aln.InDels);
                                     parmikTP_parmikOutperfomed_alnLen_allQ.insert(pmaln.matches + pmaln.inDels + pmaln.substitutions);
                                     parmikTP_parmikOutperfomed_ed_allQ.insert(pmaln.substitutions + pmaln.inDels);
+                                    cmp << "TP for BLAST, PARMIK outperformed in terms of ed, Blast alnlen : " << aln.AlignmentLength << ", ed : " << aln.Mismatches + aln.InDels << ", readID: " <<  aln.readId << ", PARMIK alnlen: " << pmaln.matches + pmaln.inDels << ", ed: " << pmaln.substitutions + pmaln.inDels << ", readID: " << pmaln.readID << endl;
                                 } else if (pmaln.substitutions + pmaln.inDels > aln.Mismatches + aln.InDels)//BLAST outperformed
                                 {
                                     blastTP_blastOutperfomed++;
