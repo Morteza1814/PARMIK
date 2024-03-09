@@ -10,6 +10,7 @@
 #include <map>
 #include "Utils.h"
 #include "sw/ssw_cpp.h"
+#include "PostFilter.h"
 
 using namespace std;
 
@@ -30,31 +31,31 @@ typedef struct Alignment
     string alignedRead;         //the region in read aligned for the partial match
     string alignedQuery;        //the region in query aligned for the partial match
     string editDistanceTypes;   //edit distance types of the region of the partial match
-    size_t editDistance = 0;           //number of edit distances detected in the region
-    size_t partialMatchSize = 0;       //partial match region size
+    uint32_t editDistance = 0;           //number of edit distances detected in the region
+    uint32_t partialMatchSize = 0;       //partial match region size
     vector<uint16_t> editLocations;  //the positions of the edit distances in the partial match region
     string cigar;               //CIGAR string of the alignment
-    size_t substitutions = 0;       //number of substitutions
-    size_t inDels = 0;       //number of InDel
-    size_t matches = 0;       //number of matched bp
-    size_t readRegionStartPos = 0;
-    size_t readRegionEndPos = 0;
-    size_t queryRegionStartPos = 0;
-    size_t queryRegionEndPos = 0;
-    size_t flag = 0;                  // determines the strand for now
-    size_t score = 0;
-    size_t criteriaCode = 0;     // criteria code for the alignment
+    uint32_t substitutions = 0;       //number of substitutions
+    uint32_t inDels = 0;       //number of InDel
+    uint32_t matches = 0;       //number of matched bp
+    uint32_t readRegionStartPos = 0;
+    uint32_t readRegionEndPos = 0;
+    uint32_t queryRegionStartPos = 0;
+    uint32_t queryRegionEndPos = 0;
+    uint32_t flag = 0;                  // determines the strand for now
+    uint32_t score = 0;
+    uint32_t criteriaCode = 0;     // criteria code for the alignment
 } Alignment;
 
 template <typename contigIndT>
 class Aligner {
 private:
-    size_t regionSize;
-    size_t allowedEditDistance;
-    size_t contigSize;
-    size_t minExactMatchLength;
+    uint32_t regionSize;
+    uint32_t allowedEditDistance;
+    uint32_t contigSize;
+    uint32_t minExactMatchLength;
 public:
-    Aligner(size_t R, size_t a, size_t c, size_t m) : regionSize(R), allowedEditDistance(a), contigSize(c), minExactMatchLength(m) {}
+    Aligner(uint32_t R, uint32_t a, uint32_t c, uint32_t m) : regionSize(R), allowedEditDistance(a), contigSize(c), minExactMatchLength(m) {}
 
     string convertCigarToStr(const string& cigar) {
         stringstream simplifiedCigar;
@@ -102,22 +103,38 @@ public:
         return simplifiedCigar.str();
     }
 
-    string convertStrToCigar(const string cigarStr) {
+    string convertStrToCigar(const string cigarStr, uint32_t queryS, uint32_t queryE) {
         stringstream cigar;
         char prev = cigarStr[0];
         uint16_t num = 0;
+        // cout << "queryS: " << queryS << ", queryE: " << queryE << endl;
+        if (prev != 'S' && prev != 'H') {
+            cigar << queryS << 'S';
+        }
         for (size_t i = 1; i < cigarStr.length(); ++i) {
             char cur = cigarStr[i];
             num++;
             if (prev != cur)
             {
+                if (prev == 'S' || prev == 'H') {
+                    num += queryS;
+                }
                 cigar << num << prev;
                 num = 0;
                 prev = cur;
             }
         }
         num++;
+        uint remainedClips = 0;
+        if (prev == 'S' || prev == 'H') {
+            num += contigSize - queryE - 1;
+        } else {
+            remainedClips = contigSize - queryE - 1;
+        }
         cigar << num << prev;
+        if (remainedClips > 0) {
+            cigar << remainedClips << 'S';
+        }
         return cigar.str();
     }
 
@@ -282,7 +299,7 @@ public:
         //change the cigar based on the new region
         string newCigarStr = cigarStr.substr(maxAlnStartPos + queryClips, aln.partialMatchSize);
         // cout << "newCigarStr: " << newCigarStr << endl;
-        aln.cigar = convertStrToCigar(newCigarStr);
+        aln.cigar = convertStrToCigar(newCigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
         vector<uint16_t> edits;
         parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, edits);
         aln.editDistance = aln.substitutions + aln.inDels;
@@ -291,6 +308,7 @@ public:
     Alignment alignDifferentPenaltyScores(string query, string read, bool isForwardStran, vector<Penalty> &penalties)
     {
         Alignment bestAlignment;
+        PostFilter pf(regionSize, allowedEditDistance, contigSize, minExactMatchLength);
         if (penalties.size() == 0)
         {
             bestAlignment.read = read;
@@ -298,7 +316,8 @@ public:
             if (!isForwardStran) bestAlignment.flag = 16;
             align(bestAlignment, 1, 1, 1, 1);
             //check the alignment based on the criteria
-            bool criteriaCheck = checkAlingmentCriteria(bestAlignment);
+            // bool criteriaCheck = checkAlingmentCriteria(bestAlignment);
+            bool criteriaCheck = pf.checkAlingmentCriteria(bestAlignment.editDistance, bestAlignment.partialMatchSize, bestAlignment.queryRegionStartPos, convertCigarToStr(bestAlignment.cigar), "cigarStr", bestAlignment.substitutions, bestAlignment.inDels, bestAlignment.criteriaCode);
             if (criteriaCheck || (!criteriaCheck && (bestAlignment.criteriaCode <= 3))){
                 return bestAlignment;
             }
@@ -311,7 +330,8 @@ public:
             if (!isForwardStran) aln.flag = 16;
             align(aln, penalty.matchPenalty, penalty.mismatchPenalty, penalty.gapOpenPenalty, penalty.gapExtendPenalty);
             //check the alignment based on the criteria
-            bool criteriaCheck = checkAlingmentCriteria(aln);
+            // bool criteriaCheck = checkAlingmentCriteria(aln);
+            bool criteriaCheck = pf.checkAlingmentCriteria(bestAlignment.editDistance, bestAlignment.partialMatchSize, bestAlignment.queryRegionStartPos, convertCigarToStr(bestAlignment.cigar), "cigarStr", bestAlignment.substitutions, bestAlignment.inDels, bestAlignment.criteriaCode);
             if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3))){
                  if (aln.partialMatchSize > bestAlignment.partialMatchSize || (aln.partialMatchSize == bestAlignment.partialMatchSize && aln.editDistance < bestAlignment.editDistance))
                     bestAlignment = aln;
@@ -375,6 +395,7 @@ public:
         0x02 -> back region dismissed because region's starting position lower than contigSize - regionSize (each missed bp is 1 edit distance)
         0x04 -> region starts from 100 + allowedEditDistance
         0x08 -> Either alignment len or edit distance does not match the criteria
+        0x10 -> No min exact match region in the partial match region
         */
         //check the alignment len and edit distance
         if((l.editDistance > allowedEditDistance) || (((uint32_t)l.partialMatchSize < (uint32_t)regionSize)))
@@ -524,7 +545,7 @@ public:
         }
     }
 
-    void parseCigar(const string& cigar, size_t& matches, size_t& substitutions, size_t& inDels, vector<uint16_t> &editLocations) {
+    void parseCigar(const string& cigar, uint32_t& matches, uint32_t& substitutions, uint32_t& inDels, vector<uint16_t> &editLocations) {
         substitutions = inDels = 0;
         int currentPos = 0; // Current position in the read
         int len = cigar.length();
