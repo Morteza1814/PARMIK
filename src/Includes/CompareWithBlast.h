@@ -7,6 +7,7 @@
 #include <iostream>
 #include "BlastReader.h"
 #include "Aligner.h"
+#include "PostFilter.h"
 
 using namespace std;
 
@@ -28,109 +29,6 @@ public:
             } 
         }
  
-    }
-
-    bool hasMinConsecutiveMatches(uint32_t queryS, const string& str1, const string& str2, Config &cfg) {
-        uint32_t consecutiveMatchCount = 0;
-    
-        // Ensure that both strings have the same length for exact matching
-        if (str1.length() != str2.length()) {
-            cerr << "Error: Sequences have different lengths." << endl;
-            return false;
-        }
-
-        // Iterate through each character in the strings and count consecutive exact matches
-        uint32_t startPos = 0;
-        for (size_t i = 0; i < str1.length(); i++) {
-            if (str1[i] == str2[i]) {
-                consecutiveMatchCount++;
-                if (consecutiveMatchCount >= cfg.minExactMatchLen) {
-                    if ((startPos + queryS + cfg.minExactMatchLen <= cfg.regionSize) || ((startPos + queryS - 1 >= cfg.contigSize - cfg.regionSize) && (startPos + queryS + cfg.minExactMatchLen <= cfg.contigSize))) {
-                        return true;  // Found enough consecutive matches inth front or back region
-                    }else{
-                        startPos++;
-                        consecutiveMatchCount--;
-                        // cout << "startPos: " << startPos << " queryS: " << queryS << " consecutiveMatchCount: " << consecutiveMatchCount << endl;
-                    }
-                }
-            } else {
-                consecutiveMatchCount = 0;  // Reset count if consecutive match is broken
-                startPos = i+1;
-            }
-        }
-
-        // Return false if the number of consecutive exact matches is less than minConsecutiveMatch
-        return false;
-    }
-
-    bool checkBlastEditPositions(BlastReader::Blast& blastAlignment, Config cfg)
-    {
-           /*criteriaCode
-        0000 -> accepted
-        0x01 -> front region dismissed because region's starting position higher than 0 (each missed bp is 1 edit distance)
-        0x02 -> back region dismissed because region's starting position lower than contigSize - regionSize (each missed bp is 1 edit distance)
-        0x04 -> region starts from 100 + allowedEditDistance
-        0x08 -> Either alignment len or edit distance does not match the criteria
-        0x10 -> No min exact match region in the partial match region
-        */
-        bool frontRegionDismissed = false, backRegionDismissed = false;
-        uint32_t queryS = blastAlignment.queryS - 1;
-
-        //check whether the region starts at most from 100 + 2
-        if(queryS > (cfg.contigSize - cfg.regionSize + cfg.editDistance)){ //first bp of back region starts from 100
-            blastAlignment.criteriaCode |= 0x04;
-            return false;
-        }
-        //check whether the regions has at least minExactMatchLen consecutive matches
-        if(!hasMinConsecutiveMatches(queryS, blastAlignment.queryAligned, blastAlignment.readAligned, cfg)){
-            // cout << "!hasMinConsecutiveMatches" << endl;
-            blastAlignment.criteriaCode |= 0x10;
-            return false;
-        }
-
-        if(cfg.editDistance >= queryS){
-            auto editsAllwedInFrontRegion = cfg.editDistance - queryS;
-            if(blastAlignment.Mismatches + blastAlignment.InDels > editsAllwedInFrontRegion)
-                frontRegionDismissed = true;
-        } else {
-            frontRegionDismissed = true;
-        }
-        if (frontRegionDismissed)
-            blastAlignment.criteriaCode |= 0x01;
-
-        if(queryS + blastAlignment.AlignmentLength >= cfg.contigSize - cfg.editDistance){ //query start position + alignment len should be larger than conig size - allowed edit
-            auto editsAllwedInBackRegion = queryS + blastAlignment.AlignmentLength - (cfg.contigSize - cfg.editDistance);
-            if(blastAlignment.Mismatches + blastAlignment.InDels > editsAllwedInBackRegion)
-                backRegionDismissed = true;
-        }else {
-            backRegionDismissed = true;
-        }
-        if (backRegionDismissed)
-            blastAlignment.criteriaCode |= 0x02;
-
-        if(frontRegionDismissed && backRegionDismissed)
-            return false;
-        return true;
-    }
-
-    void testCheckBlastEditPositions(uint32_t contigSize, uint32_t regionSize, uint32_t editDistance, uint32_t minExactMatchLen,
-    uint32_t queryS, string qAln, string readAln, uint32_t alnLen, uint32_t blastMismatches, uint32_t blastInDel){
-        BlastReader::Blast blastAlignment;
-        Config cfg;
-        cfg.contigSize = contigSize;
-        cfg.regionSize = regionSize;
-        cfg.editDistance = editDistance;
-        cfg.minExactMatchLen = minExactMatchLen;
-        blastAlignment.queryAligned = qAln;
-        blastAlignment.readAligned = readAln;
-        blastAlignment.Mismatches = blastMismatches;
-        blastAlignment.InDels = blastInDel;
-        blastAlignment.queryS = queryS;
-        blastAlignment.AlignmentLength = alnLen;
-        if(checkBlastEditPositions(blastAlignment, cfg))
-            cout << "blast alignment fits to the criteria" << endl;
-        else
-            cout << "blast alignment does not fit to the criteria" << endl;
     }
 
     void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, IndexContainer<uint32_t, Alignment>& pmAlignments, vector<pair<uint32_t, uint32_t>>& alnPmBLASTHisto, const uint32_t queryCount, string alnPerQueryFileAddress, string parmikFnReadsFileAddress)
@@ -246,28 +144,27 @@ public:
                         continue;
                     }
                     bool isFP = false;
-                    if (aln.Mismatches + aln.InDels > cfg.editDistance)
+                    PostFilter pf(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.minExactMatchLen);
+                    pf.checkAlingmentCriteria(aln.Mismatches + aln.InDels, aln.AlignmentLength, aln.queryS - 1, aln.queryAligned, aln.readAligned, aln.Mismatches, aln.InDels, aln.criteriaCode);
+                    if (aln.criteriaCode == 0x08)
                     {
                         // cmp << "with edits (Indel+Subs) [" << aln.Mismatches + aln.InDels << "] > " << cfg.editDistance << endl;
                         isFP = true;
                         blastFP_editsExceed++;
                         blastFP_editsExceed_alnLen_allQ.insert(aln.AlignmentLength);
                         blastFP_editsExceed_ed_allQ.insert(aln.Mismatches + aln.InDels);
-                    } else if(aln.AlignmentLength < cfg.regionSize) {    
+                    } else if(aln.criteriaCode == 0x10) {    
                         // cmp << "with low match size : " << blastMatchSize << endl;
                         isFP = true;
                         blastFP_lowAlnLen++;
                         blastFP_lowAlnLen_alnLen_allQ.insert(aln.AlignmentLength);
                         blastFP_lowAlnLen_ed_allQ.insert(aln.Mismatches + aln.InDels);
-                    } else if (!checkBlastEditPositions(aln, cfg)){
-                        if (aln.criteriaCode >= 4) 
-                        {
-                            isFP = true;
-                            blastFP_editPos++;
-                            blastFP_editPos_alnLen_allQ.insert(aln.AlignmentLength);
-                            blastFP_editPos_ed_allQ.insert(aln.Mismatches + aln.InDels);
-                            // cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
-                        }
+                    } else if (aln.criteriaCode >= 4) {
+                        isFP = true;
+                        blastFP_editPos++;
+                        blastFP_editPos_alnLen_allQ.insert(aln.AlignmentLength);
+                        blastFP_editPos_ed_allQ.insert(aln.Mismatches + aln.InDels);
+                        // cmp << "the read was supposed to be discarded based on our criteria (edit pos)" << endl;
                     } 
         
                     if (isFP){

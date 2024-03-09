@@ -507,11 +507,11 @@ int run(int argc, char *argv[]) {
     return 0;
 }
 
-void testCheckBlastEditPositionsWrapper(int argc, char *argv[]){
-    CompareWithBlast cwb;
-    // testCheckBlastEditPositions(uint32_t contigSize, uint32_t regionSize, uint32_t editDistance, uint32_t minExactMatchLen, uint32_t queryS, string qAln, sting readAln, uint32_t blastMismatches, uint32_t blastInDel);
-    cwb.testCheckBlastEditPositions(stod(argv[1]), stod(argv[2]), stod(argv[3]), stod(argv[4]), stod(argv[5]), argv[6], argv[7], stod(argv[8]), stod(argv[9]), stod(argv[10]));
-}
+// void testCheckBlastEditPositionsWrapper(int argc, char *argv[]){
+//     CompareWithBlast cwb;
+//     // testCheckBlastEditPositions(uint32_t contigSize, uint32_t regionSize, uint32_t editDistance, uint32_t minExactMatchLen, uint32_t queryS, string qAln, sting readAln, uint32_t blastMismatches, uint32_t blastInDel);
+//     cwb.testCheckBlastEditPositions(stod(argv[1]), stod(argv[2]), stod(argv[3]), stod(argv[4]), stod(argv[5]), argv[6], argv[7], stod(argv[8]), stod(argv[9]), stod(argv[10]));
+// }
 
 void checkParmikFNalignments(int argc, char *argv[]){
     // checkKmerFreq(string missedMatchesFileAddress, string kmerFrequLocFileAddress, string queryFileAddress, string readFileAddress, uint32_t queryCount, uint32_t readCount);
@@ -523,9 +523,11 @@ void testAligner(int argc, char *argv[]){
     Alignment aln;
     aln.query = argv[1];
     aln.read = argv[2];
+    PostFilter pf(50, 2, 150, 30);
     Aligner <uint32_t> aligner(50, 2, 150, 30);
     aligner.align(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
-    bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
+    // bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
+    bool criteriaCheck = pf.checkAlingmentCriteria(aln.editDistance, aln.partialMatchSize, aln.queryRegionStartPos, aligner.convertCigarToStr(aln.cigar), "cigarStr", aln.substitutions, aln.inDels, aln.criteriaCode);
     cout << ((criteriaCheck == true) ? "aln meets criteria" : "aln not meet criteria") << endl;
     cout << "criteriaCode: " << aln.criteriaCode << endl;
     if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3)))
@@ -533,12 +535,23 @@ void testAligner(int argc, char *argv[]){
 
 }
 
+// void testHasMinConsecutiveMatches(int argc, char *argv[]){
+//     CompareWithBlast cwb;
+//     Config cfg;
+//     cfg.minExactMatchLen = stod(argv[3]);
+//     cfg.regionSize = stod(argv[4]);
+//     cfg.contigSize = stod(argv[5]);
+//     bool hasMinConsecutiveMatches = cwb.hasMinConsecutiveMatches(stod(argv[6]), argv[1], argv[2], cfg);
+//     cout << ((hasMinConsecutiveMatches == true) ? "hasMinConsecutiveMatches" : "no hasMinConsecutiveMatches") << endl;
+// }
+
 int main(int argc, char *argv[])
 {
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // testOnePair(argc, argv);
     // checkParmikFNalignments(argc, argv);
     // testAligner(argc, argv);
+    // testHasMinConsecutiveMatches(argc, argv);
     run(argc, argv);
     return 0;
 }
