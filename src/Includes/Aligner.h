@@ -318,7 +318,7 @@ public:
             //check the alignment based on the criteria
             // bool criteriaCheck = checkAlingmentCriteria(bestAlignment);
             bool criteriaCheck = pf.checkAlingmentCriteria(bestAlignment.editDistance, bestAlignment.partialMatchSize, bestAlignment.queryRegionStartPos, convertCigarToStr(bestAlignment.cigar), "cigarStr", bestAlignment.substitutions, bestAlignment.inDels, bestAlignment.criteriaCode);
-            if (criteriaCheck || (!criteriaCheck && (bestAlignment.criteriaCode <= 3))){
+            if (criteriaCheck || (!criteriaCheck && (bestAlignment.criteriaCode < 4))){
                 return bestAlignment;
             }
         }
@@ -332,7 +332,7 @@ public:
             //check the alignment based on the criteria
             // bool criteriaCheck = checkAlingmentCriteria(aln);
             bool criteriaCheck = pf.checkAlingmentCriteria(bestAlignment.editDistance, bestAlignment.partialMatchSize, bestAlignment.queryRegionStartPos, convertCigarToStr(bestAlignment.cigar), "cigarStr", bestAlignment.substitutions, bestAlignment.inDels, bestAlignment.criteriaCode);
-            if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3))){
+            if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode < 4))){
                  if (aln.partialMatchSize > bestAlignment.partialMatchSize || (aln.partialMatchSize == bestAlignment.partialMatchSize && aln.editDistance < bestAlignment.editDistance))
                     bestAlignment = aln;
             }
@@ -387,64 +387,64 @@ public:
                 << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.substitutions) << '\t' << "CC" << l.criteriaCode << '\n';
     }
 
-    bool checkAlingmentCriteria(Alignment &l)
-    {
-        /*criteriaCode
-        0000 -> accepted
-        0x01 -> front region dismissed because region's starting position higher than 0 (each missed bp is 1 edit distance)
-        0x02 -> back region dismissed because region's starting position lower than contigSize - regionSize (each missed bp is 1 edit distance)
-        0x04 -> region starts from 100 + allowedEditDistance
-        0x08 -> Either alignment len or edit distance does not match the criteria
-        0x10 -> No min exact match region in the partial match region
-        */
-        //check the alignment len and edit distance
-        if((l.editDistance > allowedEditDistance) || (((uint32_t)l.partialMatchSize < (uint32_t)regionSize)))
-        {
-            // cout << "0- edit distance[" << l.editDistance << "] > allowed edit distance or partial match size [" << l.partialMatchSize <<"] < region size" << endl;
-            //TODO: did not check whether there is a min exact match region in the partial match region
-            // if(l.queryRegionStartPos + minExactMatchLength <= regionSize || l.queryRegionEndPos - minExactMatchLength >= contigSize - regionSize)
-            l.criteriaCode |= 0x08;
-            return false;
-        }
-        bool frontRegionDismissed = false, backRegionDismissed = false;
-        //check the starting position of the alignment for the front region
-        if(allowedEditDistance >= l.queryRegionStartPos){
-            auto editsAllwedInFrontRegion = allowedEditDistance - l.queryRegionStartPos ;
-            if(l.substitutions + l.inDels > editsAllwedInFrontRegion)
-            {
-                frontRegionDismissed = true;
-                // cout << "1- front region dismissed" << endl;
-            }
-        } else {
-            frontRegionDismissed = true;
-            // cout << "2- front region dismissed" << endl;
-        }
-        if(frontRegionDismissed)
-            l.criteriaCode |= 0x01;
-        //check the starting position of the alignment for the back region
-        if(l.queryRegionStartPos + l.partialMatchSize >= contigSize - allowedEditDistance){ //query start position + alignment len should be larger than conig size - allowed edit
-            auto editsAllwedInBackRegion = l.queryRegionStartPos + l.partialMatchSize - (contigSize - allowedEditDistance);
-            if(l.substitutions + l.inDels > editsAllwedInBackRegion)
-            {
-                backRegionDismissed = true;
-                // cout << "3- back region dismissed" << endl;
-            }
-        }else {
-            backRegionDismissed = true;
-            // cout << "4- back region dismissed" << endl;
-        }
-        if(backRegionDismissed)
-            l.criteriaCode |= 0x02;
-        if(frontRegionDismissed && backRegionDismissed)
-            return false;
-        if(l.queryRegionStartPos > (contigSize - regionSize + allowedEditDistance)){ //first bp of back region starts from 100 + allowed edit distance
-            // cout << "5- first bp of back region starts from 100" << endl;
-            l.criteriaCode |= 0x04;
-            return false;
-        }
-        // cout << "6- not meet criteria" << endl;
-        return true;
-    }
+    // bool checkAlingmentCriteria(Alignment &l)
+    // {
+    //     /*criteriaCode
+    //     0000 -> accepted
+    //     0x01 -> front region dismissed because region's starting position higher than 0 (each missed bp is 1 edit distance)
+    //     0x02 -> back region dismissed because region's starting position lower than contigSize - regionSize (each missed bp is 1 edit distance)
+    //     0x04 -> region starts from 100 + allowedEditDistance
+    //     0x08 -> Either alignment len or edit distance does not match the criteria
+    //     0x10 -> No min exact match region in the partial match region
+    //     */
+    //     //check the alignment len and edit distance
+    //     if((l.editDistance > allowedEditDistance) || (((uint32_t)l.partialMatchSize < (uint32_t)regionSize)))
+    //     {
+    //         // cout << "0- edit distance[" << l.editDistance << "] > allowed edit distance or partial match size [" << l.partialMatchSize <<"] < region size" << endl;
+    //         //TODO: did not check whether there is a min exact match region in the partial match region
+    //         // if(l.queryRegionStartPos + minExactMatchLength <= regionSize || l.queryRegionEndPos - minExactMatchLength >= contigSize - regionSize)
+    //         l.criteriaCode |= 0x08;
+    //         return false;
+    //     }
+    //     bool frontRegionDismissed = false, backRegionDismissed = false;
+    //     //check the starting position of the alignment for the front region
+    //     if(allowedEditDistance >= l.queryRegionStartPos){
+    //         auto editsAllwedInFrontRegion = allowedEditDistance - l.queryRegionStartPos ;
+    //         if(l.substitutions + l.inDels > editsAllwedInFrontRegion)
+    //         {
+    //             frontRegionDismissed = true;
+    //             // cout << "1- front region dismissed" << endl;
+    //         }
+    //     } else {
+    //         frontRegionDismissed = true;
+    //         // cout << "2- front region dismissed" << endl;
+    //     }
+    //     if(frontRegionDismissed)
+    //         l.criteriaCode |= 0x01;
+    //     //check the starting position of the alignment for the back region
+    //     if(l.queryRegionStartPos + l.partialMatchSize >= contigSize - allowedEditDistance){ //query start position + alignment len should be larger than conig size - allowed edit
+    //         auto editsAllwedInBackRegion = l.queryRegionStartPos + l.partialMatchSize - (contigSize - allowedEditDistance);
+    //         if(l.substitutions + l.inDels > editsAllwedInBackRegion)
+    //         {
+    //             backRegionDismissed = true;
+    //             // cout << "3- back region dismissed" << endl;
+    //         }
+    //     }else {
+    //         backRegionDismissed = true;
+    //         // cout << "4- back region dismissed" << endl;
+    //     }
+    //     if(backRegionDismissed)
+    //         l.criteriaCode |= 0x02;
+    //     if(frontRegionDismissed && backRegionDismissed)
+    //         return false;
+    //     if(l.queryRegionStartPos > (contigSize - regionSize + allowedEditDistance)){ //first bp of back region starts from 100 + allowed edit distance
+    //         // cout << "5- first bp of back region starts from 100" << endl;
+    //         l.criteriaCode |= 0x04;
+    //         return false;
+    //     }
+    //     // cout << "6- not meet criteria" << endl;
+    //     return true;
+    // }
 
     map<contigIndT, string> readContigsFromMap(tsl::robin_map<uint32_t, string>& reads,  set<contigIndT>& contigIdSet)
     {
@@ -489,10 +489,6 @@ public:
             tsl::robin_map <uint32_t, Alignment> alignments;
             for (auto it = frontCandidateReads.begin(); it != frontCandidateReads.end(); it++)
             {
-                // Alignment aln;
-                // aln.query = query;
-                // aln.read = it->second;
-                // align(aln, 1, 1, 2, 1);
                 Alignment aln = alignDifferentPenaltyScores(query, it->second, isForwardStrand, penalties);
                 aln.queryID = i;
                 aln.readID = it->first;

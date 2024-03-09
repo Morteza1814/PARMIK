@@ -96,10 +96,10 @@ public:
         0000 -> accepted
         0x01 -> front region dismissed because region's starting position higher than 0 (each missed bp is 1 edit distance)
         0x02 -> back region dismissed because region's starting position lower than contigSize - regionSize (each missed bp is 1 edit distance)
-        0x04 -> region starts from 100 + allowedEditDistance
+        0x04 -> No min exact match region in the partial match region
         0x08 -> Edit distance does not match the criteria
         0x10 -> Alignment len does not match the criteria
-        0x20 -> No min exact match region in the partial match region
+        0x20 -> region starts from 100 + allowedEditDistance
         */
         //check the alignment len and edit distance
         // cout << "queryS: " << queryS << " editDistance: " << editDistance << " alnLen: " << alnLen << endl;
@@ -116,13 +116,13 @@ public:
 
         //check whether the region starts at most from 100 + 2
         if(queryS > (contigSize - regionSize + allowedEditDistance)){ //first bp of back region starts from 100
-            criteriaCode |= 0x04;
+            criteriaCode |= 0x20;
             return false;
         }
         //check whether the regions has at least minExactMatchLength consecutive matches
         if(!hasMinConsecutiveMatches(queryS, queryAligned, readAligned)){
             cout << "!hasMinConsecutiveMatches" << endl;
-            criteriaCode |= 0x20;
+            criteriaCode |= 0x04;
             return false;
         }
 

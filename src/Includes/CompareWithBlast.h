@@ -159,7 +159,7 @@ public:
                         blastFP_lowAlnLen++;
                         blastFP_lowAlnLen_alnLen_allQ.insert(aln.AlignmentLength);
                         blastFP_lowAlnLen_ed_allQ.insert(aln.Mismatches + aln.InDels);
-                    } else if (aln.criteriaCode >= 4) {
+                    } else if (aln.criteriaCode >= 0x04) {
                         isFP = true;
                         blastFP_editPos++;
                         blastFP_editPos_alnLen_allQ.insert(aln.AlignmentLength);
