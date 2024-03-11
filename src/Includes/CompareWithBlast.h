@@ -31,6 +31,33 @@ public:
  
     }
 
+    string getCigarStr(uint32_t queryS, string queryAligned, string readAligned, uint32_t contigSize)
+    {
+        stringstream cigar;
+        for(uint32_t i = 0; i < queryS; i++) {
+            cigar << 'S';
+        }
+        for(uint32_t i = 0; i < queryAligned.size(); i++){
+            if(queryAligned[i] == readAligned[i])
+                cigar << '=';
+            else {
+                if(queryAligned[i] == '-')
+                    cigar << 'D';
+                else if(readAligned[i] == '-')
+                    cigar << 'I';
+                else
+                    cigar << 'X';
+            }
+        }
+        int remainedClips = contigSize - (queryS + queryAligned.size());
+        if(remainedClips > 0){
+            for(int i = 0; i < remainedClips; i++) {
+                cigar << 'S';
+            }
+        }
+        return cigar.str();
+    }
+
     void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, IndexContainer<uint32_t, Alignment>& pmAlignments, vector<pair<uint32_t, uint32_t>>& alnPmBLASTHisto, const uint32_t queryCount, string alnPerQueryFileAddress, string parmikFnReadsFileAddress)
     {
         ofstream cmp(comparisonResultsFileAddress);
@@ -145,7 +172,8 @@ public:
                     }
                     bool isFP = false;
                     PostFilter pf(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.minExactMatchLen);
-                    pf.checkAlingmentCriteria(aln.Mismatches + aln.InDels, aln.AlignmentLength, aln.queryS - 1, aln.queryAligned, aln.readAligned, aln.Mismatches, aln.InDels, aln.criteriaCode);
+                    string cigarStr = getCigarStr(aln.queryS - 1, aln.queryAligned, aln.readAligned, cfg.contigSize);
+                    pf.checkAlingmentCriteria(aln.Mismatches + aln.InDels, aln.AlignmentLength, aln.queryS - 1, cigarStr, aln.Mismatches, aln.InDels, aln.criteriaCode);
                     if (aln.criteriaCode == 0x08)
                     {
                         // cmp << "with edits (Indel+Subs) [" << aln.Mismatches + aln.InDels << "] > " << cfg.editDistance << endl;

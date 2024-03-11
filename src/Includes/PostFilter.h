@@ -14,7 +14,7 @@ private:
 public: 
     PostFilter(size_t R, size_t a, size_t c, size_t m) : regionSize(R), allowedEditDistance(a), contigSize(c), minExactMatchLength(m) {}
 
-    bool hasMinConsecutiveMatchesWithCigarStr(const string& cigarStr) {
+    bool hasMinConsecutiveMatches(const string& cigarStr) {
         uint32_t consecutiveMatchCount = 0;
     
         // Ensure that both strings have the same length for exact matching
@@ -51,46 +51,46 @@ public:
         return false;
     }
 
-    bool hasMinConsecutiveMatches(uint32_t queryS, const string& str1, const string& str2) {
-        uint32_t consecutiveMatchCount = 0;
+    // bool hasMinConsecutiveMatches(uint32_t queryS, const string& cigarStr) {
+    //     uint32_t consecutiveMatchCount = 0;
 
-        // check if it is a cigarStr
-        if (str2 == "cigarStr") {
-            return hasMinConsecutiveMatchesWithCigarStr(str1);
-        }
+    //     // check if it is a cigarStr
+    //     if (str2 == "cigarStr") {
+    //         return hasMinConsecutiveMatchesWithCigarStr(cigarStr);
+    //     }
     
-        // Ensure that both strings have the same length for exact matching
-        if (str1.length() != str2.length()) {
-            cerr << "Error: Sequences have different lengths." << endl;
-            return false;
-        }
+    //     // Ensure that both strings have the same length for exact matching
+    //     if (str1.length() != str2.length()) {
+    //         cerr << "Error: Sequences have different lengths." << endl;
+    //         return false;
+    //     }
 
-        // Iterate through each character in the strings and count consecutive exact matches
-        uint32_t startPos = 0;
-        for (size_t i = 0; i < str1.length(); i++) {
-            if (str1[i] == str2[i]) {
-                consecutiveMatchCount++;
-                if (consecutiveMatchCount >= minExactMatchLength) {
-                    if ((startPos + queryS + minExactMatchLength <= regionSize) || ((startPos + queryS >= contigSize - regionSize) && (startPos + queryS + minExactMatchLength <= contigSize))) {
-                        // cout << "11startPos: " << startPos << " queryS: " << queryS << " consecutiveMatchCount: " << consecutiveMatchCount << endl;
-                        return true;  // Found enough consecutive matches inth front or back region
-                    }else{
-                        startPos++;
-                        consecutiveMatchCount--;
-                        // cout << "22startPos: " << startPos << " queryS: " << queryS << " consecutiveMatchCount: " << consecutiveMatchCount << endl;
-                    }
-                }
-            } else {
-                consecutiveMatchCount = 0;  // Reset count if consecutive match is broken
-                startPos = i+1;
-            }
-        }
+    //     // Iterate through each character in the strings and count consecutive exact matches
+    //     uint32_t startPos = 0;
+    //     for (size_t i = 0; i < str1.length(); i++) {
+    //         if (str1[i] == str2[i]) {
+    //             consecutiveMatchCount++;
+    //             if (consecutiveMatchCount >= minExactMatchLength) {
+    //                 if ((startPos + queryS + minExactMatchLength <= regionSize) || ((startPos + queryS >= contigSize - regionSize) && (startPos + queryS + minExactMatchLength <= contigSize))) {
+    //                     cout << "11startPos: " << startPos << " queryS: " << queryS << " consecutiveMatchCount: " << consecutiveMatchCount << endl;
+    //                     return true;  // Found enough consecutive matches inth front or back region
+    //                 }else{
+    //                     startPos++;
+    //                     consecutiveMatchCount--;
+    //                     cout << "22startPos: " << startPos << " queryS: " << queryS << " consecutiveMatchCount: " << consecutiveMatchCount << endl;
+    //                 }
+    //             }
+    //         } else {
+    //             consecutiveMatchCount = 0;  // Reset count if consecutive match is broken
+    //             startPos = i+1;
+    //         }
+    //     }
 
-        // Return false if the number of consecutive exact matches is less than minConsecutiveMatch
-        return false;
-    }
+    //     // Return false if the number of consecutive exact matches is less than minConsecutiveMatch
+    //     return false;
+    // }
 
-    bool checkAlingmentCriteria(uint32_t editDistance, uint32_t alnLen, uint32_t queryS, string queryAligned, string readAligned, uint32_t mismatches, uint32_t inDels, uint32_t& criteriaCode)
+    bool checkAlingmentCriteria(uint32_t editDistance, uint32_t alnLen, uint32_t queryS, string cigarStr, uint32_t mismatches, uint32_t inDels, uint32_t& criteriaCode)
     {
         /*criteriaCode
         0000 -> accepted
@@ -120,8 +120,8 @@ public:
             return false;
         }
         //check whether the regions has at least minExactMatchLength consecutive matches
-        if(!hasMinConsecutiveMatches(queryS, queryAligned, readAligned)){
-            cout << "!hasMinConsecutiveMatches" << endl;
+        if(!hasMinConsecutiveMatches(cigarStr)){
+            // cout << "!hasMinConsecutiveMatches" << "and queryS: " << queryS << "and queryAligned: " << queryAligned << endl;
             criteriaCode |= 0x04;
             return false;
         }

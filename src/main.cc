@@ -204,7 +204,7 @@ void convertSamToAln(SamReader::Sam parmikSamAlignment, Alignment& parmikAlignme
     parmikAlignment.flag = parmikSamAlignment.flag;                
 }
 
-vector<Penalty> readPenalties(string& readPenaltiesFileAddress)
+vector<Penalty> readPenalties(const string& readPenaltiesFileAddress)
 {
     vector<Penalty> penalties;
     ifstream readPenaltiesFile(readPenaltiesFileAddress);
@@ -527,23 +527,27 @@ void testAligner(int argc, char *argv[]){
     Aligner <uint32_t> aligner(50, 2, 150, 30);
     aligner.align(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
     // bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
-    bool criteriaCheck = pf.checkAlingmentCriteria(aln.editDistance, aln.partialMatchSize, aln.queryRegionStartPos, aligner.convertCigarToStr(aln.cigar), "cigarStr", aln.substitutions, aln.inDels, aln.criteriaCode);
+    bool criteriaCheck = pf.checkAlingmentCriteria(aln.editDistance, aln.partialMatchSize, aln.queryRegionStartPos, aligner.convertCigarToStr(aln.cigar), aln.substitutions, aln.inDels, aln.criteriaCode);
     cout << ((criteriaCheck == true) ? "aln meets criteria" : "aln not meet criteria") << endl;
     cout << "criteriaCode: " << aln.criteriaCode << endl;
     if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3)))
         cout << "dump it!!!" << endl;
-
+    vector<Penalty> penalties = readPenalties("/u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_FLTR/PenaltySets/2284_1111_2444_2288_2848");
+    aln = aligner.alignDifferentPenaltyScores(argv[1], argv[2], 1, 1, 1, penalties);
+    if (aln.partialMatchSize > 0) cout << "oooof\n";
+    cout << "aln.partialMatchSize" << aln.partialMatchSize << endl;
+    cout << "aln.cigar" << aln.cigar << endl;
+    cout << "aln.criteriaCode" << aln.criteriaCode << endl;
 }
 
-// void testHasMinConsecutiveMatches(int argc, char *argv[]){
-//     CompareWithBlast cwb;
-//     Config cfg;
-//     cfg.minExactMatchLen = stod(argv[3]);
-//     cfg.regionSize = stod(argv[4]);
-//     cfg.contigSize = stod(argv[5]);
-//     bool hasMinConsecutiveMatches = cwb.hasMinConsecutiveMatches(stod(argv[6]), argv[1], argv[2], cfg);
-//     cout << ((hasMinConsecutiveMatches == true) ? "hasMinConsecutiveMatches" : "no hasMinConsecutiveMatches") << endl;
-// }
+void testHasMinConsecutiveMatches(int argc, char *argv[]){
+    PostFilter pf(50, 2, 150, 30);
+    CompareWithBlast cwb;
+    string cigarStr = cwb.getCigarStr(stod(argv[1]), argv[2], argv[3], stod(argv[4]));
+    cout << "cigarStr: " << cigarStr << endl;
+    bool hasMinConsecutiveMatches = pf.hasMinConsecutiveMatches(cigarStr);
+    cout << ((hasMinConsecutiveMatches == true) ? "hasMinConsecutiveMatches" : "no hasMinConsecutiveMatches") << endl;
+}
 
 int main(int argc, char *argv[])
 {
