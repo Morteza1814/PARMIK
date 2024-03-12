@@ -523,15 +523,15 @@ void testAligner(int argc, char *argv[]){
     Alignment aln;
     aln.query = argv[1];
     aln.read = argv[2];
-    PostFilter pf(50, 2, 150, 30);
+    // PostFilter pf(50, 2, 150, 30);
     Aligner <uint32_t> aligner(50, 2, 150, 30);
-    aligner.align(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
-    // bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
-    bool criteriaCheck = pf.checkAlingmentCriteria(aln.editDistance, aln.partialMatchSize, aln.queryRegionStartPos, aligner.convertCigarToStr(aln.cigar), aln.substitutions, aln.inDels, aln.criteriaCode);
-    cout << ((criteriaCheck == true) ? "aln meets criteria" : "aln not meet criteria") << endl;
-    cout << "criteriaCode: " << aln.criteriaCode << endl;
-    if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3)))
-        cout << "dump it!!!" << endl;
+    // aligner.align(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
+    // // bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
+    // bool criteriaCheck = pf.checkAlingmentCriteria(aln.editDistance, aln.partialMatchSize, aln.queryRegionStartPos, aligner.convertCigarToStr(aln.cigar), aln.substitutions, aln.inDels, aln.criteriaCode);
+    // cout << ((criteriaCheck == true) ? "aln meets criteria" : "aln not meet criteria") << endl;
+    // cout << "criteriaCode: " << aln.criteriaCode << endl;
+    // if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode <= 3)))
+    //     cout << "dump it!!!" << endl;
     vector<Penalty> penalties = readPenalties("/u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_FLTR/PenaltySets/2284_1111_2444_2288_2848");
     aln = aligner.alignDifferentPenaltyScores(argv[1], argv[2], 1, 1, 1, penalties);
     if (aln.partialMatchSize > 0) cout << "oooof\n";

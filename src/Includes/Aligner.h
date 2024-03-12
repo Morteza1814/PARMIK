@@ -330,6 +330,7 @@ public:
             aln.read = read;
             aln.query = query;
             if (!isForwardStran) aln.flag = 16;
+            // cout << "penalties: " << penalty.matchPenalty <<  penalty.mismatchPenalty <<  penalty.gapOpenPenalty << penalty.gapExtendPenalty << endl;
             align(aln, penalty.matchPenalty, penalty.mismatchPenalty, penalty.gapOpenPenalty, penalty.gapExtendPenalty);
             //check the alignment based on the criteria
             // bool criteriaCheck = checkAlingmentCriteria(aln);
@@ -346,6 +347,7 @@ public:
     {
         //do the alignment using smith waterman
         smithWatermanAligner(aln, matchPen, subPen, gapoPen, gapextPen);
+        // cout << "penalties: " << matchPen <<  subPen <<  gapoPen << gapextPen << endl;
         // cout << "---------- before -------" << endl;
         // cout << "Score: " << aln.score << endl;
         // cout << "cigar: " << aln.cigar << endl;
