@@ -148,34 +148,34 @@ uint32_t sumMapValues(const map<uint32_t, uint32_t>& inputMap) {
 
 void testOnePair(int argc, char *argv[])
 {
-    string read =  argv[1];
-    string query = argv[2];
-    double idPen = stod(argv[3]);
-    double subPen = stod(argv[4]);
-    SeedMatchExtender<uint32_t, uint64_t> pm(30, 50, true, 2, 150, idPen, subPen);
-    cout << "read  : " << read << endl;
-    cout << "query : " << query << endl;
-    vector<uint64_t> frontKmers;
-    char frontRegion = 'F';
-    pm.extractKmersFromRegions(query, frontKmers, frontRegion);
-    LevAlign fla = pm.extendSeed(query, read, frontKmers, frontRegion);
-    cout << "front partialMatchSize : " << fla.partialMatchSize << ", editDistance : " << fla.editDistance << endl;
-    cout << "or R : " << fla.read << endl;
-    cout << "or Q : " << fla.query << endl;
-    cout << "al R : " << fla.alignedRead << endl;
-    cout << "al Q : " << fla.alignedQuery << endl;
-    cout << "ed T : " << fla.editDistanceTypes << endl;
+    // string read =  argv[1];
+    // string query = argv[2];
+    // double idPen = stod(argv[3]);
+    // double subPen = stod(argv[4]);
+    // SeedMatchExtender<uint32_t, uint64_t> pm(30, 50, true, 2, 150, idPen, subPen);
+    // cout << "read  : " << read << endl;
+    // cout << "query : " << query << endl;
+    // vector<uint64_t> frontKmers;
+    // char frontRegion = 'F';
+    // pm.extractKmersFromRegions(query, frontKmers, frontRegion);
+    // LevAlign fla = pm.extendSeed(query, read, frontKmers, frontRegion);
+    // cout << "front partialMatchSize : " << fla.partialMatchSize << ", editDistance : " << fla.editDistance << endl;
+    // cout << "or R : " << fla.read << endl;
+    // cout << "or Q : " << fla.query << endl;
+    // cout << "al R : " << fla.alignedRead << endl;
+    // cout << "al Q : " << fla.alignedQuery << endl;
+    // cout << "ed T : " << fla.editDistanceTypes << endl;
 
-    vector<uint64_t> backKmers;
-    char backRegion = 'B';
-    pm.extractKmersFromRegions(query, backKmers, backRegion);
-    LevAlign bla = pm.extendSeed(query, read, backKmers, backRegion);
-    cout << "back partialMatchSize : " << bla.partialMatchSize << ", editDistance : " << bla.editDistance << endl;
-    cout << "or R : " << bla.read << endl;
-    cout << "or Q : " << bla.query << endl;
-    cout << "al R : " << bla.alignedRead << endl;
-    cout << "al Q : " << bla.alignedQuery << endl;
-    cout << "ed T : " << bla.editDistanceTypes << endl;
+    // vector<uint64_t> backKmers;
+    // char backRegion = 'B';
+    // pm.extractKmersFromRegions(query, backKmers, backRegion);
+    // LevAlign bla = pm.extendSeed(query, read, backKmers, backRegion);
+    // cout << "back partialMatchSize : " << bla.partialMatchSize << ", editDistance : " << bla.editDistance << endl;
+    // cout << "or R : " << bla.read << endl;
+    // cout << "or Q : " << bla.query << endl;
+    // cout << "al R : " << bla.alignedRead << endl;
+    // cout << "al Q : " << bla.alignedQuery << endl;
+    // cout << "ed T : " << bla.editDistanceTypes << endl;
 }
 
 void convertSamToLev(SamReader::Sam parmikSamAlignment, LevAlign& parmikAlignment)
@@ -274,7 +274,8 @@ int run(int argc, char *argv[]) {
 	cout << left << setw(30) << "minExactMatchLen: " << cfg.minExactMatchLen << endl;
     cout << left << setw(30) << "overlapsize: " << cfg.overlapSize << endl;
     cout << left << setw(30) << "cheapKmerThreshold: " << cfg.cheapKmerThreshold << endl;
-    uint32_t minNumExactMatchKmer = ((cfg.minExactMatchLen-cfg.overlapSize)/(cfg.kmerLength - cfg.overlapSize));
+    // uint32_t minNumExactMatchKmer = ((cfg.minExactMatchLen-cfg.overlapSize)/(cfg.kmerLength - cfg.overlapSize));
+    uint32_t minNumExactMatchKmer = cfg.editDistance + 1;
     cout << left << setw(30) << "minNumExactMatchKmer: " << minNumExactMatchKmer << endl;
     cout << left << setw(30) << "isIndexOffline: " << cfg.isIndexOffline << endl;
     cout << left << setw(30) << "offlineIndexAddress: " << cfg.offlineIndexAddress << endl;
@@ -288,7 +289,7 @@ int run(int argc, char *argv[]) {
         // BaseLinePartialMatcher<uint32_t, uint64_t, uint32_t> blpm(cfg.minExactMatchLen, cfg.regionSize);
         // blpm.constructBaseline(cfg.readDatabaseAddress, cfg.readsCount, cfg.queryFileAddress, cfg.queryCount,cfg.minExactMatchLen, cfg.cheapKmerThreshold, baselineQueriesFrontSeeds, baselineQueriesBackSeeds, cfg.isIndexOffline, cfg.offlineIndexAddress);
         // run the experiment
-        IndexContainer<uint32_t, uint32_t> frontMinThCheapSeedReads, backMinThCheapSeedReads, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads;
+        IndexContainer<uint32_t, uint32_t> minThCheapSeedReads, revMinThCheapSeedReads;
         // map<uint32_t, LevAlign> pmr;
         tsl::robin_map <uint32_t, string> reads, queries;
         uint32_t queryCount = 0;
@@ -337,19 +338,19 @@ int run(int argc, char *argv[]) {
                 if (cfg.parmikMode == PARMIK_MODE_ALIGN)
                 {
                     //do partial matching based on cheap k-mers
-                    CheapKmerPartialMatcher<uint32_t, uint32_t, uint32_t> ckpm50(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
-                    ckpm50.cheapSeedFilter(cheapKmers, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads);
+                    CheapKmerPartialMatcher<uint32_t, uint32_t, uint32_t> ckpm(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
+                    ckpm.cheapSeedFilter(cheapKmers, queries, minThCheapSeedReads);
                     //get the reverse complement of queries
                     tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
-                    ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
-                    // ckpm50.printArrays();
+                    ckpm.cheapSeedFilter(cheapKmers, revQueries, revMinThCheapSeedReads);
+                    // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
                     Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.minExactMatchLen);
-                    // pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
-                    aligner.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
+                    // pm.findPartiaMatches(reads, queries, minThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
+                    aligner.findPartiaMatches(reads, queries, minThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
-                    // pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
-                    aligner.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
+                    // pm.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
+                    aligner.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
                 }
             } else
             {
@@ -382,19 +383,19 @@ int run(int argc, char *argv[]) {
                 if (cfg.parmikMode == PARMIK_MODE_ALIGN)
                 {
                     // do partial matching based on cheap k-mers
-                    CheapKmerPartialMatcher<uint32_t, uint64_t, uint32_t> ckpm50(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
-                    ckpm50.cheapSeedFilter(cheapKmers, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads);
+                    CheapKmerPartialMatcher<uint32_t, uint64_t, uint32_t> ckpm(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
+                    ckpm.cheapSeedFilter(cheapKmers, queries, minThCheapSeedReads);
                     //get the reverse complement of queries
                     tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
-                    ckpm50.cheapSeedFilter(cheapKmers, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads);
-                    // ckpm50.printArrays();
+                    ckpm.cheapSeedFilter(cheapKmers, revQueries, revMinThCheapSeedReads);
+                    // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
                     Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.minExactMatchLen);
-                    // pm.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
-                    aligner.findPartiaMatches(reads, queries, frontMinThCheapSeedReads, backMinThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
+                    // pm.findPartiaMatches(reads, queries, minThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
+                    aligner.findPartiaMatches(reads, queries, minThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
-                    // pm.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
-                    aligner.findPartiaMatches(reads, revQueries, revFrontMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
+                    // pm.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
+                    aligner.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
                 }
             }
         
@@ -477,7 +478,7 @@ int run(int argc, char *argv[]) {
         //     cout << "<<<<<<<<<<<<<<<<<<<<<<<<Partial Matching Seeding FN results>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         //     map<uint32_t, uint32_t> frontSeedsFNRates;
         //     map<uint32_t, uint32_t> backSeedsFNRates;
-        //     map<uint32_t, uint32_t> frontSeedsTPRates = checkRates(baselineQueriesFrontSeeds, frontMinThCheapSeedReads, frontSeedsFNRates);
+        //     map<uint32_t, uint32_t> frontSeedsTPRates = checkRates(baselineQueriesFrontSeeds, minThCheapSeedReads, frontSeedsFNRates);
         //     map<uint32_t, uint32_t> backSeedsTPRates = checkRates(baselineQueriesBackSeeds, backMinThCheapSeedReads, backSeedsFNRates);
         //     tuple<uint32_t, uint32_t, uint32_t> frontSeedsFNRateTuple = util.calculateStatistics(convertMapToSet(frontSeedsFNRates));
         //     tuple<uint32_t, uint32_t, uint32_t> backSeedsFNRateTuple = util.calculateStatistics(convertMapToSet(backSeedsFNRates));
@@ -492,7 +493,7 @@ int run(int argc, char *argv[]) {
         //     cout << "<<<<<<<<<<<<<<<<<<<<<<<<Partial Matching Seeding FP results>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         //     map<uint32_t, uint32_t> frontSeedsFPRates;
         //     map<uint32_t, uint32_t> backSeedsFPRates;
-        //     checkRates(frontMinThCheapSeedReads, baselineQueriesFrontSeeds, frontSeedsFPRates);
+        //     checkRates(minThCheapSeedReads, baselineQueriesFrontSeeds, frontSeedsFPRates);
         //     checkRates(backMinThCheapSeedReads, baselineQueriesBackSeeds, backSeedsFPRates);
         //     uint32_t frontSeedsFPRate = sumMapValues(frontSeedsFPRates);
         //     uint32_t backSeedsFPRate= sumMapValues(backSeedsFPRates);
