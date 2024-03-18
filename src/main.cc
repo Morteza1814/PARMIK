@@ -434,6 +434,7 @@ int run(int argc, char *argv[]) {
             string comparisonResultsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/cmp_" + "R" + to_string(cfg.regionSize) + "_M" + to_string(cfg.minExactMatchLen) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
             string alnPerQueryFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/AlnPerQ_" + "R" + to_string(cfg.regionSize) + "_M" + to_string(cfg.minExactMatchLen) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
             string parmikFnReadsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/ParmikFnReads_" + "R" + to_string(cfg.regionSize) + "_M" + to_string(cfg.minExactMatchLen) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+            string bestAlnCmpFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/BestAlnCmp_" + "R" + to_string(cfg.regionSize) + "_M" + to_string(cfg.minExactMatchLen) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
             vector<std::pair<uint32_t, uint32_t>> alnPmVsOtherAlnSizesMap;
             // (BWA)
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
@@ -443,7 +444,7 @@ int run(int argc, char *argv[]) {
             } else if(cfg.otherTool == "BLAST" || cfg.otherTool == "blast")
             {
                 CompareWithBlast cwb;
-                cwb.comparePmWithBlast(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress, parmikFnReadsFileAddress);
+                cwb.comparePmWithBlast(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress, parmikFnReadsFileAddress, bestAlnCmpFileAddress);
             } else if(cfg.otherTool == "GT" || cfg.otherTool == "gt")
             {
                 SamReader gtSam(cfg.otherToolOutputFileAddress);
