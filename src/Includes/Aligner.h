@@ -414,7 +414,7 @@ public:
         return readContigs;
     }
 
-    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, bool isForwardStrand, string parmikAlignments, vector<Penalty> penalties)
+    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& minThCheapSeedReads, contigIndT queryCount, bool isForwardStrand, string parmikAlignments, vector<Penalty> penalties)
     {
         ofstream pAln(parmikAlignments, ios::app);
         cout << "Starting alignment for all queries [" << (isForwardStrand ? ("fwd"):("rev")) << "]..." << endl;
@@ -429,26 +429,14 @@ public:
             if (query.find('n') != string::npos || query.find('N') != string::npos)
                 continue;
             // read the candidate reads of cheap k-mer filter of front
-            auto frontReadSet = frontMinThCheapSeedReads.get(i);
-            map<contigIndT, string> frontCandidateReads = readContigsFromMap(reads, frontReadSet);
+            auto readSet = minThCheapSeedReads.get(i);
+            map<contigIndT, string> candidateReads = readContigsFromMap(reads, readSet);
             tsl::robin_map <uint32_t, Alignment> alignments;
-            for (auto it = frontCandidateReads.begin(); it != frontCandidateReads.end(); it++)
+            for (auto it = candidateReads.begin(); it != candidateReads.end(); it++)
             {
                 Alignment aln = alignDifferentPenaltyScores(query, it->second, i, it->first, isForwardStrand, penalties);
                 if (aln.partialMatchSize > 0){
                     alignments.insert(make_pair(it->first, aln));
-                }
-            }
-            auto backReadSet = backMinThCheapSeedReads.get(i);
-            map<contigIndT, string> backCandidateReads = readContigsFromMap(reads, backReadSet);
-            for (auto it = backCandidateReads.begin(); it != backCandidateReads.end(); it++)
-            {
-                Alignment aln = alignDifferentPenaltyScores(query, it->second, i, it->first, isForwardStrand, penalties);
-                if (aln.partialMatchSize > 0){
-                    auto ita = alignments.find(it->first);
-                    if (ita == alignments.end() || (ita != alignments.end() && ita->second.partialMatchSize < aln.partialMatchSize)){
-                        alignments.insert(make_pair(it->first, aln));
-                    }
                 }
             }
             //dump the alignments

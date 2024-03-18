@@ -85,37 +85,21 @@ public:
     }
 
     // Count the occurrences of distinct values for a key
-    void collectCheapSeeds(IndexContainer<char, Key> kmers, map<Value, uint32_t> &frontReadCounts, map<Value, uint32_t> &backReadCounts) {
-        char frontRegion = 'F';
-        char backRegion = 'B';
-        auto frontRange = kmers.getRange(frontRegion);
-        uint32_t frontCheapSeeds = 0, backCheapSeeds = 0;
-        for (auto it = frontRange.first; it != frontRange.second; it++) 
+    uint32_t collectCheapSeeds(vector<Key> kmers, map<Value, uint32_t> &readCounts) {
+        uint32_t cheapSeeds = 0;
+        for (auto it = kmers.begin(); it != kmers.end(); it++) 
         {
-            auto itt = container.find(it->second);
+            auto itt = container.find(*it);
             if (itt != container.end()) 
             {
-                frontCheapSeeds++;
+                cheapSeeds++;
                 const auto& innerContainer = itt->second;
                 for (const auto& value : innerContainer) {
-                    frontReadCounts[value]++;
+                    readCounts[value]++;
                 }
             }
         }
-        auto backRange = kmers.getRange(backRegion);
-        for (auto it = backRange.first; it != backRange.second; it++) 
-        {
-            backCheapSeeds++;
-            auto itt = container.find(it->second);
-            if (itt != container.end()) 
-            {
-                const auto& innerContainer = itt->second;
-                for (const auto& value : innerContainer) {
-                    backReadCounts[value]++;
-                }
-            }
-        }
-        // printf("# of cheap seeds => Front [%d] - Back [%d]\n", frontCheapSeeds, backCheapSeeds);
+        return cheapSeeds;
     }
 
     void serializeSet(ofstream& ofs, const InnerContainerType& data) {
