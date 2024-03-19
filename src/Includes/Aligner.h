@@ -54,8 +54,9 @@ private:
     uint32_t allowedEditDistance;
     uint32_t contigSize;
     uint32_t minExactMatchLength;
+    double identityPercentage;
 public:
-    Aligner(uint32_t R, uint32_t a, uint32_t c, uint32_t m) : regionSize(R), allowedEditDistance(a), contigSize(c), minExactMatchLength(m) {}
+    Aligner(uint32_t R, uint32_t a, uint32_t c, uint32_t m, double i) : regionSize(R), allowedEditDistance(a), contigSize(c), minExactMatchLength(m), identityPercentage(i) {}
 
     string convertCigarToStr(const string& cigar) {
         stringstream simplifiedCigar;
@@ -317,8 +318,8 @@ public:
             if (!isForwardStran) bestAlignment.flag = 16;
             align(bestAlignment, 1, 1, 1, 1);
             //check the alignment based on the criteria
-            bool criteriaCheck = pf.checkAlingmentCriteria(bestAlignment.editDistance, bestAlignment.partialMatchSize, bestAlignment.queryRegionStartPos, convertCigarToStr(bestAlignment.cigar), bestAlignment.substitutions, bestAlignment.inDels, bestAlignment.criteriaCode);
-            if (criteriaCheck || (!criteriaCheck && (bestAlignment.criteriaCode < 4))){
+            bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(bestAlignment);
+            if (criteriaCheck ){
                 return bestAlignment;
             }
         }
@@ -333,9 +334,8 @@ public:
             // cout << "penalties: " << penalty.matchPenalty <<  penalty.mismatchPenalty <<  penalty.gapOpenPenalty << penalty.gapExtendPenalty << endl;
             align(aln, penalty.matchPenalty, penalty.mismatchPenalty, penalty.gapOpenPenalty, penalty.gapExtendPenalty);
             //check the alignment based on the criteria
-            // bool criteriaCheck = checkAlingmentCriteria(aln);
-            bool criteriaCheck = pf.checkAlingmentCriteria(aln.editDistance, aln.partialMatchSize, aln.queryRegionStartPos, convertCigarToStr(aln.cigar), aln.substitutions, aln.inDels, aln.criteriaCode);
-            if (criteriaCheck || (!criteriaCheck && (aln.criteriaCode < 4))){
+            bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln);
+            if (criteriaCheck){
                  if (aln.partialMatchSize > bestAlignment.partialMatchSize || (aln.partialMatchSize == bestAlignment.partialMatchSize && aln.editDistance < bestAlignment.editDistance))
                     bestAlignment = aln;
             }
@@ -363,10 +363,6 @@ public:
         // for(auto it = aln.editLocations.begin(); it!= aln.editLocations.end(); it++){
         //     cout << *it << " ";
         // }
-        if (aln.editDistance > allowedEditDistance) {
-            // exclude the additional edit distance
-            findMemAndExtend(aln);
-        }  
         // cout << "---------- after -------" << endl;
         // cout << "Score: " << aln.score << endl;
         // cout << "cigar: " << aln.cigar << endl;
@@ -440,19 +436,10 @@ public:
                 }
             }
             //dump the alignments
-            size_t matchesAccepted = 0, matchesPassedWithStartingPosOverED = 0;
             for (auto it = alignments.begin(); it!= alignments.end(); it++)
             {
-                if (it->second.criteriaCode <= 3) // 00, 01, 02, 03
-                {
-                    dumpSam(pAln, it->second);
-                    matchesAccepted++;
-                }
-                if (it->second.criteriaCode > 0 && it->second.criteriaCode <= 3 ) // 00
-                {
-                    matchesPassedWithStartingPosOverED++;
-                }
-
+                dumpSam(pAln, it->second);
+                matchesAccepted++;
             }
             // cout << "queryID: " << i << ", " << (isForwardStrand ? ("fwd"):("rev")) <<", total matches: " << alignments.size() << i << ", matches accepted: " << matchesAccepted << ", matches passed with starting pos over ED: " << matchesPassedWithStartingPosOverED << endl;
         }

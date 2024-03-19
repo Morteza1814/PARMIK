@@ -2,17 +2,21 @@
 #define POSTFILTER_H
 
 #include <iostream>
+#include "Aligner.h"
+
+typedef struct Alignment;
 
 using namespace std;
 
 class PostFilter {
 private:
-    size_t regionSize;
-    size_t allowedEditDistance;
-    size_t contigSize;
-    size_t minExactMatchLength;
+    uint32_t regionSize;
+    uint32_t allowedEditDistance;
+    uint32_t contigSize;
+    uint32_t minExactMatchLength;
+    double identityPercentage;
 public: 
-    PostFilter(size_t R, size_t a, size_t c, size_t m) : regionSize(R), allowedEditDistance(a), contigSize(c), minExactMatchLength(m) {}
+    PostFilter(uint32_t R, uint32_t a, uint32_t c, uint32_t m, double i) : regionSize(R), allowedEditDistance(a), contigSize(c), minExactMatchLength(m), identityPercentage(i) {}
 
     bool hasMinConsecutiveMatches(const string& cigarStr) {
         uint32_t consecutiveMatchCount = 0;
@@ -51,127 +55,147 @@ public:
         return false;
     }
 
-    // bool hasMinConsecutiveMatches(uint32_t queryS, const string& cigarStr) {
-    //     uint32_t consecutiveMatchCount = 0;
-
-    //     // check if it is a cigarStr
-    //     if (str2 == "cigarStr") {
-    //         return hasMinConsecutiveMatchesWithCigarStr(cigarStr);
-    //     }
-    
-    //     // Ensure that both strings have the same length for exact matching
-    //     if (str1.length() != str2.length()) {
-    //         cerr << "Error: Sequences have different lengths." << endl;
-    //         return false;
-    //     }
-
-    //     // Iterate through each character in the strings and count consecutive exact matches
-    //     uint32_t startPos = 0;
-    //     for (size_t i = 0; i < str1.length(); i++) {
-    //         if (str1[i] == str2[i]) {
-    //             consecutiveMatchCount++;
-    //             if (consecutiveMatchCount >= minExactMatchLength) {
-    //                 if ((startPos + queryS + minExactMatchLength <= regionSize) || ((startPos + queryS >= contigSize - regionSize) && (startPos + queryS + minExactMatchLength <= contigSize))) {
-    //                     cout << "11startPos: " << startPos << " queryS: " << queryS << " consecutiveMatchCount: " << consecutiveMatchCount << endl;
-    //                     return true;  // Found enough consecutive matches inth front or back region
-    //                 }else{
-    //                     startPos++;
-    //                     consecutiveMatchCount--;
-    //                     cout << "22startPos: " << startPos << " queryS: " << queryS << " consecutiveMatchCount: " << consecutiveMatchCount << endl;
-    //                 }
-    //             }
-    //         } else {
-    //             consecutiveMatchCount = 0;  // Reset count if consecutive match is broken
-    //             startPos = i+1;
-    //         }
-    //     }
-
-    //     // Return false if the number of consecutive exact matches is less than minConsecutiveMatch
-    //     return false;
-    // }
-
-    bool checkAlingmentCriteria(uint32_t editDistance, uint32_t alnLen, uint32_t queryS, string cigarStr, uint32_t mismatches, uint32_t inDels, uint32_t& criteriaCode)
-    {
-        /*criteriaCode
-        0000 -> accepted
-        0x01 -> front region dismissed because region's starting position higher than 0 (each missed bp is 1 edit distance)
-        0x02 -> back region dismissed because region's starting position lower than contigSize - regionSize (each missed bp is 1 edit distance)
-        0x04 -> No min exact match region in the partial match region
-        0x08 -> Edit distance does not match the criteria
-        0x10 -> Alignment len does not match the criteria
-        0x20 -> region starts from 100 + allowedEditDistance
-        */
-        //check the alignment len and edit distance
-        // cout << "queryS: " << queryS << " editDistance: " << editDistance << " alnLen: " << alnLen << endl;
-        if((editDistance > allowedEditDistance))
-        {
-            criteriaCode |= 0x08;
-            return false;
+    uint32_t getMatchesCount(string cigarStr) {
+        uint32_t cnt = 0;
+        for (size_t i = 0; i < cigarStr.length(); i++) {
+            if (cigarStr[i] == '=') {
+                cnt++;
+            }
         }
-        if(((uint32_t)alnLen < (uint32_t)regionSize))
-        {
-            criteriaCode |= 0x10;
-            return false;
-        }
+        return cnt;
+    }
 
-        //check whether the region starts at most from 100 + 2
-        if(queryS > (contigSize - regionSize + allowedEditDistance)){ //first bp of back region starts from 100
-            criteriaCode |= 0x20;
-            return false;
-        }
-        //check whether the regions has at least minExactMatchLength consecutive matches
-        if(!hasMinConsecutiveMatches(cigarStr)){
-            // cout << "!hasMinConsecutiveMatches" << "and queryS: " << queryS << "and queryAligned: " << queryAligned << endl;
-            criteriaCode |= 0x04;
-            return false;
-        }
-
-        bool frontRegionDismissed = false, backRegionDismissed = false;
-
-        if(allowedEditDistance >= queryS){
-            auto editsAllwedInFrontRegion = allowedEditDistance - queryS;
-            if(mismatches + inDels > editsAllwedInFrontRegion)
-                frontRegionDismissed = true;
-        } else {
-            frontRegionDismissed = true;
-        }
-        if (frontRegionDismissed)
-            criteriaCode |= 0x01;
-
-        if(queryS + alnLen >= contigSize - allowedEditDistance){ //query start position + alignment len should be larger than conig size - allowed edit
-            auto editsAllwedInBackRegion = queryS + alnLen - (contigSize - allowedEditDistance);
-            if(mismatches + inDels > editsAllwedInBackRegion)
-                backRegionDismissed = true;
-        }else {
-            backRegionDismissed = true;
-        }
-        if (backRegionDismissed)
-            criteriaCode |= 0x02;
-
-        if(frontRegionDismissed && backRegionDismissed)
+    bool checkIdentityPercentange(string cigarStr){
+        uint32_t matches = getMatchesCount(cigarStr);
+        uint32_t len = cigarStr.length();
+        double identity = matches * 100 / len;
+        if(identity < identityPercentage)
             return false;
         return true;
     }
 
-    //  void testCheckBlastEditPositions(uint32_t contigSize, uint32_t regionSize, uint32_t editDistance, uint32_t minExactMatchLength,
-    // uint32_t queryS, string qAln, string readAln, uint32_t alnLen, uint32_t blastMismatches, uint32_t blastInDel){
-    //     BlastReader::Blast blastAlignment;
-    //     Config cfg;
-    //     contigSize = contigSize;
-    //     regionSize = regionSize;
-    //     editDistance = editDistance;
-    //     minExactMatchLength = minExactMatchLength;
-    //     blastAlignment.queryAligned = qAln;
-    //     blastAlignment.readAligned = readAln;
-    //     mismatches = blastMismatches;
-    //     inDels = blastInDel;
-    //     blastAlignment.queryS = queryS;
-    //     blastAlignment.AlignmentLength = alnLen;
-    //     if(checkBlastEditPositions(blastAlignment, cfg))
-    //         cout << "blast alignment fits to the criteria" << endl;
-    //     else
-    //         cout << "blast alignment does not fit to the criteria" << endl;
-    // }
+    string convertCigarToStr(const string& cigar) {
+        stringstream simplifiedCigar;
+        int len = cigar.length();
+
+        for (int i = 0; i < len; ++i) {
+            // Parse the numeric part of CIGAR operation
+            int num = 0;
+            while (i < len && isdigit(cigar[i])) {
+                num = num * 10 + (cigar[i] - '0');
+                ++i;
+            }
+
+            // Extract the CIGAR operation
+            char op = cigar[i];
+
+            // Perform actions based on CIGAR operation
+            switch (op) {
+                case '=':
+                    // Match or mismatch (substitution)
+                    simplifiedCigar << string(num, '=');
+                    break;
+                case 'X':
+                    // Match or mismatch (substitution)
+                    simplifiedCigar << string(num, 'X');
+                    break;
+                case 'I':
+                    // Insertion
+                    simplifiedCigar << string(num, 'I');
+                    break;
+                case 'D':
+                    // Deletion
+                    simplifiedCigar << string(num, 'D');
+                    break;
+                case 'S':
+                    // Soft clipping
+                    simplifiedCigar << string(num, 'S');
+                    break;
+                default:
+                    // Handle other CIGAR operations if needed
+                    break;
+            }
+        }
+
+        return simplifiedCigar.str();
+    }
+
+    string convertStrToCigar(const string cigarStr, uint32_t queryS, uint32_t queryE) {
+        stringstream cigar;
+        char prev = cigarStr[0];
+        uint16_t num = 0;
+        // cout << "queryS: " << queryS << ", queryE: " << queryE << endl;
+        if (prev != 'S' && prev != 'H' && queryS > 0) {
+            cigar << queryS << 'S';
+        }
+        for (size_t i = 1; i < cigarStr.length(); ++i) {
+            char cur = cigarStr[i];
+            num++;
+            if (prev != cur)
+            {
+                if (prev == 'S' || prev == 'H') {
+                    num += queryS;
+                }
+                cigar << num << prev;
+                num = 0;
+                prev = cur;
+            }
+        }
+        num++;
+        int remainedClips = contigSize - queryE - 1;
+        if (remainedClips > 0 && (prev == 'S' || prev == 'H')) {
+            num += remainedClips;
+            remainedClips = 0;
+        }
+        cigar << num << prev;
+        if (remainedClips > 0) {
+            cigar << remainedClips << 'S';
+        }
+        return cigar.str();
+    }
+
+    bool checkAndUpdateBasedOnAlingmentCriteria(Alignment &aln)
+    {
+        // covert cigar to str
+        string cigarStr = convertCigarToStr(aln.cigar);
+        while (true){
+            if(cigarStr.length() == 0 || cigarStr.length() < regionSize)
+                return false;
+            if(checkIdentityPercentange(cigarStr))
+                return true;
+            else {
+                uint16_t lastEditLocation = max(cigarStr.find_last_of('X'), max(cigarStr.find_last_of('I'), cigarStr.find_last_of('D')));
+                uint16_t firstEditLocation = min(cigarStr.find_first_of('X'), min(cigarStr.find_first_of('I'), cigarStr.find_first_of('D')));
+                if (cigarStr.size() - lastEditLocation - 1 < firstEditLocation){
+                    cigarStr = cigarStr.substr(0, lastEditLocation);
+                    size_t insertionsBeforeEnd = 0, deletionsBeforeEnd = 0;
+                    for (size_t i = 0; i < queryClips + lastEditLocation; i++) {
+                        if (cigarStr[i] == 'I') {
+                            insertionsBeforeEnd++;
+                        } else if (cigarStr[i] == 'D') {
+                            deletionsBeforeEnd++;
+                        }
+                    }
+                    aln.queryRegionEndPos = aln.queryRegionStartPos + lastEditLocation - 1 - deletionsBeforeEnd;
+                    aln.readRegionEndPos = aln.readRegionStartPos + lastEditLocation - 1 - insertionsBeforeEnd;
+                    aln.cigar = convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
+                } else {
+                    size_t insertionsBeforeStart = 0, deletionsBeforeStart = 0;
+                    for (size_t i = firstEditLocation + 1; i < cigarStr.size(); i++) {
+                        if (cigarStr[i] == 'I') {
+                            insertionsBeforeStart++;
+                        } else if (cigarStr[i] == 'D') {
+                            deletionsBeforeStart++;
+                        }
+                    }
+                    cigarStr = cigarStr.substr(firstEditLocation + 1);
+                    aln.queryRegionStartPos = aln.queryRegionStartPos + firstEditLocation + 1 - deletionsBeforeStart;
+                    aln.readRegionStartPos = aln.readRegionStartPos + firstEditLocation + 1 - insertionsBeforeStart;
+                    aln.cigar = convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
+                }
+            }
+        }
+    }
 
 };
 

@@ -23,9 +23,10 @@
 
 int argParse(int argc, char** argv, Config &cfg){
 	args::ArgumentParser parser("=========================Arguments===========================", "======================================================");
-    args::ValueFlag<int> parmikModeArg(parser, "", "PARMIK mode",                              {'a', "mode"});
-    args::ValueFlag<string> bwaSamAddressArg(parser, "", "Other tool output",              {'b', "tool"});
+    args::ValueFlag<int> parmikModeArg(parser, "", "PARMIK mode",                           {'a', "mode"});
+    args::ValueFlag<string> bwaSamAddressArg(parser, "", "Other tool output",               {'b', "tool"});
 	args::ValueFlag<int> contigSizeArg(parser, "", "Contig Size",                           {'c', "contigSize"});
+    args::ValueFlag<int> identityPercentageArg(parser, "", "Identity Percentage",           {'d', "identityPercentage"});
 	args::ValueFlag<int> editDistanceArg(parser, "", "Edit Distance (i/d/s)",               {'e', "editDistance"});
 	args::ValueFlag<string> offlineIndexAddressArg(parser, "", "Offline Index Address",     {'f', "offlineIndex"});
     args::HelpFlag help(parser, "help", "Help",                                             {'h', "help"});
@@ -70,6 +71,7 @@ int argParse(int argc, char** argv, Config &cfg){
 	if (queryFileAddressArg) {cfg.queryFileAddress = args::get(queryFileAddressArg);} else {cout << "no queryFileAddress!"<< endl; return 0;}
     if (penaltyFileAddressArg) {cfg.penaltyFileAddress = args::get(penaltyFileAddressArg);} else {cfg.penaltyFileAddress = ""; cout << "no penaltyFileAddress!"<< endl;}
 	if (outputDirArg) {cfg.outputDir = args::get(outputDirArg);} else {cout << "no outputDirArg!"<< endl; cfg.noOutputFileDump = true;}
+    if (identityPercentageArg) {cfg.identityPercentage = args::get(identityPercentageArg);} else {cout << "no identityPercentage (default = 0.9)!"<< endl;}
 	if (readsCountArg) {cfg.readsCount = args::get(readsCountArg); } else {cfg.readsCount = NUMBER_OF_READS;}
 	if (queryCountArg) {cfg.queryCount = args::get(queryCountArg); } else {cfg.queryCount = NUMBER_OF_QUERIES;}
 	if (kmerLengthArg) {cfg.kmerLength = args::get(kmerLengthArg); } else {cfg.kmerLength = KMER_SZ;}
@@ -274,8 +276,11 @@ int run(int argc, char *argv[]) {
 	cout << left << setw(30) << "minExactMatchLen: " << cfg.minExactMatchLen << endl;
     cout << left << setw(30) << "overlapsize: " << cfg.overlapSize << endl;
     cout << left << setw(30) << "cheapKmerThreshold: " << cfg.cheapKmerThreshold << endl;
+    cout << left << setw(30) << "identityPercentage: " << cfg.identityPercentage << endl;
     // uint32_t minNumExactMatchKmer = ((cfg.minExactMatchLen-cfg.overlapSize)/(cfg.kmerLength - cfg.overlapSize));
-    uint32_t minNumExactMatchKmer = cfg.editDistance + 1;
+    // uint32_t minNumExactMatchKmer = cfg.editDistance + 1;
+    uint32_t minNumExactMatchKmer = (uint32_t)((cfg.regionSize * cfg.identityPercentage) / cfg.kmerLength);
+    assert(minNumExactMatchKmer > 0);
     cout << left << setw(30) << "minNumExactMatchKmer: " << minNumExactMatchKmer << endl;
     cout << left << setw(30) << "isIndexOffline: " << cfg.isIndexOffline << endl;
     cout << left << setw(30) << "offlineIndexAddress: " << cfg.offlineIndexAddress << endl;
@@ -526,7 +531,7 @@ void testAligner(int argc, char *argv[]){
     aln.query = argv[1];
     aln.read = argv[2];
     // PostFilter pf(50, 2, 150, 30);
-    Aligner <uint32_t> aligner(50, 2, 150, 30);
+    Aligner <uint32_t> aligner(50, 2, 150, 30, 0.9);
     // aligner.align(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
     // // bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
     // bool criteriaCheck = pf.checkAlingmentCriteria(aln.editDistance, aln.partialMatchSize, aln.queryRegionStartPos, aligner.convertCigarToStr(aln.cigar), aln.substitutions, aln.inDels, aln.criteriaCode);
