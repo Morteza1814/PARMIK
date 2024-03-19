@@ -41,6 +41,7 @@ typedef struct config
     unsigned int regionSize;
     unsigned int contigSize;
     unsigned int parmikMode;
+    double identityPercentage = 0.9;
     double inDelPenalty = 2;
     double subPenalty = 1;
     // unsigned int numberOfKmers;
