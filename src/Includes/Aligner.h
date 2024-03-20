@@ -11,41 +11,9 @@
 #include "Utils.h"
 #include "sw/ssw_cpp.h"
 #include "PostFilter.h"
+#include "Alignment.h"
 
 using namespace std;
-
-typedef struct Penalty
-{
-    int matchPenalty = 1;
-    int mismatchPenalty = 1;
-    int gapOpenPenalty = 1;
-    int gapExtendPenalty = 1;
-} Penalty;
-
-typedef struct Alignment
-{
-    int readID = -1;            //read ID of the alignment
-    int queryID = -1;            //query ID of the alignment
-    string read;                //the region in read evaluated for the partial match
-    string query;               //the region in query evaluated for the partial match
-    string alignedRead;         //the region in read aligned for the partial match
-    string alignedQuery;        //the region in query aligned for the partial match
-    string editDistanceTypes;   //edit distance types of the region of the partial match
-    uint32_t editDistance = 0;           //number of edit distances detected in the region
-    uint32_t partialMatchSize = 0;       //partial match region size
-    vector<uint16_t> editLocations;  //the positions of the edit distances in the partial match region
-    string cigar;               //CIGAR string of the alignment
-    uint32_t substitutions = 0;       //number of substitutions
-    uint32_t inDels = 0;       //number of InDel
-    uint32_t matches = 0;       //number of matched bp
-    uint32_t readRegionStartPos = 0;
-    uint32_t readRegionEndPos = 0;
-    uint32_t queryRegionStartPos = 0;
-    uint32_t queryRegionEndPos = 0;
-    uint32_t flag = 0;                  // determines the strand for now
-    uint32_t score = 0;
-    uint32_t criteriaCode = 0;     // criteria code for the alignment
-} Alignment;
 
 template <typename contigIndT>
 class Aligner {
@@ -53,10 +21,9 @@ private:
     uint32_t regionSize;
     uint32_t allowedEditDistance;
     uint32_t contigSize;
-    uint32_t minExactMatchLength;
     double identityPercentage;
 public:
-    Aligner(uint32_t R, uint32_t a, uint32_t c, uint32_t m, double i) : regionSize(R), allowedEditDistance(a), contigSize(c), minExactMatchLength(m), identityPercentage(i) {}
+    Aligner(uint32_t R, uint32_t a, uint32_t c, double i) : regionSize(R), allowedEditDistance(a), contigSize(c), identityPercentage(i) {}
 
     string convertCigarToStr(const string& cigar) {
         stringstream simplifiedCigar;
@@ -308,7 +275,7 @@ public:
     Alignment alignDifferentPenaltyScores(string query, string read, uint32_t queryID, uint32_t readID, bool isForwardStran, vector<Penalty> &penalties)
     {
         Alignment bestAlignment;
-        PostFilter pf(regionSize, allowedEditDistance, contigSize, minExactMatchLength);
+        PostFilter pf(regionSize, allowedEditDistance, contigSize, identityPercentage);
         if (penalties.size() == 0)
         {
             bestAlignment.read = read;
@@ -436,6 +403,7 @@ public:
                 }
             }
             //dump the alignments
+            uint32_t matchesAccepted = 0;
             for (auto it = alignments.begin(); it!= alignments.end(); it++)
             {
                 dumpSam(pAln, it->second);

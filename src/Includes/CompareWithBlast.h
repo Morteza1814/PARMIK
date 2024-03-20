@@ -8,6 +8,7 @@
 #include "BlastReader.h"
 #include "Aligner.h"
 #include "PostFilter.h"
+#include "Alignment.h"
 
 using namespace std;
 
@@ -175,9 +176,10 @@ public:
                         continue;
                     }
                     bool isFP = false;
-                    PostFilter pf(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.minExactMatchLen);
+                    PostFilter pf(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.identityPercentage);
                     string cigarStr = getCigarStr(aln.queryS - 1, aln.queryAligned, aln.readAligned, cfg.contigSize);
-                    pf.checkAlingmentCriteria(aln.Mismatches + aln.InDels, aln.AlignmentLength, aln.queryS - 1, cigarStr, aln.Mismatches, aln.InDels, aln.criteriaCode);
+                    //TODO: check for the new implementation
+                    // pf.checkAlingmentCriteria(aln.Mismatches + aln.InDels, aln.AlignmentLength, aln.queryS - 1, cigarStr, aln.Mismatches, aln.InDels, aln.criteriaCode);
                     if (aln.criteriaCode == 0x08)
                     {
                         // cmp << "with edits (Indel+Subs) [" << aln.Mismatches + aln.InDels << "] > " << cfg.editDistance << endl;

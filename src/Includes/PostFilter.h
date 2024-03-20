@@ -2,9 +2,7 @@
 #define POSTFILTER_H
 
 #include <iostream>
-#include "Aligner.h"
-
-typedef struct Alignment;
+#include "Alignment.h"
 
 using namespace std;
 
@@ -13,47 +11,9 @@ private:
     uint32_t regionSize;
     uint32_t allowedEditDistance;
     uint32_t contigSize;
-    uint32_t minExactMatchLength;
     double identityPercentage;
 public: 
-    PostFilter(uint32_t R, uint32_t a, uint32_t c, uint32_t m, double i) : regionSize(R), allowedEditDistance(a), contigSize(c), minExactMatchLength(m), identityPercentage(i) {}
-
-    bool hasMinConsecutiveMatches(const string& cigarStr) {
-        uint32_t consecutiveMatchCount = 0;
-    
-        // Ensure that both strings have the same length for exact matching
-        if (cigarStr.length() == 0) {
-            cerr << "Error: Sequences have different lengths." << endl;
-            return false;
-        }
-        // cout << "cigarStr: " << cigarStr << endl;
-        // Iterate through each character in the strings and count consecutive exact matches
-        uint32_t startPos = 0, numOfDeletionsSofare = 0;
-        for (size_t i = 0; i < cigarStr.length(); i++) {
-            if (cigarStr[i] == '=') {
-                consecutiveMatchCount++;
-                if (consecutiveMatchCount >= minExactMatchLength) {
-                    if ((startPos + minExactMatchLength <= regionSize) || ((startPos >= contigSize - regionSize) && (startPos + minExactMatchLength <= contigSize))) {
-                        // cout << "11startPos: " << startPos << " consecutiveMatchCount: " << consecutiveMatchCount << endl;
-                        return true;  // Found enough consecutive matches inth front or back region
-                    }else{
-                        startPos++;
-                        consecutiveMatchCount--;
-                        // cout << "22startPos: " << startPos  << " consecutiveMatchCount: " << consecutiveMatchCount << endl;
-                    }
-                }
-            } else {
-                consecutiveMatchCount = 0;  // Reset count if consecutive match is broken
-                if (cigarStr[i] == 'D') {
-                    numOfDeletionsSofare++;
-                }
-                startPos = i+1-numOfDeletionsSofare;
-            }
-        }
-
-        // Return false if the number of consecutive exact matches is less than minConsecutiveMatch
-        return false;
-    }
+    PostFilter(uint32_t R, uint32_t a, uint32_t c, double i) : regionSize(R), allowedEditDistance(a), contigSize(c), identityPercentage(i) {}
 
     uint32_t getMatchesCount(string cigarStr) {
         uint32_t cnt = 0;
@@ -67,8 +27,8 @@ public:
 
     bool checkIdentityPercentange(string cigarStr){
         uint32_t matches = getMatchesCount(cigarStr);
-        uint32_t len = cigarStr.length();
-        double identity = matches * 100 / len;
+        double identity =  (double) matches / (double) cigarStr.size();
+        if(DEBUG_MODE) cout << "matches: " << matches << ", cigarStr.size : " << cigarStr.size() << ", identity: " << identity << endl;
         if(identity < identityPercentage)
             return false;
         return true;
@@ -125,7 +85,7 @@ public:
         char prev = cigarStr[0];
         uint16_t num = 0;
         // cout << "queryS: " << queryS << ", queryE: " << queryE << endl;
-        if (prev != 'S' && prev != 'H' && queryS > 0) {
+        if (queryS > 0) {
             cigar << queryS << 'S';
         }
         for (size_t i = 1; i < cigarStr.length(); ++i) {
@@ -133,55 +93,95 @@ public:
             num++;
             if (prev != cur)
             {
-                if (prev == 'S' || prev == 'H') {
-                    num += queryS;
-                }
                 cigar << num << prev;
                 num = 0;
                 prev = cur;
             }
         }
         num++;
-        int remainedClips = contigSize - queryE - 1;
-        if (remainedClips > 0 && (prev == 'S' || prev == 'H')) {
-            num += remainedClips;
-            remainedClips = 0;
-        }
         cigar << num << prev;
+        int remainedClips = contigSize - queryE - 1;
         if (remainedClips > 0) {
             cigar << remainedClips << 'S';
         }
         return cigar.str();
     }
 
+    uint32_t getClipCount(string cigarStr) {
+        uint32_t cnt = 0;
+        for (size_t i = 0; i < cigarStr.length(); i++) {
+            if (cigarStr[i] == 'S' || cigarStr[i] == 'H') {
+                cnt++;
+            }
+        }
+        return cnt;
+    }
+
+    string trimClips(string cigarStr){
+        string trimmedCigarStr = "";
+        for (size_t i = 0; i < cigarStr.length(); i++) {
+            if (cigarStr[i] == 'S' || cigarStr[i] == 'H') {
+                continue;
+            }
+            trimmedCigarStr += cigarStr[i];
+        }
+        return trimmedCigarStr;
+    }
+
+    int getLastEditLocation (string cigarStr){
+        for (size_t i = cigarStr.length()-1; i >= 0; i--) {
+            if (cigarStr[i] == 'X' || cigarStr[i] == 'I' || cigarStr[i] == 'D') {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    int getFirstEditLocation (string cigarStr){
+        for (size_t i = 0; i < cigarStr.length(); i++) {
+            if (cigarStr[i] == 'X' || cigarStr[i] == 'I' || cigarStr[i] == 'D') {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     bool checkAndUpdateBasedOnAlingmentCriteria(Alignment &aln)
     {
         // covert cigar to str
         string cigarStr = convertCigarToStr(aln.cigar);
+        cigarStr = trimClips(cigarStr);
+        if(DEBUG_MODE) cout << "-----------------------------------------------------\n";
         while (true){
+            if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
             if(cigarStr.length() == 0 || cigarStr.length() < regionSize)
                 return false;
             if(checkIdentityPercentange(cigarStr))
                 return true;
             else {
-                uint16_t lastEditLocation = max(cigarStr.find_last_of('X'), max(cigarStr.find_last_of('I'), cigarStr.find_last_of('D')));
-                uint16_t firstEditLocation = min(cigarStr.find_first_of('X'), min(cigarStr.find_first_of('I'), cigarStr.find_first_of('D')));
-                if (cigarStr.size() - lastEditLocation - 1 < firstEditLocation){
+                int lastEditLocation = getLastEditLocation(cigarStr);
+                int firstEditLocation = getFirstEditLocation(cigarStr);
+                if(DEBUG_MODE) cout << "lastEditLocation: " << lastEditLocation << ", firstEditLocation: " << firstEditLocation << endl;
+                if (lastEditLocation < 0 || firstEditLocation < 0) {
+                    return false;
+                }
+                if (cigarStr.size() - (uint16_t)lastEditLocation - 1 < (uint16_t)firstEditLocation){
                     cigarStr = cigarStr.substr(0, lastEditLocation);
                     size_t insertionsBeforeEnd = 0, deletionsBeforeEnd = 0;
-                    for (size_t i = 0; i < queryClips + lastEditLocation; i++) {
+                    for (size_t i = 0; i < (uint16_t)lastEditLocation; i++) {
                         if (cigarStr[i] == 'I') {
                             insertionsBeforeEnd++;
                         } else if (cigarStr[i] == 'D') {
                             deletionsBeforeEnd++;
                         }
                     }
+                    aln.partialMatchSize = cigarStr.size();
                     aln.queryRegionEndPos = aln.queryRegionStartPos + lastEditLocation - 1 - deletionsBeforeEnd;
                     aln.readRegionEndPos = aln.readRegionStartPos + lastEditLocation - 1 - insertionsBeforeEnd;
                     aln.cigar = convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
                 } else {
                     size_t insertionsBeforeStart = 0, deletionsBeforeStart = 0;
-                    for (size_t i = firstEditLocation + 1; i < cigarStr.size(); i++) {
+                    for (size_t i = (uint16_t)firstEditLocation + 1; i < cigarStr.size(); i++) {
                         if (cigarStr[i] == 'I') {
                             insertionsBeforeStart++;
                         } else if (cigarStr[i] == 'D') {
@@ -189,6 +189,7 @@ public:
                         }
                     }
                     cigarStr = cigarStr.substr(firstEditLocation + 1);
+                    aln.partialMatchSize = cigarStr.size();
                     aln.queryRegionStartPos = aln.queryRegionStartPos + firstEditLocation + 1 - deletionsBeforeStart;
                     aln.readRegionStartPos = aln.readRegionStartPos + firstEditLocation + 1 - insertionsBeforeStart;
                     aln.cigar = convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
