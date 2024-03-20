@@ -36,7 +36,6 @@ typedef struct config
     unsigned int queryCount;
     unsigned int kmerLength;
     unsigned int cheapKmerThreshold;
-    unsigned int overlapSize;
     unsigned int minExactMatchLen;
     unsigned int regionSize;
     unsigned int contigSize;
