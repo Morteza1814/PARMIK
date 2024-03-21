@@ -20,15 +20,15 @@ class CheapKmerPartialMatcher {
 private:
     NucleotideEncoder<kmerT> encoder_;
     size_t k_;
-    size_t regionSize;
+    size_t contigSize;
     uint32_t minNumberOfCheapSeeds;
     uint32_t *numberOfKmersMatchedInQuery;
     bool isVeboseLog_ = false;
 public:
-    CheapKmerPartialMatcher(size_t k, size_t R, uint32_t minCheaps, bool isVeboseLog) : encoder_(k), k_(k), regionSize(R), minNumberOfCheapSeeds(minCheaps), isVeboseLog_(isVeboseLog) 
+    CheapKmerPartialMatcher(size_t k, size_t c, uint32_t minCheaps, bool isVeboseLog) : encoder_(k), k_(k), contigSize(c), minNumberOfCheapSeeds(minCheaps), isVeboseLog_(isVeboseLog) 
     {
-        numberOfKmersMatchedInQuery = new uint32_t[regionSize-k_+2];
-        for (size_t i = 0; i <= regionSize-k+1; i++)
+        numberOfKmersMatchedInQuery = new uint32_t[contigSize-k_+2];
+        for (size_t i = 0; i <= contigSize-k+1; i++)
         {
             numberOfKmersMatchedInQuery[i] = 0;
         }
@@ -41,7 +41,7 @@ public:
 
     void printArrays() 
     {
-        for (size_t i = 0; i <= regionSize-k_; i++) {
+        for (size_t i = 0; i <= contigSize-k_; i++) {
             cout << "numberOfKmersMatchedInQuery[" << i << "]: " << numberOfKmersMatchedInQuery[i] << endl;
         }
     }

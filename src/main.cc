@@ -25,21 +25,22 @@
 int argParse(int argc, char** argv, Config &cfg){
 	args::ArgumentParser parser("=========================Arguments===========================", "======================================================");
     args::ValueFlag<int> parmikModeArg(parser, "", "PARMIK mode",                           {'a', "mode"});
-    args::ValueFlag<string> otherToolAddressArg(parser, "", "Other tool output",               {'b', "tool"});
+    args::ValueFlag<string> otherToolAddressArg(parser, "", "Other tool output",            {'b', "tool"});
 	args::ValueFlag<int> contigSizeArg(parser, "", "Contig Size",                           {'c', "contigSize"});
     args::ValueFlag<int> identityPercentageArg(parser, "", "Identity Percentage",           {'d', "identityPercentage"});
-	args::ValueFlag<int> editDistanceArg(parser, "", "Max Edit Distance (i/d/s)",               {'e', "editDistance"});
+	args::ValueFlag<int> editDistanceArg(parser, "", "Max Edit Distance (i/d/s)",           {'e', "editDistance"});
 	args::ValueFlag<string> offlineIndexAddressArg(parser, "", "Offline Index Address",     {'f', "offlineIndex"});
     args::HelpFlag help(parser, "help", "Help",                                             {'h', "help"});
 	args::ValueFlag<int> readsCountArg(parser, "", "Number of Reads",                       {'i', "readCount"});
 	args::ValueFlag<int> queryCountArg(parser, "", "Number of Queries",                     {'j', "queryCount"});
 	args::ValueFlag<int> kmerLengthArg(parser, "", "Kmer Length",                           {'k', "kmerLen"});
     args::ValueFlag<string> otherToolArg(parser, "", "The Other Tool  (bwa, blast, etc)",   {'l', "otherTool"});
+    args::ValueFlag<int> minExactMatchLenArg(parser, "", "Minimum Exact Match Length",      {'m', "minExactMatchLen"});
 	args::ValueFlag<string> outputDirArg(parser, "", "OutputDir",                           {'o', "outputDir"});
     args::ValueFlag<string> penaltyFileAddressArg(parser, "", "Penalty File Address",       {'p', "penaltyFileAddress"});
 	args::ValueFlag<string> queryFileAddressArg(parser, "", "Query File Address",           {'q', "query"});
 	args::ValueFlag<string> readDatabaseAddressArg(parser, "", "Read Data Base Address",    {'r', "read"});
-	// args::ValueFlag<int> regionSizeArg(parser, "", "Region Size",                           {'s', "regionSize"});
+	args::ValueFlag<int> regionSizeArg(parser, "", "Region Size",                           {'s', "regionSize"});
     args::ValueFlag<int> cheapKmerThresholdArg(parser, "", "Cheap Kmer Threshold",          {'t', "cheapKmerThreshold"});
 	args::Flag isVerboseLogArg(parser, "", "Verbose Logging",                               {'v', "verboseLog"});
 	args::Flag isIndexOfflineArg(parser, "", "Is the read index offline",                  {'x', "isIndexOffline"});
@@ -75,7 +76,7 @@ int argParse(int argc, char** argv, Config &cfg){
 	if (readsCountArg) {cfg.readsCount = args::get(readsCountArg); } else {cfg.readsCount = NUMBER_OF_READS;}
 	if (queryCountArg) {cfg.queryCount = args::get(queryCountArg); } else {cfg.queryCount = NUMBER_OF_QUERIES;}
 	if (kmerLengthArg) {cfg.kmerLength = args::get(kmerLengthArg); } else {cfg.kmerLength = KMER_SZ;}
-	// if (regionSizeArg) {cfg.regionSize = args::get(regionSizeArg); } else {cfg.regionSize = REGION_SZ;}
+	if (regionSizeArg) {cfg.regionSize = args::get(regionSizeArg); } else {cfg.regionSize = REGION_SZ;}
 	if (contigSizeArg) {cfg.contigSize = args::get(contigSizeArg); } else {cfg.contigSize = CONTIG_SZ;}
     if (cheapKmerThresholdArg) {cfg.cheapKmerThreshold = args::get(cheapKmerThresholdArg); } else {cout << "no cheapKmerThreshold!"<< endl; return 0;}
     if (isIndexOfflineArg) {cfg.isIndexOffline = true; } else {cfg.isIndexOffline = false;}
@@ -85,10 +86,10 @@ int argParse(int argc, char** argv, Config &cfg){
     if (parmikModeArg) {cfg.parmikMode = args::get(parmikModeArg); } else {cout << "no parmik mode is determined!"<< endl; return 0;}
     if (otherToolArg) {cfg.otherTool = args::get(otherToolArg);} else {cout << "no otherToolArg!"<< endl;if(cfg.parmikMode == PARMIK_MODE_COMPARE) return 0;}
 	if (editDistanceArg) {cfg.editDistance = args::get(editDistanceArg); } else {cfg.editDistance = NUMBER_OF_ALLOWED_EDIT_DISTANCES;}
+    if (minExactMatchLenArg) {cfg.minExactMatchLen = args::get(minExactMatchLenArg); } else {cfg.minExactMatchLen = 0;}
 	cfg.readFileName = cfg.readDatabaseAddress.substr(cfg.readDatabaseAddress.find_last_of("/\\") + 1);
 	cfg.queryFileName = cfg.queryFileAddress.substr(cfg.queryFileAddress.find_last_of("/\\") + 1);
-	cfg.regionSize = cfg.kmerLength * (cfg.editDistance + 1) + cfg.editDistance;
-    assert(cfg.regionSize < cfg.kmerLength && "region size should be larger than k-mer length");
+    assert(cfg.regionSize > cfg.kmerLength && "region size should be larger than k-mer length");
 	return 1;
 }
 
@@ -242,14 +243,20 @@ int run(int argc, char *argv[]) {
 	cout << left << setw(30) << "regionSize: " << cfg.regionSize << endl;
     cout << left << setw(30) << "cheapKmerThreshold: " << cfg.cheapKmerThreshold << endl;
     cout << left << setw(30) << "identityPercentage: " << cfg.identityPercentage << endl;
-    // uint32_t minNumExactMatchKmer = ((cfg.minExactMatchLen-cfg.overlapSize)/(cfg.kmerLength - cfg.overlapSize));
-    // uint32_t minNumExactMatchKmer = cfg.editDistance + 1;
-    uint32_t minNumExactMatchKmer = (uint32_t)((cfg.regionSize * cfg.identityPercentage) / cfg.kmerLength);
+    cout << left << setw(30) << "minExactMatchLen: " << cfg.minExactMatchLen << endl;
+    uint32_t minNumExactMatchKmer = 0;
+    if(cfg.minExactMatchLen > 0) {
+        minNumExactMatchKmer = cfg.minExactMatchLen - (cfg.kmerLength - 1);
+    } else {
+        minNumExactMatchKmer = (uint32_t)((cfg.regionSize * cfg.identityPercentage) / cfg.kmerLength);
+        cfg.editDistance = minNumExactMatchKmer - 1;
+    }
+    assert(cfg.minExactMatchLen == 0 && "min exact match len should be 0 for this version");
     assert(minNumExactMatchKmer > 0 && "minNumExactMatchKmer must be greater than 0 for cheap k-mer matching");
     cout << left << setw(30) << "minNumExactMatchKmer: " << minNumExactMatchKmer << endl;
     cout << left << setw(30) << "isIndexOffline: " << cfg.isIndexOffline << endl;
     cout << left << setw(30) << "offlineIndexAddress: " << cfg.offlineIndexAddress << endl;
-    cout << left << setw(30) << "isVeboseLog: " << cfg.isVerboseLog << endl;
+    cout << left << setw(30) << "max editDistance in min region: " << cfg.editDistance << endl;
 	cout << "**********************CONFIGURATIONS*****************************" << endl;
 
     try { 
@@ -308,7 +315,7 @@ int run(int argc, char *argv[]) {
                 if (cfg.parmikMode == PARMIK_MODE_ALIGN)
                 {
                     //do partial matching based on cheap k-mers
-                    CheapKmerPartialMatcher<uint32_t, uint32_t, uint32_t> ckpm(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
+                    CheapKmerPartialMatcher<uint32_t, uint32_t, uint32_t> ckpm(cfg.kmerLength, cfg.contigSize, minNumExactMatchKmer, cfg.isVerboseLog);
                     ckpm.cheapSeedFilter(cheapKmers, queries, minThCheapSeedReads);
                     //get the reverse complement of queries
                     tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
@@ -353,7 +360,7 @@ int run(int argc, char *argv[]) {
                 if (cfg.parmikMode == PARMIK_MODE_ALIGN)
                 {
                     // do partial matching based on cheap k-mers
-                    CheapKmerPartialMatcher<uint32_t, uint64_t, uint32_t> ckpm(cfg.kmerLength, cfg.regionSize, minNumExactMatchKmer, cfg.isVerboseLog);
+                    CheapKmerPartialMatcher<uint32_t, uint64_t, uint32_t> ckpm(cfg.kmerLength, cfg.contigSize, minNumExactMatchKmer, cfg.isVerboseLog);
                     ckpm.cheapSeedFilter(cheapKmers, queries, minThCheapSeedReads);
                     //get the reverse complement of queries
                     tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);

@@ -1,8 +1,8 @@
 #ifndef ALIGNMENT_H
 #define ALIGNMENT_H
 
-#define DEBUG_MODE  1
-#define EXE_MODE    0
+#define DEBUG_MODE  0
+#define EXE_MODE    1
 
 typedef struct Penalty
 {

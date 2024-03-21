@@ -268,7 +268,8 @@ public:
         // cout << "newCigarStr: " << newCigarStr << endl;
         aln.cigar = convertStrToCigar(newCigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
         vector<uint16_t> edits;
-        parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, edits);
+        Utilities<uint32_t> util;
+        util.parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, edits);
         aln.editDistance = aln.substitutions + aln.inDels;
     }  
 
@@ -413,57 +414,9 @@ public:
         }
     }
 
-    void parseCigar(const string& cigar, uint32_t& matches, uint32_t& substitutions, uint32_t& inDels, vector<uint16_t> &editLocations) {
-        substitutions = inDels = 0;
-        int currentPos = 0; // Current position in the read
-        int len = cigar.length();
-        for (int i = 0; i < len; ++i) {
-            // Parse the numeric part of CIGAR operation
-            int num = 0;
-            while (i < len && isdigit(cigar[i])) {
-                num = num * 10 + (cigar[i] - '0');
-                ++i;
-            }
-            // Extract the CIGAR operation
-            char op = cigar[i];
-            // Perform actions based on CIGAR operation
-            switch (op) {
-                case '=':
-                    // Match or mismatch (substitution)
-                    currentPos += num;
-                    matches += num;
-                    break;
-                case 'X':
-                    // Substitution
-                    substitutions += num;
-                    for (int j = 0; j < num; ++j) {
-                        editLocations.push_back(currentPos + j);
-                    }
-                    currentPos += num;
-                    break;
-                case 'I':
-                case 'D':
-                    // Insertion
-                    inDels += num;
-                    for (int j = 0; j < num; ++j) {
-                        editLocations.push_back(currentPos + j);
-                    }
-                    currentPos += num;
-                    break;
-                case 'S':
-                    // Soft clipping
-                    // currentPos += num;
-                    break;
-                default:
-                    // Unsupported CIGAR operation
-                    cerr << "Unsupported CIGAR operation: " << op << endl;
-                    break;
-            }
-        }
-    }
-
     void smithWatermanAligner(Alignment &aln, uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
     {
+        Utilities<uint32_t> util;
         int32_t maskLen = strlen(aln.query.c_str())/2;
         maskLen = maskLen < 15 ? 15 : maskLen;
 
@@ -484,7 +437,7 @@ public:
         aln.editDistance = alignment.mismatches;
         aln.score = alignment.sw_score;
         // cout << "aln.query_begin: " << alignment.query_begin << ", aln.query_end: " << alignment.query_end << ", aln.ref_begin: " << alignment.ref_begin << ", aln.ref_end: " << alignment.ref_end << ", cigar_string: " << alignment.cigar_string << endl;
-        parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
+        util.parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
         aln.partialMatchSize = aln.matches + aln.substitutions + aln.inDels;
         // for(auto it = aln.editLocations.begin(); it!= aln.editLocations.end(); it++){
         //     cout << *it << " ";
