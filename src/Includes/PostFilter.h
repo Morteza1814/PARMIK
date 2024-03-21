@@ -148,6 +148,7 @@ public:
 
     bool checkAndUpdateBasedOnAlingmentCriteria(Alignment &aln)
     {
+        Utilities<uint32_t> util;
         // covert cigar to str
         string cigarStr = convertCigarToStr(aln.cigar);
         cigarStr = trimClips(cigarStr);
@@ -179,6 +180,9 @@ public:
                     aln.queryRegionEndPos = aln.queryRegionStartPos + lastEditLocation - 1 - deletionsBeforeEnd;
                     aln.readRegionEndPos = aln.readRegionStartPos + lastEditLocation - 1 - insertionsBeforeEnd;
                     aln.cigar = convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
+                    util.parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
+                    aln.partialMatchSize = aln.matches + aln.substitutions + aln.inDels;
+                    aln.editDistance = aln.substitutions + aln.inDels;
                 } else {
                     size_t insertionsBeforeStart = 0, deletionsBeforeStart = 0;
                     for (size_t i = (uint16_t)firstEditLocation + 1; i < cigarStr.size(); i++) {
@@ -193,6 +197,9 @@ public:
                     aln.queryRegionStartPos = aln.queryRegionStartPos + firstEditLocation + 1 - deletionsBeforeStart;
                     aln.readRegionStartPos = aln.readRegionStartPos + firstEditLocation + 1 - insertionsBeforeStart;
                     aln.cigar = convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
+                    util.parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
+                    aln.partialMatchSize = aln.matches + aln.substitutions + aln.inDels;
+                    aln.editDistance = aln.substitutions + aln.inDels;
                 }
             }
         }

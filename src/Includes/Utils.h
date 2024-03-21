@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <set>
+#include <vector>
 #include "tsl/robin_map.h"
 
 using namespace std;
@@ -121,6 +122,57 @@ public:
         }
         cout << "numberOfReadsWithN : " << numberOfReadsWithN << endl;
         return queryCount;
+    }
+
+    void parseCigar(const string& cigar, uint32_t& matches, uint32_t& substitutions, uint32_t& inDels, vector<uint16_t> &editLocations) {
+        substitutions = inDels = 0;
+        int currentPos = 0; // Current position in the read
+        int len = cigar.length();
+        matches = 0; substitutions = 0; inDels = 0;
+        editLocations.clear();
+        for (int i = 0; i < len; ++i) {
+            // Parse the numeric part of CIGAR operation
+            int num = 0;
+            while (i < len && isdigit(cigar[i])) {
+                num = num * 10 + (cigar[i] - '0');
+                ++i;
+            }
+            // Extract the CIGAR operation
+            char op = cigar[i];
+            // Perform actions based on CIGAR operation
+            switch (op) {
+                case '=':
+                    // Match or mismatch (substitution)
+                    currentPos += num;
+                    matches += num;
+                    break;
+                case 'X':
+                    // Substitution
+                    substitutions += num;
+                    for (int j = 0; j < num; ++j) {
+                        editLocations.push_back(currentPos + j);
+                    }
+                    currentPos += num;
+                    break;
+                case 'I':
+                case 'D':
+                    // Insertion
+                    inDels += num;
+                    for (int j = 0; j < num; ++j) {
+                        editLocations.push_back(currentPos + j);
+                    }
+                    currentPos += num;
+                    break;
+                case 'S':
+                    // Soft clipping
+                    // currentPos += num;
+                    break;
+                default:
+                    // Unsupported CIGAR operation
+                    cerr << "Unsupported CIGAR operation: " << op << endl;
+                    break;
+            }
+        }
     }
 
 };
