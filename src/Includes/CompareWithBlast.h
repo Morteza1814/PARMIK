@@ -176,7 +176,8 @@ public:
                     }
                     bool isFP = false;
                     PostFilter pf(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.identityPercentage);
-                    string cigarStr = getCigarStr(aln.queryRegionStartPos - 1, aln.alignedQuery, aln.alignedRead, cfg.contigSize);
+                    string cigarStr = getCigarStr(aln.queryRegionStartPos, aln.alignedQuery, aln.alignedRead, cfg.contigSize);
+                    aln.cigar = pf.convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
                     //TODO: check for the new implementation
                     bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln);
                     if(!criteriaCheck){
