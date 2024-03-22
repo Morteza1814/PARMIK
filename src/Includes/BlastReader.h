@@ -67,10 +67,10 @@ public:
 
             if (queryID == "") blast.queryID = 0; else blast.queryID = utl.extractContigId(queryID);
             if (readID == "") blast.readID = 0; else blast.readID = utl.extractContigId(readID);
-            if (queryS == "") blast.queryRegionStartPos = 0; else blast.queryRegionStartPos = stoi(queryS.c_str());
-            if (queryE == "") blast.queryRegionEndPos = 0; else blast.queryRegionEndPos = stoi(queryE.c_str());
-            if (readS == "") blast.readRegionStartPos = 0; else blast.readRegionStartPos = stoi(readS.c_str());
-            if (readE == "") blast.readRegionEndPos = 0; else blast.readRegionEndPos = stoi(readE.c_str());
+            if (queryS == "") blast.queryRegionStartPos = 0; else blast.queryRegionStartPos = stoi(queryS.c_str()) - 1;
+            if (queryE == "") blast.queryRegionEndPos = 0; else blast.queryRegionEndPos = stoi(queryE.c_str()) - 1;
+            if (readS == "") blast.readRegionStartPos = 0; else blast.readRegionStartPos = stoi(readS.c_str()) - 1;
+            if (readE == "") blast.readRegionEndPos = 0; else blast.readRegionEndPos = stoi(readE.c_str()) - 1;
             if (AlignmentLength == "") blast.partialMatchSize = 0; else blast.partialMatchSize = stoi(AlignmentLength.c_str());
             if (Mismatches == "") blast.substitutions = 0; else blast.substitutions = stoi(Mismatches.c_str());
             if (flag == "") blast.flag = 0; else if (flag == "plus") blast.flag = 0; else blast.flag = 16;

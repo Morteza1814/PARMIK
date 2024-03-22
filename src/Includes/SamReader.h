@@ -49,7 +49,6 @@ public:
 
         for (; iter != end; ++iter) {
             char op = (*iter)[2].str()[0];
-            cout << "jaaaaaaaa" << endl;
             int length = stoi((*iter)[1].str());
             switch (op) {
                 case 'X':
@@ -123,8 +122,6 @@ public:
                 queryCount++;
                 continue;
             }
-            cout << "daaaaaaaaar" << endl;
-            cout << "flag: " << flag << " pos:" << pos << " map: " <<  mapQ << "tLen:" << tLen << endl;
             if (flag.find("*") != string::npos) sam.flag = 0; else sam.flag = stoi(flag.c_str());
             if (pos.find("*") != string::npos) sam.pos = 0; else sam.pos = stoi(pos.c_str());
             if (mapQ.find("*") != string::npos) sam.mapQ = 0; else sam.mapQ = stoi(mapQ.c_str());
