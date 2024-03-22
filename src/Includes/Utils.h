@@ -76,17 +76,30 @@ public:
 
     T extractContigId(const string& line) 
     {
+        string contigID;
         size_t dotPos = line.find_last_of('.');
         if (dotPos != string::npos) {
             // Add 1 to dotPos to skip the '.' character
-            return atoi(line.substr(dotPos + 1).c_str());
-        } else if (line.find('.') == string::npos)
-        {
-            return atoi(line.c_str());
+            contigID = line.substr(dotPos + 1).c_str();
+        } else if (line.find('.') == string::npos) {
+            contigID = line.c_str();
         } else {
             cout << line << endl;
             throw runtime_error("Invalid contig ID format : " + line);
         }
+        try {
+            T val = stoi(contigID);
+            return val; 
+        } catch (const std::invalid_argument& e) {
+            std::cerr << "Invalid argument error: " << e.what() << std::endl;
+            // Handle the error, maybe return a default value or rethrow
+            // depending on your application's logic
+        } catch (const std::out_of_range& e) {
+            std::cerr << "Out of range error: " << e.what() << std::endl;
+            // Handle the error, maybe return a default value or rethrow
+            // depending on your application's logic
+        }
+        return 0;
     }
 
     uint32_t readContigsFromFile(string fileAddress, T numberOfEntriesToRead, tsl::robin_map <uint32_t, string>& queries)
