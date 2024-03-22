@@ -49,6 +49,7 @@ public:
 
         for (; iter != end; ++iter) {
             char op = (*iter)[2].str()[0];
+            cout << "jaaaaaaaa" << endl;
             int length = stoi((*iter)[1].str());
             switch (op) {
                 case 'X':
@@ -122,14 +123,15 @@ public:
                 queryCount++;
                 continue;
             }
-
-            if (flag.find("*") != string::npos) sam.flag = 0; else sam.flag = atoi(flag.c_str());
-            if (pos.find("*") != string::npos) sam.pos = 0; else sam.pos = atoi(pos.c_str());
-            if (mapQ.find("*") != string::npos) sam.mapQ = 0; else sam.mapQ = atoi(mapQ.c_str());
+            cout << "daaaaaaaaar" << endl;
+            cout << "flag: " << flag << " pos:" << pos << " map: " <<  mapQ << "tLen:" << tLen << endl;
+            if (flag.find("*") != string::npos) sam.flag = 0; else sam.flag = stoi(flag.c_str());
+            if (pos.find("*") != string::npos) sam.pos = 0; else sam.pos = stoi(pos.c_str());
+            if (mapQ.find("*") != string::npos) sam.mapQ = 0; else sam.mapQ = stoi(mapQ.c_str());
             if (cigar.find("*") != string::npos) sam.cigar = ""; else sam.cigar = cigar;
             if (rNext.find("*") != string::npos) sam.rNext = ""; else sam.rNext = rNext;
             if (pNext.find("*") != string::npos) sam.pNext = ""; else sam.pNext = pNext;
-            if (tLen.find("*") != string::npos) sam.tLen = 0; else sam.tLen = atoi(tLen.c_str());
+            if (tLen.find("*") != string::npos) sam.tLen = 0; else sam.tLen = stoi(tLen.c_str());
             if (seq.find("*") != string::npos) sam.seq = ""; else sam.seq = seq;
             if (qual.find("*") != string::npos) sam.qual = ""; else sam.qual = qual;
 

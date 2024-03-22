@@ -9,26 +9,12 @@
 #include <regex>
 #include <map>
 #include "Utils.h"
+#include "Alignment.h"
 
 using namespace std;
 
 class BlastReader {
 public:
-    struct Blast {
-        uint32_t queryId = 0;
-        uint32_t readId = 0;
-        uint32_t queryS = 0;
-        uint32_t queryE = 0;
-        uint32_t readS = 0;
-        uint32_t readE = 0;
-        uint32_t AlignmentLength = 0;
-        uint32_t Mismatches = 0;
-        uint32_t flag = 0;
-        uint32_t InDels = 0;
-        string queryAligned;
-        string readAligned;
-        uint32_t criteriaCode = 0;     // criteria code for the alignment
-    };
 
     BlastReader(const string& filename) : filename_(filename) {}
 
@@ -59,7 +45,7 @@ public:
         return inDelCount;
     }
 
-    void parseFile(uint32_t lastQueryID, IndexContainer<uint32_t, Blast>& alignments) {
+    void parseFile(uint32_t lastQueryID, IndexContainer<uint32_t, Alignment>& alignments) {
         
         ifstream blastFile(filename_);
         Utilities<uint32_t> utl;
@@ -74,35 +60,31 @@ public:
             if (line.empty() || line == "" || line.find('#') != string::npos) {
                 continue; // Skip empty lines
             }
-            Blast blast;
+            Alignment blast;
             istringstream iss(line);
             string queryID, readID, queryS, queryE, readS, readE, AlignmentLength, Mismatches, flag, queryAligned, readAligned;
             iss >> queryID >>  readID >>  queryS >>  queryE >>  readS >>  readE >>  AlignmentLength >>  Mismatches >>  flag >> queryAligned >> readAligned;
 
-            if (queryID == "") blast.queryId = 0; else blast.queryId = utl.extractContigId(queryID);
-            if (readID == "") blast.readId = 0; else blast.readId = utl.extractContigId(readID);
-            if (queryS == "") blast.queryS = 0; else blast.queryS = atoi(queryS.c_str());
-            if (queryE == "") blast.queryE = 0; else blast.queryE = atoi(queryE.c_str());
-            if (readS == "") blast.readS = 0; else blast.readS = atoi(readS.c_str());
-            if (readE == "") blast.readE = 0; else blast.readE = atoi(readE.c_str());
-            if (AlignmentLength == "") blast.AlignmentLength = 0; else blast.AlignmentLength = atoi(AlignmentLength.c_str());
-            if (Mismatches == "") blast.Mismatches = 0; else blast.Mismatches = atoi(Mismatches.c_str());
+            if (queryID == "") blast.queryID = 0; else blast.queryID = utl.extractContigId(queryID);
+            if (readID == "") blast.readID = 0; else blast.readID = utl.extractContigId(readID);
+            if (queryS == "") blast.queryRegionStartPos = 0; else blast.queryRegionStartPos = stoi(queryS.c_str());
+            if (queryE == "") blast.queryRegionEndPos = 0; else blast.queryRegionEndPos = stoi(queryE.c_str());
+            if (readS == "") blast.readRegionStartPos = 0; else blast.readRegionStartPos = stoi(readS.c_str());
+            if (readE == "") blast.readRegionEndPos = 0; else blast.readRegionEndPos = stoi(readE.c_str());
+            if (AlignmentLength == "") blast.partialMatchSize = 0; else blast.partialMatchSize = stoi(AlignmentLength.c_str());
+            if (Mismatches == "") blast.substitutions = 0; else blast.substitutions = stoi(Mismatches.c_str());
             if (flag == "") blast.flag = 0; else if (flag == "plus") blast.flag = 0; else blast.flag = 16;
-            if (queryAligned == "") blast.queryAligned = ""; else blast.queryAligned = queryAligned;
-            if (readAligned == "") blast.readAligned = ""; else blast.readAligned = readAligned;
+            if (queryAligned == "") blast.alignedQuery = ""; else blast.alignedQuery = queryAligned;
+            if (readAligned == "") blast.alignedRead = ""; else blast.alignedRead = readAligned;
 
-            blast.InDels = getIndels(readAligned, queryAligned);
+            blast.inDels = getIndels(readAligned, queryAligned);
 
-            if(blast.queryId > lastQueryID)
+            if(blast.queryID > (int)lastQueryID)
                 break;
 
-            alignments.put(blast.queryId, blast);
+            alignments.put(blast.queryID, blast);
             queryCount++;
         }
-    }
-
-    bool isReverseComplemented(const Blast& blast) const {
-        return (blast.flag & 0x10) != 0; // Check if the 5th bit (0x10) is set
     }
 
 private:

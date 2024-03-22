@@ -155,14 +155,17 @@ public:
         if(DEBUG_MODE) cout << "-----------------------------------------------------\n";
         while (true){
             if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
-            if(cigarStr.length() == 0 || cigarStr.length() < regionSize)
+            if(cigarStr.length() == 0 || cigarStr.length() < regionSize){
+                aln.criteriaCode = 0x10;
                 return false;
+            }
             if(checkIdentityPercentange(cigarStr))
                 return true;
             else {
                 int lastEditLocation = getLastEditLocation(cigarStr);
                 int firstEditLocation = getFirstEditLocation(cigarStr);
                 if(DEBUG_MODE) cout << "lastEditLocation: " << lastEditLocation << ", firstEditLocation: " << firstEditLocation << endl;
+                if(DEBUG_MODE) cout << "Before: queryRegionStartPos: " << aln.queryRegionStartPos << ", queryRegionEndPos: " << aln.queryRegionEndPos << ", readRegionStartPos: " << aln.readRegionStartPos << ", readRegionEndPos: " << aln.readRegionEndPos << endl;
                 if (lastEditLocation < 0 || firstEditLocation < 0) {
                     return false;
                 }
@@ -185,7 +188,7 @@ public:
                     aln.editDistance = aln.substitutions + aln.inDels;
                 } else {
                     size_t insertionsBeforeStart = 0, deletionsBeforeStart = 0;
-                    for (size_t i = (uint16_t)firstEditLocation + 1; i < cigarStr.size(); i++) {
+                    for (size_t i = 0; i <= (uint16_t) firstEditLocation; i++) {
                         if (cigarStr[i] == 'I') {
                             insertionsBeforeStart++;
                         } else if (cigarStr[i] == 'D') {
@@ -202,7 +205,9 @@ public:
                     aln.editDistance = aln.substitutions + aln.inDels;
                 }
             }
+            if(DEBUG_MODE) cout << "after: queryRegionStartPos: " << aln.queryRegionStartPos << ", queryRegionEndPos: " << aln.queryRegionEndPos << ", readRegionStartPos: " << aln.readRegionStartPos << ", readRegionEndPos: " << aln.readRegionEndPos << endl;
         }
+        return false;
     }
 
 };
