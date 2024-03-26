@@ -248,7 +248,7 @@ int run(int argc, char *argv[]) {
     if(cfg.minExactMatchLen > 0) {
         minNumExactMatchKmer = cfg.minExactMatchLen - (cfg.kmerLength - 1);
     } else {
-        minNumExactMatchKmer = (uint32_t)((cfg.regionSize * cfg.identityPercentage) / cfg.kmerLength);
+        minNumExactMatchKmer = (uint32_t)(ceil(cfg.regionSize * cfg.identityPercentage) / cfg.kmerLength);
         cfg.editDistance = minNumExactMatchKmer - 1;
     }
     assert(cfg.minExactMatchLen == 0 && "min exact match len should be 0 for this version");
@@ -266,7 +266,7 @@ int run(int argc, char *argv[]) {
         // BaseLinePartialMatcher<uint32_t, uint64_t, uint32_t> blpm(cfg.minExactMatchLen, cfg.regionSize);
         // blpm.constructBaseline(cfg.readDatabaseAddress, cfg.readsCount, cfg.queryFileAddress, cfg.queryCount,cfg.minExactMatchLen, cfg.cheapKmerThreshold, baselineQueriesFrontSeeds, baselineQueriesBackSeeds, cfg.isIndexOffline, cfg.offlineIndexAddress);
         // run the experiment
-        IndexContainer<uint32_t, uint32_t> minThCheapSeedReads, revMinThCheapSeedReads;
+        Container<uint32_t, uint32_t> minThCheapSeedReads, revMinThCheapSeedReads;
         // map<uint32_t, LevAlign> pmr;
         tsl::robin_map <uint32_t, string> reads, queries;
         uint32_t queryCount = 0;
@@ -479,7 +479,8 @@ void testAligner(int argc, char *argv[]){
     // // bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
     // bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln);
     // cout << ((criteriaCheck == true) ? "aln meets criteria" : "aln not meet criteria") << endl;
-    vector<Penalty> penalties = readPenalties("/u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_FLTR/PenaltySets/2284_1111_2444_2288_2848");
+    // vector<Penalty> penalties = readPenalties("/u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_FLTR/PenaltySets/2284_1111_2444_2288_2848");
+    vector<Penalty> penalties = readPenalties("/u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/blast_pen");
     aln = aligner.alignDifferentPenaltyScores(argv[1], argv[2], 1, 1, 1, penalties);
     cout << "aln.partialMatchSize: " << aln.partialMatchSize << endl;
     cout << "aln.cigar: " << aln.cigar << endl;

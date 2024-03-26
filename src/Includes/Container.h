@@ -27,6 +27,10 @@ public:
         container[key] = innerContainer;
     }
 
+    InnerContainerType get(const Key& key) {
+        return container[key];
+    }
+
     // Insert a value into the inner container associated with the given key
     void insertValue(const Key& key, const Value& value) {
         container[key].insert(value);
@@ -85,8 +89,10 @@ public:
     }
 
     // Count the occurrences of distinct values for a key
-    uint32_t collectCheapSeeds(vector<Key> kmers, map<Value, uint32_t> &readCounts) {
-        uint32_t cheapSeeds = 0;
+    pair<uint64_t, uint64_t> collectCheapSeeds(vector<Key> kmers, Container<Value, Value>& minThCheapSeeds, uint32_t minNumberOfCheapSeeds, Value queryInd) {
+        uint64_t cheapSeeds = 0;
+        uint64_t cheapSeedReads = 0;
+        tsl::robin_map <Value, uint64_t> readCounts;
         for (auto it = kmers.begin(); it != kmers.end(); it++) 
         {
             auto itt = container.find(*it);
@@ -95,11 +101,20 @@ public:
                 cheapSeeds++;
                 const auto& innerContainer = itt->second;
                 for (const auto& value : innerContainer) {
-                    readCounts[value]++;
+                    auto ittt = readCounts.find(value);
+                    if (ittt == readCounts.end()) {
+                        readCounts[value] = 1;
+                    } else {
+                        if (ittt->second == minNumberOfCheapSeeds) {
+                            minThCheapSeeds.insertValue(queryInd, value);
+                            cheapSeedReads++;
+                        }
+                        readCounts[value]++;
+                    }
                 }
             }
         }
-        return cheapSeeds;
+        return make_pair(cheapSeeds, cheapSeedReads);
     }
 
     void serializeSet(ofstream& ofs, const InnerContainerType& data) {
