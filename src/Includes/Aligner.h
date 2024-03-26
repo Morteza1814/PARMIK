@@ -8,6 +8,7 @@
 #include <vector>
 #include <regex>
 #include <map>
+#include <chrono>
 #include "Utils.h"
 #include "sw/ssw_cpp.h"
 #include "PostFilter.h"
@@ -293,6 +294,10 @@ public:
         }
         for (auto penalty : penalties)
         {
+            if(DEBUG_MODE) 
+            {
+                cout << "<<<<<<<<<<<<Match: " << penalty.matchPenalty << " Mismatch: " << penalty.mismatchPenalty << " GapOpen: " << penalty.gapOpenPenalty << " GapExtend: " << penalty.gapExtendPenalty << ">>>>>>>>>>>>>" << endl;
+            }
             Alignment aln;
             aln.readID = readID;
             aln.queryID = queryID;
@@ -355,30 +360,37 @@ public:
                 << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.substitutions) << '\t' << "CC" << l.criteriaCode << '\n';
     }
 
-    map<contigIndT, string> readContigsFromMap(tsl::robin_map<uint32_t, string>& reads,  set<contigIndT>& contigIdSet)
+    map<contigIndT, string> readContigsFromMap(tsl::robin_map<uint32_t, string>& reads,  unordered_set<contigIndT>& contigIdSet)
     {
-        contigIndT setElement;
-        unsigned int setInd = 0;
+        // contigIndT setElement;
+        // unsigned int setInd = 0;
         map<contigIndT, string> readContigs;
-        while (true)
-        {        
-            if (setInd >= 0 && setInd < contigIdSet.size())
-            {
-                auto it = contigIdSet.begin();
-                advance(it, setInd);
-                setElement = *it;
-                setInd++;
-                readContigs[setElement] = reads[setElement];
-            }
-            else
-            {
-                break;
-            }
+        for (auto it = contigIdSet.begin(); it!= contigIdSet.end(); it++)
+        {
+            auto itt = reads.find(*it);
+            if (itt == reads.end())
+                assert(false && "contig not found in reads");
+            readContigs[*it] = itt->second;
         }
+        // while (true)
+        // {        
+        //     if (setInd >= 0 && setInd < contigIdSet.size())
+        //     {
+        //         auto it = contigIdSet.begin();
+        //         advance(it, setInd);
+        //         setElement = *it;
+        //         setInd++;
+        //         readContigs[setElement] = reads[setElement];
+        //     }
+        //     else
+        //     {
+        //         break;
+        //     }
+        // }
         return readContigs;
     }
 
-    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& minThCheapSeedReads, contigIndT queryCount, bool isForwardStrand, string parmikAlignments, vector<Penalty> penalties)
+    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, Container<contigIndT, contigIndT>& minThCheapSeedReads, contigIndT queryCount, bool isForwardStrand, string parmikAlignments, vector<Penalty> penalties)
     {
         ofstream pAln(parmikAlignments, ios::app);
         cout << "Starting alignment for all queries [" << (isForwardStrand ? ("fwd"):("rev")) << "]..." << endl;
@@ -396,6 +408,7 @@ public:
             auto readSet = minThCheapSeedReads.get(i);
             map<contigIndT, string> candidateReads = readContigsFromMap(reads, readSet);
             tsl::robin_map <uint32_t, Alignment> alignments;
+            auto start = chrono::high_resolution_clock::now();
             for (auto it = candidateReads.begin(); it != candidateReads.end(); it++)
             {
                 Alignment aln = alignDifferentPenaltyScores(query, it->second, i, it->first, isForwardStrand, penalties);
@@ -403,6 +416,9 @@ public:
                     alignments.insert(make_pair(it->first, aln));
                 }
             }
+            auto end = chrono::high_resolution_clock::now();
+            auto duration = chrono::duration_cast<chrono::nanoseconds>(end - start);
+            cout << "query [" << i << "]: # of matches found " << alignments.size() << " and it took: " << static_cast<double>(duration.count()) / 1'000'000.0 << "ms" << endl;
             //dump the alignments
             uint32_t matchesAccepted = 0;
             for (auto it = alignments.begin(); it!= alignments.end(); it++)
