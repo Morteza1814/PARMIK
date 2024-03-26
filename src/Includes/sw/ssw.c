@@ -711,7 +711,7 @@ static cigar* banded_sw (const int8_t* ref,
 				op = 'D';
 				break;
 			default:
-				fprintf(stderr, "Trace back error: %d.\n", direction_line[temp1 - 1]);
+				// fprintf(stderr, "Trace back error: %d.\n", direction_line[temp1 - 1]);
 				free(direction);
 				free(h_c);
 				free(e_b);
