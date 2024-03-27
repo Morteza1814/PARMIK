@@ -1,7 +1,7 @@
 #ifndef KMERFREQUENCYCOUNTER_H
 #define KMERFREQUENCYCOUNTER_H
 
-#include <unordered_map>
+#include <map>
 #include <algorithm>
 #include <iostream>
 #include <unordered_set>
@@ -19,23 +19,54 @@ public:
         cheapKmersThreshold_ = cheapKmersThreshold;
     }
 
-    void collectCheapKmers(Container<keyT, valT>& cheapKmers, IndexContainer<keyT, valT>& invertedIndex) {
+    // Function to read kmerRanges from the file and populate the map
+    void readRanges(const string& filename, map<pair<int, int>, int>& kmerRanges) {
+        ifstream file(filename);
+        if (!file) {
+            cout << "kmerRanges filename address: " << filename << endl;
+            throw runtime_error("Failed to open the file.");
+        }
+        int start, end;
+        while (file >> start >> end) {
+            cout << "start : " << start << " end : " << end << endl;
+            kmerRanges.emplace(make_pair(start, end), 0); // Initialize count to 0
+        }
+    }
+
+    // Function to find the range of a key in the invertsed index
+    pair<int, int> findRange(const map<pair<int, int>, int>& kmerRanges, int key) {
+        for (const auto& pair : kmerRanges) {
+            if (key >= pair.first.first && key <= pair.first.second) {
+                return pair.first;
+            }
+        }
+        // If key is not found in any range, return a range indicating it's not found
+        return {-1, -1};
+    }
+
+    void collectCheapKmers(Container<keyT, valT>& cheapKmers, IndexContainer<keyT, valT>& invertedIndex, const string& rangesFilename) {
         // Count the number of items with values less than 500 and more than 500
         size_t cheapKmersCount = 0;
         size_t expensiveKmersCount = 0; 
         IndexContainer<keyT, valT> expensiveKmers;
+        map<pair<int, int>, int> kmerRanges;
+        readRanges(rangesFilename, kmerRanges);
         cout << "<<<<<<<<<<<<<<<<<<<<<<<<Cheap Kmers Collection Started!!>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         cout << left << setw(30) << "cheap k-mer threshold: " << cheapKmersThreshold_ << endl;
         clock_t start_time = clock();
         size_t totalkmers = 0, uniqueKmers = 0, distinctKmers = 0;
         for (auto it = invertedIndex.begin(); it != invertedIndex.end(); ) {
-            // Get the range of items with the current key  
-                      
+            // Get the range of items with the current key          
             auto range = invertedIndex.getRange(it->first);
             auto rangeBegin = range.first;
             auto rangeEnd = range.second;
             // Get the number of items for the current key
             size_t itemCount = distance(range.first, range.second);
+            auto kmerRange = findRange(kmerRanges, itemCount);
+            if (kmerRange.first != -1 && kmerRange.second != -1) {
+                // Increment count for the range
+                kmerRanges[kmerRange]++;
+            }
             // count unique k-mers
             if (itemCount == 1)
             {
@@ -83,6 +114,10 @@ public:
         cout << left << setw(30) << "Cheap k-mers: " << cheapKmersCount  << " [" << (cheapKmersCount*100) / distinctKmers << "\% of distinctKmers]" << endl;
         cout << left << setw(30) << "Expensive k-mers: " << expensiveKmersCount << " [" << (expensiveKmersCount*100) / distinctKmers << "\% of distinctKmers]" << endl;
         cout << left << setw(30) << "Most expensive k-mer has: " << mostExpensiveKmer << " read ptr\n";
+        cout << "Histogram of k-mer ranges:\n";
+        for (const auto& entry : kmerRanges) {
+            cout << "[" << entry.first.first << "-" << entry.first.second << "]: " << entry.second << " k-mers\n";
+        }
         cout << "<<<<<<<<<<<<<<<<<<<<<<<<CollectCheapKmers Ended!!>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
     }
 };
