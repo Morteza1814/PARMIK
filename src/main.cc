@@ -24,26 +24,27 @@
 
 int argParse(int argc, char** argv, Config &cfg){
 	args::ArgumentParser parser("=========================Arguments===========================", "======================================================");
-    args::ValueFlag<int> parmikModeArg(parser, "", "PARMIK mode",                           {'a', "mode"});
-    args::ValueFlag<string> otherToolAddressArg(parser, "", "Other tool output",            {'b', "tool"});
-	args::ValueFlag<int> contigSizeArg(parser, "", "Contig Size",                           {'c', "contigSize"});
-    args::ValueFlag<int> identityPercentageArg(parser, "", "Identity Percentage",           {'d', "identityPercentage"});
-	args::ValueFlag<int> editDistanceArg(parser, "", "Max Edit Distance (i/d/s)",           {'e', "editDistance"});
-	args::ValueFlag<string> offlineIndexAddressArg(parser, "", "Offline Index Address",     {'f', "offlineIndex"});
-    args::HelpFlag help(parser, "help", "Help",                                             {'h', "help"});
-	args::ValueFlag<int> readsCountArg(parser, "", "Number of Reads",                       {'i', "readCount"});
-	args::ValueFlag<int> queryCountArg(parser, "", "Number of Queries",                     {'j', "queryCount"});
-	args::ValueFlag<int> kmerLengthArg(parser, "", "Kmer Length",                           {'k', "kmerLen"});
-    args::ValueFlag<string> otherToolArg(parser, "", "The Other Tool  (bwa, blast, etc)",   {'l', "otherTool"});
-    args::ValueFlag<int> minExactMatchLenArg(parser, "", "Minimum Exact Match Length",      {'m', "minExactMatchLen"});
-	args::ValueFlag<string> outputDirArg(parser, "", "OutputDir",                           {'o', "outputDir"});
-    args::ValueFlag<string> penaltyFileAddressArg(parser, "", "Penalty File Address",       {'p', "penaltyFileAddress"});
-	args::ValueFlag<string> queryFileAddressArg(parser, "", "Query File Address",           {'q', "query"});
-	args::ValueFlag<string> readDatabaseAddressArg(parser, "", "Read Data Base Address",    {'r', "read"});
-	args::ValueFlag<int> regionSizeArg(parser, "", "Region Size",                           {'s', "regionSize"});
-    args::ValueFlag<int> cheapKmerThresholdArg(parser, "", "Cheap Kmer Threshold",          {'t', "cheapKmerThreshold"});
-	args::Flag isVerboseLogArg(parser, "", "Verbose Logging",                               {'v', "verboseLog"});
-	args::Flag isIndexOfflineArg(parser, "", "Is the read index offline",                  {'x', "isIndexOffline"});
+    args::ValueFlag<int> parmikModeArg(parser, "", "PARMIK mode",                               {'a', "mode"});
+    args::ValueFlag<string> otherToolAddressArg(parser, "", "Other tool output",                {'b', "tool"});
+	args::ValueFlag<int> contigSizeArg(parser, "", "Contig Size",                               {'c', "contigSize"});
+    args::ValueFlag<int> identityPercentageArg(parser, "", "Identity Percentage",               {'d', "identityPercentage"});
+	args::ValueFlag<int> editDistanceArg(parser, "", "Max Edit Distance (i/d/s)",               {'e', "editDistance"});
+	args::ValueFlag<string> offlineIndexAddressArg(parser, "", "Offline Index Address",         {'f', "offlineIndex"});
+    args::HelpFlag help(parser, "help", "Help",                                                 {'h', "help"});
+	args::ValueFlag<int> readsCountArg(parser, "", "Number of Reads",                           {'i', "readCount"});
+	args::ValueFlag<int> queryCountArg(parser, "", "Number of Queries",                         {'j', "queryCount"});
+	args::ValueFlag<int> kmerLengthArg(parser, "", "Kmer Length",                               {'k', "kmerLen"});
+    args::ValueFlag<string> otherToolArg(parser, "", "The Other Tool  (bwa, blast, etc)",       {'l', "otherTool"});
+    args::ValueFlag<int> minExactMatchLenArg(parser, "", "Minimum Exact Match Length",          {'m', "minExactMatchLen"});
+    args::ValueFlag<string> kmerRangesFileAddressArg(parser, "", "k-mer Ranges File Address",   {'n', "kmerRangesFileAddress"});
+	args::ValueFlag<string> outputDirArg(parser, "", "OutputDir",                               {'o', "outputDir"});
+    args::ValueFlag<string> penaltyFileAddressArg(parser, "", "Penalty File Address",           {'p', "penaltyFileAddress"});
+	args::ValueFlag<string> queryFileAddressArg(parser, "", "Query File Address",               {'q', "query"});
+	args::ValueFlag<string> readDatabaseAddressArg(parser, "", "Read Data Base Address",        {'r', "read"});
+	args::ValueFlag<int> regionSizeArg(parser, "", "Region Size",                               {'s', "regionSize"});
+    args::ValueFlag<int> cheapKmerThresholdArg(parser, "", "Cheap Kmer Threshold",              {'t', "cheapKmerThreshold"});
+	args::Flag isVerboseLogArg(parser, "", "Verbose Logging",                                   {'v', "verboseLog"});
+	args::Flag isIndexOfflineArg(parser, "", "Is the read index offline",                       {'x', "isIndexOffline"});
     // args::ValueFlag<int> overlapSizeArg(parser, "", "Overlap Size",                         {'z', "overlapSize"});
 	// args::Flag isFreqAndMemReportArg(parser, "", "Report Seed Frequencies and Avg MEM sizes", {'z', "memfreq"});
 	// args::Flag isReverseStrandArg(parser, "", "Check the Reverse Strand of Queries", {'y', "reverseStrand"});
@@ -72,6 +73,7 @@ int argParse(int argc, char** argv, Config &cfg){
 	if (queryFileAddressArg) {cfg.queryFileAddress = args::get(queryFileAddressArg);} else {cout << "no queryFileAddress!"<< endl; return 0;}
     if (penaltyFileAddressArg) {cfg.penaltyFileAddress = args::get(penaltyFileAddressArg);} else {cfg.penaltyFileAddress = ""; cout << "no penaltyFileAddress!"<< endl;}
 	if (outputDirArg) {cfg.outputDir = args::get(outputDirArg);} else {cout << "no outputDirArg!"<< endl; cfg.noOutputFileDump = true;}
+    if (kmerRangesFileAddressArg) {cfg.kmerRangesFileAddress = args::get(kmerRangesFileAddressArg);} else {cout << "no kmerRangesFileAddressArg!"<< endl; cfg.kmerRangesFileAddress = "";}
     if (identityPercentageArg) {cfg.identityPercentage = args::get(identityPercentageArg);} else {cout << "no identityPercentage (default = 0.9)!"<< endl;}
 	if (readsCountArg) {cfg.readsCount = args::get(readsCountArg); } else {cfg.readsCount = NUMBER_OF_READS;}
 	if (queryCountArg) {cfg.queryCount = args::get(queryCountArg); } else {cfg.queryCount = NUMBER_OF_QUERIES;}
@@ -237,6 +239,7 @@ int run(int argc, char *argv[]) {
     cout << left << setw(30) << "otherToolOutputFileAddress: " << cfg.otherToolOutputFileAddress << endl;
 	cout << left << setw(30) << "outputDir: " << cfg.outputDir << endl;
     cout << left << setw(30) << "penaltyFileAddress: " << cfg.penaltyFileAddress << endl;
+    cout << left << setw(30) << "kmerRangesFileAddress: " << cfg.kmerRangesFileAddress << endl;
 	cout << left << setw(30) << "readsCount: " << cfg.readsCount << endl; 
 	cout << left << setw(30) << "queryCount: " << cfg.queryCount << endl;
 	cout << left << setw(30) << "kmerLength: " << cfg.kmerLength << endl;
@@ -298,7 +301,7 @@ int run(int argc, char *argv[]) {
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
                     //collect cheap kmers
                     KmersFrequencyCounter<uint32_t, uint32_t> kfc(cfg.cheapKmerThreshold);
-                    kfc.collectCheapKmers(cheapKmers, invertedIndex);
+                    kfc.collectCheapKmers(cheapKmers, invertedIndex, cfg.kmerRangesFileAddress);
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
                     // cheapKmers.getSize();
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
@@ -343,7 +346,7 @@ int run(int argc, char *argv[]) {
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
                     //collect cheap kmers
                     KmersFrequencyCounter<uint64_t, uint32_t> kfc(cfg.cheapKmerThreshold);
-                    kfc.collectCheapKmers(cheapKmers, invertedIndex);
+                    kfc.collectCheapKmers(cheapKmers, invertedIndex, cfg.kmerRangesFileAddress);
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
                     // cheapKmers.getSize();
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
@@ -474,13 +477,13 @@ void testAligner(int argc, char *argv[]){
     aln.query = argv[1];
     aln.read = argv[2];
     // PostFilter pf(50, 2, 150, 30, 0.9);
-    Aligner <uint32_t> aligner(50, 2, 150, 0.9);
+    Aligner <uint32_t> aligner(stod(argv[3]), 2, 150, stod(argv[4]));
     // aligner.align(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
     // // bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
     // bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln);
     // cout << ((criteriaCheck == true) ? "aln meets criteria" : "aln not meet criteria") << endl;
     // vector<Penalty> penalties = readPenalties("/u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_FLTR/PenaltySets/2284_1111_2444_2288_2848");
-    vector<Penalty> penalties = readPenalties("/u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/blast_pen");
+    vector<Penalty> penalties = readPenalties(argv[5]);
     aln = aligner.alignDifferentPenaltyScores(argv[1], argv[2], 1, 1, 1, penalties);
     cout << "aln.partialMatchSize: " << aln.partialMatchSize << endl;
     cout << "aln.cigar: " << aln.cigar << endl;

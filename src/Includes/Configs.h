@@ -32,6 +32,7 @@ typedef struct config
     string otherToolOutputFileAddress;
     string offlineIndexAddress;
     string penaltyFileAddress;
+    string kmerRangesFileAddress;
     unsigned int readsCount;
     unsigned int queryCount;
     unsigned int kmerLength;

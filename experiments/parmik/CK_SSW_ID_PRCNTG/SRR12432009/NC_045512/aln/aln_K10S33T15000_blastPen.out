@@ -1,0 +1,39 @@
+no kmerRangesFileAddressArg!
+no identityPercentage (default = 0.9)!
+no otherToolArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  1
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads
+readFileName:                 SRR12432009_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries
+queryFileName:                NC_045512_queries
+otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR12432009/NC_045512/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/NC_045512
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/blast_pen
+kmerRangesFileAddress:        
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   10
+regionSize:                   33
+cheapKmerThreshold:           15000
+identityPercentage:           0.9
+minExactMatchLen:             0
+minNumExactMatchKmer:         3
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/
+max editDistance in min region: 2
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 1, s: 1, go: 3, ge: 2
+m: 1, s: 1, go: 2, ge: 2
+m: 1, s: 1, go: 1, ge: 2
+m: 1, s: 1, go: 0, ge: 2
+m: 1, s: 1, go: 4, ge: 1
+m: 1, s: 1, go: 3, ge: 1
+m: 1, s: 1, go: 2, ge: 1
+m: 1, s: 3, go: 5, ge: 2
+------------------------------------
+numberOfReadsWithN : 0
+queryCount : 29754
+numberOfReadsWithN : 0
+readCount : 16344647
