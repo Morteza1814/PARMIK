@@ -59,7 +59,7 @@ public:
         return cigar.str();
     }
 
-    void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, IndexContainer<uint32_t, Alignment>& pmAlignments, vector<pair<uint32_t, uint32_t>>& alnPmBLASTHisto, const uint32_t queryCount, const string alnPerQueryFileAddress, const string parmikFnReadsFileAddress, const string bestAlnCmpFileAddress)
+    void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, IndexContainer<uint32_t, Alignment>& pmAlignments, vector<pair<uint32_t, uint32_t>>& alnPmBLASTHisto, const uint32_t queryCount, const uint16_t minNumExactMatchKmer, const string alnPerQueryFileAddress, const string parmikFnReadsFileAddress, const string bestAlnCmpFileAddress)
     {
         ofstream cmp(comparisonResultsFileAddress);
         cout << "cmp file address: " << comparisonResultsFileAddress << endl;
@@ -80,7 +80,7 @@ public:
         totalBlastFP = 0,
         blastTP_noParmikMatches_allQ = 0, blastTP_blastOutperfomed_allQ = 0, blastTP_parmikOutperfomed_allQ = 0, blastTP_blastEqualParmik_allQ = 0,
         parmikTP_noBlastMatches_allQ = 0,
-        blastFP_editsExceed_allQ = 0, blastFP_lowAlnLen_allQ = 0, blastFP_editPos_allQ = 0,
+        blastFP_editsExceed_allQ = 0, blastFP_lowAlnLen_allQ = 0, blastFP_editPos_allQ = 0, blastFP_lowerExactMatchKmers_allQ = 0,
         blastBest_blastOutperfomed_allQ = 0, blastBest_parmikOutperfomed_allQ = 0, blastBest_blastEqualParmik_allQ = 0;
         //all query level parameters sets (if total is needed, just add all the elements in the set)
         set<uint32_t> pmReadPerQuerySet, blastReadPerQuerySet;
@@ -95,8 +95,8 @@ public:
         set<uint32_t> blastBest_blastOutperfomed_ed_allQ, blastBest_parmikOutperfomed_ed_allQ, blastBest_blastEqualParmik_ed_allQ; 
         set<uint32_t> parmikBest_blastOutperfomed_alnLen_allQ, parmikBest_parmikOutperfomed_alnLen_allQ, parmikBest_blastEqualParmik_alnLen_allQ; 
         set<uint32_t> parmikBest_blastOutperfomed_ed_allQ, parmikBest_parmikOutperfomed_ed_allQ, parmikBest_blastEqualParmik_ed_allQ; 
-        set<uint32_t> blastFP_editsExceed_alnLen_allQ, blastFP_lowAlnLen_alnLen_allQ, blastFP_editPos_alnLen_allQ;
-        set<uint32_t> blastFP_editsExceed_ed_allQ, blastFP_lowAlnLen_ed_allQ, blastFP_editPos_ed_allQ;
+        set<uint32_t> blastFP_editsExceed_alnLen_allQ, blastFP_lowAlnLen_alnLen_allQ, blastFP_editPos_alnLen_allQ, blastFP_lowerExactMatchKmers_alnLen_allQ;
+        set<uint32_t> blastFP_editsExceed_ed_allQ, blastFP_lowAlnLen_ed_allQ, blastFP_editPos_ed_allQ, blastFP_lowerExactMatchKmers_ed_allQ;
         set<uint32_t> blastFN_parmik_alnLen_allQ, blastFN_parmik_ed_allQ;// PARMIK alignment characteristics for all queries when BLAST did not find a match
         set<uint32_t> blastFN_noCriteria_parmik_alnLen_allQ, blastFN_noCriteria_parmik_ed_allQ;
         set<uint32_t> pmFN_blast_alnLen_allQ, pmFN_blast_ed_allQ;// BLAST alignment characteristics for all queries when PARMIK did not find a match
@@ -116,7 +116,7 @@ public:
             uint32_t blastTP_noParmikMatches = 0, blastTP_blastOutperfomed = 0, blastTP_parmikOutperfomed = 0, blastTP_blastEqualParmik = 0;
             uint32_t parmikTP_noBlastMatches = 0;
             uint32_t blastBest_blastOutperfomed = 0, blastBest_parmikOutperfomed = 0, blastBest_blastEqualParmik = 0;
-            uint32_t blastFP_editsExceed = 0, blastFP_lowAlnLen = 0, blastFP_editPos = 0;
+            uint32_t blastFP_editsExceed = 0, blastFP_lowAlnLen = 0, blastFP_editPos = 0, blastFP_lowerExactMatchKmers = 0;
             cmp << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
             cmp << "Q : " << query << ", queryInd: " << queryInd << endl;
             Alignment bestAlnBlast;
@@ -175,17 +175,21 @@ public:
                         continue;
                     }
                     bool isFP = false;
-                    PostFilter pf(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.identityPercentage);
+                    PostFilter pf(cfg.regionSize, cfg.kmerLength, cfg.contigSize, minNumExactMatchKmer, cfg.identityPercentage);
                     string cigarStr = getCigarStr(aln.queryRegionStartPos, aln.alignedQuery, aln.alignedRead, cfg.contigSize);
                     aln.cigar = pf.convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
                     //TODO: check for the new implementation
-                    bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln);
+                    bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln, true);
                     if(!criteriaCheck){
                         isFP = true;
                         if(aln.criteriaCode == 0x10) {
                             blastFP_lowAlnLen++;
                             blastFP_lowAlnLen_alnLen_allQ.insert(aln.partialMatchSize);
                             blastFP_lowAlnLen_ed_allQ.insert(aln.substitutions + aln.inDels);
+                        } else if(aln.criteriaCode == 0x40) {
+                            blastFP_lowerExactMatchKmers++;
+                            blastFP_lowerExactMatchKmers_alnLen_allQ.insert(aln.partialMatchSize);
+                            blastFP_lowerExactMatchKmers_ed_allQ.insert(aln.substitutions + aln.inDels);
                         }
                     }
                     // if (aln.criteriaCode == 0x08)
@@ -392,7 +396,8 @@ public:
             blastFP_editsExceed_allQ += blastFP_editsExceed;
             blastFP_lowAlnLen_allQ += blastFP_lowAlnLen; 
             blastFP_editPos_allQ += blastFP_editPos;
-            cmp << "blastFP_editsExceed: " << blastFP_editsExceed << ", blastFP_lowAlnLen: " << blastFP_lowAlnLen << ", blastFP_editPos: " << blastFP_editPos << endl;
+            blastFP_lowerExactMatchKmers_allQ += blastFP_lowerExactMatchKmers;
+            cmp << "blastFP_editsExceed: " << blastFP_editsExceed << ", blastFP_lowAlnLen: " << blastFP_lowAlnLen << ", blastFP_editPos: " << blastFP_editPos << ", blastFP_lowerExactMatchKmers: " << blastFP_lowerExactMatchKmers << endl;
             blastBest_parmikOutperfomed_allQ += blastBest_parmikOutperfomed;
             blastBest_blastOutperfomed_allQ += blastBest_blastOutperfomed;
             blastBest_blastEqualParmik_allQ += blastBest_blastEqualParmik;
@@ -523,6 +528,12 @@ public:
         pair<uint32_t, uint32_t> avgblastFP_lowAlnLen_ed_allQ = util.calculateStatistics2(blastFP_lowAlnLen_ed_allQ);
         cmp << left << setw(80) << "(avg, median) BLAST's alignment length where alignment length < R: " << avgblastFP_lowAlnLen_alnLen_allQ.first << ", " << avgblastFP_lowAlnLen_alnLen_allQ.second << endl;
         cmp << left << setw(80) << "(avg, median) BLAST's edit distance where alignment length < R: " << avgblastFP_lowAlnLen_ed_allQ.first << ", " << avgblastFP_lowAlnLen_ed_allQ.second << endl;
+
+        cmp << left << setw(60) << "# Of BLAST (FP) that # of kmers is lower than [" << minNumExactMatchKmer << "] : " << setw(20) << blastFP_lowerExactMatchKmers_allQ << endl;
+        pair<uint32_t, uint32_t> avgblastFP_lowerExactMatchKmers_alnLen_allQ = util.calculateStatistics2(blastFP_lowerExactMatchKmers_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgblastFP_lowerExactMatchKmers_ed_allQ = util.calculateStatistics2(blastFP_lowerExactMatchKmers_ed_allQ);
+        cmp << left << setw(60) << "(avg, median) BLAST's alignment length where # of kmers is lower than [" << minNumExactMatchKmer << "] : " << setw(20) << avgblastFP_lowerExactMatchKmers_alnLen_allQ.first << ", " << avgblastFP_lowerExactMatchKmers_alnLen_allQ.second << endl;
+        cmp << left << setw(60) << "(avg, median) BLAST's edit distance where # of kmers is lower than [" << minNumExactMatchKmer << "] : " << setw(20) << avgblastFP_lowerExactMatchKmers_ed_allQ.first << ", " << avgblastFP_lowerExactMatchKmers_ed_allQ.second << endl;
         
         // cmp << left << setw(80) << "# Of BLAST (FP) that edit pos breaks criteria: " << blastFP_editPos_allQ << endl;
         // pair<uint32_t, uint32_t> avgblastFP_editPos_alnLen_allQ = util.calculateStatistics2(blastFP_editPos_alnLen_allQ);

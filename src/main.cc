@@ -325,7 +325,7 @@ int run(int argc, char *argv[]) {
                     ckpm.cheapSeedFilter(cheapKmers, revQueries, revMinThCheapSeedReads);
                     // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
-                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.identityPercentage);
+                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage);
                     // pm.findPartiaMatches(reads, queries, minThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
                     aligner.findPartiaMatches(reads, queries, minThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
@@ -370,7 +370,7 @@ int run(int argc, char *argv[]) {
                     ckpm.cheapSeedFilter(cheapKmers, revQueries, revMinThCheapSeedReads);
                     // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
-                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.identityPercentage);
+                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage);
                     // pm.findPartiaMatches(reads, queries, minThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
                     aligner.findPartiaMatches(reads, queries, minThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
@@ -425,7 +425,7 @@ int run(int argc, char *argv[]) {
             } else if(cfg.otherTool == "BLAST" || cfg.otherTool == "blast")
             {
                 CompareWithBlast cwb;
-                cwb.comparePmWithBlast(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress, parmikFnReadsFileAddress, bestAlnCmpFileAddress);
+                cwb.comparePmWithBlast(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, minNumExactMatchKmer, alnPerQueryFileAddress, parmikFnReadsFileAddress, bestAlnCmpFileAddress);
             } else if(cfg.otherTool == "GT" || cfg.otherTool == "gt")
             {
                 SamReader gtSam(cfg.otherToolOutputFileAddress);
@@ -477,13 +477,13 @@ void testAligner(int argc, char *argv[]){
     aln.query = argv[1];
     aln.read = argv[2];
     // PostFilter pf(50, 2, 150, 30, 0.9);
-    Aligner <uint32_t> aligner(stod(argv[3]), 2, 150, stod(argv[4]));
+    Aligner <uint32_t> aligner(stod(argv[3]), 2, 150, stod(argv[4]), stod(argv[5]), stod(argv[6]));
     // aligner.align(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
     // // bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
     // bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln);
     // cout << ((criteriaCheck == true) ? "aln meets criteria" : "aln not meet criteria") << endl;
     // vector<Penalty> penalties = readPenalties("/u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_FLTR/PenaltySets/2284_1111_2444_2288_2848");
-    vector<Penalty> penalties = readPenalties(argv[5]);
+    vector<Penalty> penalties = readPenalties(argv[7]);
     aln = aligner.alignDifferentPenaltyScores(argv[1], argv[2], 1, 1, 1, penalties);
     cout << "aln.partialMatchSize: " << aln.partialMatchSize << endl;
     cout << "aln.cigar: " << aln.cigar << endl;
