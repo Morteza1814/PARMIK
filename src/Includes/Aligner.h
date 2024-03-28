@@ -19,12 +19,14 @@ using namespace std;
 template <typename contigIndT>
 class Aligner {
 private:
-    uint32_t regionSize;
-    uint32_t allowedEditDistance;
-    uint32_t contigSize;
+    uint16_t regionSize;
+    uint16_t allowedEditDistance;
+    uint16_t contigSize;
+    uint16_t k_;
+    uint16_t minNumExactMatchKmer;
     double identityPercentage;
 public:
-    Aligner(uint32_t R, uint32_t a, uint32_t c, double i) : regionSize(R), allowedEditDistance(a), contigSize(c), identityPercentage(i) {}
+    Aligner(uint16_t R, uint16_t a, uint16_t c, uint16_t k, uint16_t m, double i) : regionSize(R), allowedEditDistance(a), contigSize(c), k_(k), minNumExactMatchKmer(m), identityPercentage(i) {}
 
     string convertCigarToStr(const string& cigar) {
         stringstream simplifiedCigar;
@@ -277,7 +279,7 @@ public:
     Alignment alignDifferentPenaltyScores(string query, string read, uint32_t queryID, uint32_t readID, bool isForwardStran, vector<Penalty> &penalties)
     {
         Alignment bestAlignment;
-        PostFilter pf(regionSize, allowedEditDistance, contigSize, identityPercentage);
+        PostFilter pf(regionSize, k_, contigSize, minNumExactMatchKmer, identityPercentage);
         if (penalties.size() == 0)
         {
             bestAlignment.read = read;

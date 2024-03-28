@@ -8,12 +8,13 @@ using namespace std;
 
 class PostFilter {
 private:
-    uint32_t regionSize;
-    uint32_t allowedEditDistance;
-    uint32_t contigSize;
+    uint16_t regionSize;
+    uint16_t k_;
+    uint16_t contigSize;
+    uint16_t minNumExactMatchKmer;
     double identityPercentage;
 public: 
-    PostFilter(uint32_t R, uint32_t a, uint32_t c, double i) : regionSize(R), allowedEditDistance(a), contigSize(c), identityPercentage(i) {}
+    PostFilter(uint16_t R, uint16_t k, uint16_t c, uint16_t m, double i) : regionSize(R), k_(k), contigSize(c), minNumExactMatchKmer(m), identityPercentage(i) {}
 
     uint32_t getMatchesCount(string cigarStr) {
         uint32_t cnt = 0;
@@ -144,9 +145,23 @@ public:
             }
         }
         return -1;
+    } 
+
+    bool checkminNumExactMatchKmer(const string& cigarStr){
+         uint32_t kmerCounts = 0;
+
+        for (size_t i = 0; i <= cigarStr.length() - k_; ++i) {
+            string kmer = cigarStr.substr(i, k_);
+            if (kmer.find_first_not_of('=') == string::npos) {
+                kmerCounts++;
+            }
+        }
+        if(kmerCounts < minNumExactMatchKmer)
+            return false;
+        return true;
     }
 
-    bool checkAndUpdateBasedOnAlingmentCriteria(Alignment &aln)
+    bool checkAndUpdateBasedOnAlingmentCriteria(Alignment &aln, bool bCheckminNumExactMatchKmer = false)
     {
         Utilities<uint32_t> util;
         // covert cigar to str
@@ -159,9 +174,15 @@ public:
                 aln.criteriaCode = 0x10;
                 return false;
             }
-            if(checkIdentityPercentange(cigarStr))
+            if(checkIdentityPercentange(cigarStr)){
+                if(bCheckminNumExactMatchKmer){
+                    if(!checkminNumExactMatchKmer(cigarStr)){
+                        aln.criteriaCode = 0x40;
+                        return false;
+                    }
+                }
                 return true;
-            else {
+            } else {
                 int lastEditLocation = getLastEditLocation(cigarStr);
                 int firstEditLocation = getFirstEditLocation(cigarStr);
                 if(DEBUG_MODE) cout << "lastEditLocation: " << lastEditLocation << ", firstEditLocation: " << firstEditLocation << endl;
