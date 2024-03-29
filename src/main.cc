@@ -17,6 +17,7 @@
 #include "Includes/CheckKmersFrequency.h"
 #include "Includes/Aligner.h"
 #include "Includes/Alignment.h"
+#include <cmath>
 
 #define PARMIK_MODE_INDEX   0
 #define PARMIK_MODE_ALIGN   1
@@ -74,7 +75,7 @@ int argParse(int argc, char** argv, Config &cfg){
     if (penaltyFileAddressArg) {cfg.penaltyFileAddress = args::get(penaltyFileAddressArg);} else {cfg.penaltyFileAddress = ""; cout << "no penaltyFileAddress!"<< endl;}
 	if (outputDirArg) {cfg.outputDir = args::get(outputDirArg);} else {cout << "no outputDirArg!"<< endl; cfg.noOutputFileDump = true;}
     if (kmerRangesFileAddressArg) {cfg.kmerRangesFileAddress = args::get(kmerRangesFileAddressArg);} else {cout << "no kmerRangesFileAddressArg!"<< endl; cfg.kmerRangesFileAddress = "";}
-    if (identityPercentageArg) {cfg.identityPercentage = args::get(identityPercentageArg);} else {cout << "no identityPercentage (default = 0.9)!"<< endl;}
+    if (identityPercentageArg) {cfg.identityPercentage = args::get(identityPercentageArg);cfg.identityPercentage = (double)(cfg.identityPercentage/100);} else {cout << "no identityPercentage (default = 0.9)!"<< endl;}
 	if (readsCountArg) {cfg.readsCount = args::get(readsCountArg); } else {cfg.readsCount = NUMBER_OF_READS;}
 	if (queryCountArg) {cfg.queryCount = args::get(queryCountArg); } else {cfg.queryCount = NUMBER_OF_QUERIES;}
 	if (kmerLengthArg) {cfg.kmerLength = args::get(kmerLengthArg); } else {cfg.kmerLength = KMER_SZ;}
@@ -251,7 +252,9 @@ int run(int argc, char *argv[]) {
     if(cfg.minExactMatchLen > 0) {
         minNumExactMatchKmer = cfg.minExactMatchLen - (cfg.kmerLength - 1);
     } else {
-        minNumExactMatchKmer = (uint32_t)(ceil(cfg.regionSize * cfg.identityPercentage) / cfg.kmerLength);
+        cfg.editDistance = (uint32_t)(round(cfg.regionSize * (1-cfg.identityPercentage)));
+        uint16_t exactMatchSize = cfg.regionSize - cfg.editDistance;
+        minNumExactMatchKmer = (uint32_t)(floor((exactMatchSize/cfg.kmerLength) + (exactMatchSize%cfg.kmerLength)));
         cfg.editDistance = minNumExactMatchKmer - 1;
     }
     assert(cfg.minExactMatchLen == 0 && "min exact match len should be 0 for this version");
