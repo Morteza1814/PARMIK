@@ -494,6 +494,7 @@ void testAligner(int argc, char *argv[]){
     cout << "aln.queryRegionEndPos: " << aln.queryRegionEndPos << endl;
     cout << "aln.readRegionStartPos: " << aln.readRegionStartPos << endl;
     cout << "aln.readRegionEndPos: " << aln.readRegionEndPos << endl;
+    cout << "aln.criteriaCode: " << aln.criteriaCode << endl;
 }
 
 int main(int argc, char *argv[])

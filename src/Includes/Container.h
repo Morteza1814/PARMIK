@@ -105,11 +105,11 @@ public:
                     if (ittt == readCounts.end()) {
                         readCounts[value] = 1;
                     } else {
-                        if (ittt->second == minNumberOfCheapSeeds) {
-                            minThCheapSeeds.insertValue(queryInd, value);
-                            cheapSeedReads++;
-                        }
                         readCounts[value]++;
+                    }
+                    if (readCounts[value] == minNumberOfCheapSeeds) {
+                        minThCheapSeeds.insertValue(queryInd, value);
+                        cheapSeedReads++;
                     }
                 }
             }
