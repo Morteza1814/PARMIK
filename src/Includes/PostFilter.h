@@ -173,7 +173,11 @@ public:
         if(DEBUG_MODE) cout << "-----------------------------------------------------\n";
         while (true){
             if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
-            if(cigarStr.length() == 0 || (cigarStr.length() < regionSize && !atBeginning)) {
+            if(cigarStr.length() == 0 || (cigarStr.length() < regionSize && atBeginning)) {
+                aln.criteriaCode = 0x10;
+                return false;
+            }
+            if(cigarStr.length() < regionSize && !atBeginning) {
                 if(secondChance == 0) {
                     if(DEBUG_MODE) cout << "second chancce" << endl;
                     if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
@@ -221,7 +225,10 @@ public:
                         aln.criteriaCode = 0x10;
                         return false;
                     }
-
+                    if(cigarStr.length() < regionSize){
+                        aln.criteriaCode = 0x10;
+                        return false;
+                    }
                 } else {
                     aln.criteriaCode = 0x10;
                     return false;
