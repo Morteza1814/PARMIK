@@ -2,6 +2,7 @@
 #define POSTFILTER_H
 
 #include <iostream>
+#include <stack>
 #include "Alignment.h"
 
 using namespace std;
@@ -163,78 +164,32 @@ public:
 
     bool checkAndUpdateBasedOnAlingmentCriteria(Alignment &aln, bool bCheckminNumExactMatchKmer = false)
     {
-        uint16_t secondChance = 0;
-        string leftCigarSegment = "", rightCigarSegment = "";
-        bool firstOrLastEdit = false, atBeginning = true;
+        Alignment tmpAln = aln;
+        bool secondChance = false, foundValidAlignment = false;
+        stack<string> leftCigarSegments, rightCigarSegments;
+        bool firstOrLastEdit = false;
         Utilities<uint32_t> util;
         // covert cigar to str
         string cigarStr = convertCigarToStr(aln.cigar);
         cigarStr = trimClips(cigarStr);
         if(DEBUG_MODE) cout << "-----------------------------------------------------\n";
+        if(cigarStr.length() == 0 || cigarStr.length() < regionSize) {
+            if(DEBUG_MODE) cout << "cigar len was smaller than the R at the beginning\n";
+            aln.criteriaCode = 0x10;
+            return false;
+        }
         while (true){
             if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
-            if(cigarStr.length() == 0 || (cigarStr.length() < regionSize && atBeginning)) {
-                aln.criteriaCode = 0x10;
-                return false;
-            }
-            if(cigarStr.length() < regionSize && !atBeginning) {
-                if(secondChance == 0) {
+            if(cigarStr.length() < regionSize) {
+                if(!secondChance && ((firstOrLastEdit && rightCigarSegments.size() > 0) || (!firstOrLastEdit && leftCigarSegments.size() > 0))) {
                     if(DEBUG_MODE) cout << "second chancce" << endl;
-                    if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
                     //give it another chance
-                    secondChance++;
-                    if (firstOrLastEdit && rightCigarSegment.size() > 0) {
-                        if(DEBUG_MODE) cout << "second chance an righ and rightCigarSegment: " << rightCigarSegment << endl;
-                        cigarStr = cigarStr + rightCigarSegment;
-                        if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
-                        size_t insertionsInRightCigarSegment = 0, deletionsInRightCigarSegment = 0;
-                        for (size_t i = 0; i < rightCigarSegment.size(); i++) {
-                            if (rightCigarSegment[i] == 'I') {
-                                insertionsInRightCigarSegment++;
-                            } else if (rightCigarSegment[i] == 'D') {
-                                deletionsInRightCigarSegment++;
-                            }
-                        }
-                        aln.partialMatchSize = cigarStr.size();
-                        aln.queryRegionEndPos = aln.queryRegionEndPos + rightCigarSegment.size() - deletionsInRightCigarSegment;
-                        aln.readRegionEndPos = aln.readRegionEndPos + rightCigarSegment.size() - insertionsInRightCigarSegment;
-                        aln.cigar = convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
-                        util.parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
-                        aln.partialMatchSize = aln.matches + aln.substitutions + aln.inDels;
-                        aln.editDistance = aln.substitutions + aln.inDels;
-                    } else if (!firstOrLastEdit && leftCigarSegment.size() > 0) {
-                        if(DEBUG_MODE) cout << "second chance an left and leftCigarSegment: " << leftCigarSegment << endl;
-                        cigarStr = leftCigarSegment + cigarStr;
-                        if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
-                        size_t insertionsInLeftCigarSegment = 0, deletionsInLeftCigarSegment = 0;
-                        for (size_t i = 0; i < leftCigarSegment.size(); i++) {
-                            if (leftCigarSegment[i] == 'I') {
-                                insertionsInLeftCigarSegment++;
-                            } else if (leftCigarSegment[i] == 'D') {
-                                deletionsInLeftCigarSegment++;
-                            }
-                        }
-                        aln.partialMatchSize = cigarStr.size();
-                        aln.queryRegionStartPos = aln.queryRegionStartPos - leftCigarSegment.size() + deletionsInLeftCigarSegment;
-                        aln.readRegionStartPos = aln.readRegionStartPos - leftCigarSegment.size() + insertionsInLeftCigarSegment;
-                        aln.cigar = convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
-                        util.parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
-                        aln.partialMatchSize = aln.matches + aln.substitutions + aln.inDels;
-                        aln.editDistance = aln.substitutions + aln.inDels;
-                    } else {
-                        aln.criteriaCode = 0x10;
-                        return false;
-                    }
-                    if(cigarStr.length() < regionSize){
-                        aln.criteriaCode = 0x10;
-                        return false;
-                    }
+                    secondChance = true;
                 } else {
                     aln.criteriaCode = 0x10;
                     return false;
                 }
             }
-            atBeginning = false;
             if(checkIdentityPercentange(cigarStr)){
                 if(bCheckminNumExactMatchKmer){
                     if(!checkminNumExactMatchKmer(cigarStr)){
@@ -242,58 +197,133 @@ public:
                         return false;
                     }
                 }
-                return true;
+                if(((firstOrLastEdit && rightCigarSegments.size() > 0) || (!firstOrLastEdit && leftCigarSegments.size() > 0))){
+                    secondChance = true;
+                    foundValidAlignment = true;
+                    aln = tmpAln;
+                } else {
+                    aln = tmpAln;
+                    return true;
+                }
             } else {
-                int lastEditLocation = getLastEditLocation(cigarStr);
-                int firstEditLocation = getFirstEditLocation(cigarStr);
-                if(DEBUG_MODE) cout << "lastEditLocation: " << lastEditLocation << ", firstEditLocation: " << firstEditLocation << endl;
-                if(DEBUG_MODE) cout << "Before: queryRegionStartPos: " << aln.queryRegionStartPos << ", queryRegionEndPos: " << aln.queryRegionEndPos << ", readRegionStartPos: " << aln.readRegionStartPos << ", readRegionEndPos: " << aln.readRegionEndPos << endl;
-                if (lastEditLocation < 0 || firstEditLocation < 0) {
+                if(secondChance && foundValidAlignment) {
+                    return true;
+                } else if(secondChance && !foundValidAlignment) {
                     return false;
                 }
-                if (cigarStr.size() - (uint16_t)lastEditLocation - 1 < (uint16_t)firstEditLocation){
-                    firstOrLastEdit = false;
-                    rightCigarSegment = cigarStr.substr(lastEditLocation + 1);
-                    if(DEBUG_MODE) cout << "rightCigarSegment: " << rightCigarSegment << endl;
-                    cigarStr = cigarStr.substr(0, lastEditLocation);
-                    size_t insertionsBeforeEnd = 0, deletionsBeforeEnd = 0;
-                    for (size_t i = 0; i < (uint16_t)lastEditLocation; i++) {
-                        if (cigarStr[i] == 'I') {
-                            insertionsBeforeEnd++;
-                        } else if (cigarStr[i] == 'D') {
-                            deletionsBeforeEnd++;
-                        }
-                    }
-                    aln.partialMatchSize = cigarStr.size();
-                    aln.queryRegionEndPos = aln.queryRegionStartPos + lastEditLocation - 1 - deletionsBeforeEnd;
-                    aln.readRegionEndPos = aln.readRegionStartPos + lastEditLocation - 1 - insertionsBeforeEnd;
-                    aln.cigar = convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
-                    util.parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
-                    aln.partialMatchSize = aln.matches + aln.substitutions + aln.inDels;
-                    aln.editDistance = aln.substitutions + aln.inDels;
-                } else {
-                    firstOrLastEdit = true;
-                    leftCigarSegment = cigarStr.substr(0, firstEditLocation + 1);
-                    if(DEBUG_MODE) cout << "leftCigarSegment: " << leftCigarSegment << endl;
-                    size_t insertionsBeforeStart = 0, deletionsBeforeStart = 0;
-                    for (size_t i = 0; i <= (uint16_t) firstEditLocation; i++) {
-                        if (cigarStr[i] == 'I') {
-                            insertionsBeforeStart++;
-                        } else if (cigarStr[i] == 'D') {
-                            deletionsBeforeStart++;
-                        }
-                    }
-                    cigarStr = cigarStr.substr(firstEditLocation + 1);
-                    aln.partialMatchSize = cigarStr.size();
-                    aln.queryRegionStartPos = aln.queryRegionStartPos + firstEditLocation + 1 - deletionsBeforeStart;
-                    aln.readRegionStartPos = aln.readRegionStartPos + firstEditLocation + 1 - insertionsBeforeStart;
-                    aln.cigar = convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
-                    util.parseCigar(aln.cigar, aln.matches, aln.substitutions, aln.inDels, aln.editLocations);
-                    aln.partialMatchSize = aln.matches + aln.substitutions + aln.inDels;
-                    aln.editDistance = aln.substitutions + aln.inDels;
+                if(!secondChance && ((firstOrLastEdit && rightCigarSegments.size() > 0) || (!firstOrLastEdit && leftCigarSegments.size() > 0))) {
+                    secondChance = true;
+                } else if (secondChance && ((firstOrLastEdit && rightCigarSegments.size() == 0) || (!firstOrLastEdit && leftCigarSegments.size() == 0))){
+                    aln.criteriaCode = 0x10;
+                    return false;
                 }
             }
-            if(DEBUG_MODE) cout << "after: queryRegionStartPos: " << aln.queryRegionStartPos << ", queryRegionEndPos: " << aln.queryRegionEndPos << ", readRegionStartPos: " << aln.readRegionStartPos << ", readRegionEndPos: " << aln.readRegionEndPos << endl;
+            if(secondChance) {
+                if(DEBUG_MODE) cout << "second chancce" << endl;
+                if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
+                if (firstOrLastEdit && rightCigarSegments.size() > 0) {
+                    string rightCigarSegment = rightCigarSegments.top();
+                    rightCigarSegments.pop();
+                    if(DEBUG_MODE) cout << "second chance an righ and rightCigarSegment: " << rightCigarSegment << endl;
+                    cigarStr = cigarStr + rightCigarSegment;
+                    if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
+                    size_t insertionsInRightCigarSegment = 0, deletionsInRightCigarSegment = 0;
+                    for (size_t i = 0; i < rightCigarSegment.size(); i++) {
+                        if (rightCigarSegment[i] == 'I') {
+                            insertionsInRightCigarSegment++;
+                        } else if (rightCigarSegment[i] == 'D') {
+                            deletionsInRightCigarSegment++;
+                        }
+                    }
+                    tmpAln.partialMatchSize = cigarStr.size();
+                    tmpAln.queryRegionEndPos = tmpAln.queryRegionEndPos + rightCigarSegment.size() - deletionsInRightCigarSegment;
+                    tmpAln.readRegionEndPos = tmpAln.readRegionEndPos + rightCigarSegment.size() - insertionsInRightCigarSegment;
+                    tmpAln.cigar = convertStrToCigar(cigarStr, tmpAln.queryRegionStartPos, tmpAln.queryRegionEndPos);
+                    util.parseCigar(tmpAln.cigar, tmpAln.matches, tmpAln.substitutions, tmpAln.inDels, tmpAln.editLocations);
+                    tmpAln.partialMatchSize = tmpAln.matches + tmpAln.substitutions + tmpAln.inDels;
+                    tmpAln.editDistance = tmpAln.substitutions + tmpAln.inDels;
+                } else if (!firstOrLastEdit && leftCigarSegments.size() > 0) {
+                    string leftCigarSegment = leftCigarSegments.top();
+                    leftCigarSegments.pop();
+                    if(DEBUG_MODE) cout << "second chance an left and leftCigarSegment: " << leftCigarSegment << endl;
+                    cigarStr = leftCigarSegment + cigarStr;
+                    if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
+                    size_t insertionsInLeftCigarSegment = 0, deletionsInLeftCigarSegment = 0;
+                    for (size_t i = 0; i < leftCigarSegment.size(); i++) {
+                        if (leftCigarSegment[i] == 'I') {
+                            insertionsInLeftCigarSegment++;
+                        } else if (leftCigarSegment[i] == 'D') {
+                            deletionsInLeftCigarSegment++;
+                        }
+                    }
+                    tmpAln.partialMatchSize = cigarStr.size();
+                    tmpAln.queryRegionStartPos = tmpAln.queryRegionStartPos - leftCigarSegment.size() + deletionsInLeftCigarSegment;
+                    tmpAln.readRegionStartPos = tmpAln.readRegionStartPos - leftCigarSegment.size() + insertionsInLeftCigarSegment;
+                    tmpAln.cigar = convertStrToCigar(cigarStr, tmpAln.queryRegionStartPos, tmpAln.queryRegionEndPos);
+                    util.parseCigar(tmpAln.cigar, tmpAln.matches, tmpAln.substitutions, tmpAln.inDels, tmpAln.editLocations);
+                    tmpAln.partialMatchSize = tmpAln.matches + tmpAln.substitutions + tmpAln.inDels;
+                    tmpAln.editDistance = tmpAln.substitutions + tmpAln.inDels;
+                } 
+                if(checkIdentityPercentange(cigarStr)) {
+                    continue;
+                }
+            }
+            int lastEditLocation = getLastEditLocation(cigarStr);
+            int firstEditLocation = getFirstEditLocation(cigarStr);
+            if(DEBUG_MODE) cout << "lastEditLocation: " << lastEditLocation << ", firstEditLocation: " << firstEditLocation << endl;
+            if(DEBUG_MODE) cout << "Before: queryRegionStartPos: " << tmpAln.queryRegionStartPos << ", queryRegionEndPos: " << tmpAln.queryRegionEndPos << ", readRegionStartPos: " << tmpAln.readRegionStartPos << ", readRegionEndPos: " << tmpAln.readRegionEndPos << endl;
+            if (lastEditLocation < 0 || firstEditLocation < 0) {
+                if(cigarStr.size() > regionSize){
+                    return true;
+                }
+                return false;
+            }
+            if (cigarStr.size() - (uint16_t)lastEditLocation - 1 < (uint16_t)firstEditLocation){
+                firstOrLastEdit = false;
+                string rightCigarSegment = cigarStr.substr(lastEditLocation + 1);
+                if (!secondChance)
+                    rightCigarSegments.push(rightCigarSegment);
+                if(DEBUG_MODE) cout << "rightCigarSegment: " << rightCigarSegment << endl;
+                cigarStr = cigarStr.substr(0, lastEditLocation);
+                size_t insertionsBeforeEnd = 0, deletionsBeforeEnd = 0;
+                for (size_t i = 0; i < (uint16_t)lastEditLocation; i++) {
+                    if (cigarStr[i] == 'I') {
+                        insertionsBeforeEnd++;
+                    } else if (cigarStr[i] == 'D') {
+                        deletionsBeforeEnd++;
+                    }
+                }
+                tmpAln.partialMatchSize = cigarStr.size();
+                tmpAln.queryRegionEndPos = tmpAln.queryRegionStartPos + lastEditLocation - 1 - deletionsBeforeEnd;
+                tmpAln.readRegionEndPos = tmpAln.readRegionStartPos + lastEditLocation - 1 - insertionsBeforeEnd;
+                tmpAln.cigar = convertStrToCigar(cigarStr, tmpAln.queryRegionStartPos, tmpAln.queryRegionEndPos);
+                util.parseCigar(tmpAln.cigar, tmpAln.matches, tmpAln.substitutions, tmpAln.inDels, tmpAln.editLocations);
+                tmpAln.partialMatchSize = tmpAln.matches + tmpAln.substitutions + tmpAln.inDels;
+                tmpAln.editDistance = tmpAln.substitutions + tmpAln.inDels;
+            } else {
+                firstOrLastEdit = true;
+                string leftCigarSegment = cigarStr.substr(0, firstEditLocation + 1);
+                if (!secondChance)
+                    leftCigarSegments.push(leftCigarSegment);
+                if(DEBUG_MODE) cout << "leftCigarSegment: " << leftCigarSegment << endl;
+                size_t insertionsBeforeStart = 0, deletionsBeforeStart = 0;
+                for (size_t i = 0; i <= (uint16_t) firstEditLocation; i++) {
+                    if (cigarStr[i] == 'I') {
+                        insertionsBeforeStart++;
+                    } else if (cigarStr[i] == 'D') {
+                        deletionsBeforeStart++;
+                    }
+                }
+                cigarStr = cigarStr.substr(firstEditLocation + 1);
+                tmpAln.partialMatchSize = cigarStr.size();
+                tmpAln.queryRegionStartPos = tmpAln.queryRegionStartPos + firstEditLocation + 1 - deletionsBeforeStart;
+                tmpAln.readRegionStartPos = tmpAln.readRegionStartPos + firstEditLocation + 1 - insertionsBeforeStart;
+                tmpAln.cigar = convertStrToCigar(cigarStr, tmpAln.queryRegionStartPos, tmpAln.queryRegionEndPos);
+                util.parseCigar(tmpAln.cigar, tmpAln.matches, tmpAln.substitutions, tmpAln.inDels, tmpAln.editLocations);
+                tmpAln.partialMatchSize = tmpAln.matches + tmpAln.substitutions + tmpAln.inDels;
+                tmpAln.editDistance = tmpAln.substitutions + tmpAln.inDels;
+            }
+            if(DEBUG_MODE) cout << "after: queryRegionStartPos: " << tmpAln.queryRegionStartPos << ", queryRegionEndPos: " << tmpAln.queryRegionEndPos << ", readRegionStartPos: " << tmpAln.readRegionStartPos << ", readRegionEndPos: " << tmpAln.readRegionEndPos << endl;
         }
         return false;
     }
