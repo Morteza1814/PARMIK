@@ -529,11 +529,11 @@ public:
         cmp << left << setw(80) << "(avg, median) BLAST's alignment length where alignment length < R: " << avgblastFP_lowAlnLen_alnLen_allQ.first << ", " << avgblastFP_lowAlnLen_alnLen_allQ.second << endl;
         cmp << left << setw(80) << "(avg, median) BLAST's edit distance where alignment length < R: " << avgblastFP_lowAlnLen_ed_allQ.first << ", " << avgblastFP_lowAlnLen_ed_allQ.second << endl;
 
-        cmp << left << setw(60) << "# Of BLAST (FP) that # of kmers is lower than [" << minNumExactMatchKmer << "] : " << setw(20) << blastFP_lowerExactMatchKmers_allQ << endl;
+        cmp << left << setw(80) << "# Of BLAST (FP) that # of kmers is lower than regionSize" << blastFP_lowerExactMatchKmers_allQ << endl;
         pair<uint32_t, uint32_t> avgblastFP_lowerExactMatchKmers_alnLen_allQ = util.calculateStatistics2(blastFP_lowerExactMatchKmers_alnLen_allQ);
         pair<uint32_t, uint32_t> avgblastFP_lowerExactMatchKmers_ed_allQ = util.calculateStatistics2(blastFP_lowerExactMatchKmers_ed_allQ);
-        cmp << left << setw(60) << "(avg, median) BLAST's alignment length where # of kmers is lower than [" << minNumExactMatchKmer << "] : " << setw(20) << avgblastFP_lowerExactMatchKmers_alnLen_allQ.first << ", " << avgblastFP_lowerExactMatchKmers_alnLen_allQ.second << endl;
-        cmp << left << setw(60) << "(avg, median) BLAST's edit distance where # of kmers is lower than [" << minNumExactMatchKmer << "] : " << setw(20) << avgblastFP_lowerExactMatchKmers_ed_allQ.first << ", " << avgblastFP_lowerExactMatchKmers_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's alignment length where # of kmers < MinExactNumberOfKmers" <<  avgblastFP_lowerExactMatchKmers_alnLen_allQ.first << ", " << avgblastFP_lowerExactMatchKmers_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's edit distance where # of kmers < MinExactNumberOfKmers" << avgblastFP_lowerExactMatchKmers_ed_allQ.first << ", " << avgblastFP_lowerExactMatchKmers_ed_allQ.second << endl;
         
         // cmp << left << setw(80) << "# Of BLAST (FP) that edit pos breaks criteria: " << blastFP_editPos_allQ << endl;
         // pair<uint32_t, uint32_t> avgblastFP_editPos_alnLen_allQ = util.calculateStatistics2(blastFP_editPos_alnLen_allQ);
