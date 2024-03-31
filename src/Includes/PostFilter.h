@@ -133,6 +133,8 @@ public:
     int getLastEditLocation (string cigarStr){
         for (size_t i = cigarStr.length()-1; i >= 0; i--) {
             if (cigarStr[i] == 'X' || cigarStr[i] == 'I' || cigarStr[i] == 'D') {
+                if(i > 0 && cigarStr[i-1] != '=')
+                    continue;
                 return i;
             }
         }
@@ -142,6 +144,8 @@ public:
     int getFirstEditLocation (string cigarStr){
         for (size_t i = 0; i < cigarStr.length(); i++) {
             if (cigarStr[i] == 'X' || cigarStr[i] == 'I' || cigarStr[i] == 'D') {
+                if((i < cigarStr.length() - 1) && cigarStr[i+1] != '=')
+                    continue;
                 return i;
             }
         }
@@ -167,7 +171,7 @@ public:
         Alignment tmpAln = aln;
         bool secondChance = false, foundValidAlignment = false;
         stack<string> leftCigarSegments, rightCigarSegments;
-        bool firstOrLastEdit = false;
+        bool firstOrLastEdit = false, secondChanceFirstOrLastEdit = false;
         Utilities<uint32_t> util;
         // covert cigar to str
         string cigarStr = convertCigarToStr(aln.cigar);
@@ -185,6 +189,7 @@ public:
                     if(DEBUG_MODE) cout << "second chancce" << endl;
                     //give it another chance
                     secondChance = true;
+                    secondChanceFirstOrLastEdit = firstOrLastEdit;
                 } else {
                     aln.criteriaCode = 0x10;
                     return false;
@@ -199,6 +204,7 @@ public:
                 }
                 if(((firstOrLastEdit && rightCigarSegments.size() > 0) || (!firstOrLastEdit && leftCigarSegments.size() > 0))){
                     secondChance = true;
+                    secondChanceFirstOrLastEdit = firstOrLastEdit;
                     foundValidAlignment = true;
                     aln = tmpAln;
                 } else {
@@ -208,23 +214,27 @@ public:
             } else {
                 if(secondChance && foundValidAlignment) {
                     return true;
-                } else if(secondChance && !foundValidAlignment) {
-                    return false;
-                }
+                } 
+                // else if(secondChance && !foundValidAlignment) {
+                //     return false;
+                // }
                 if(!secondChance && ((firstOrLastEdit && rightCigarSegments.size() > 0) || (!firstOrLastEdit && leftCigarSegments.size() > 0))) {
                     secondChance = true;
-                } else if (secondChance && ((firstOrLastEdit && rightCigarSegments.size() == 0) || (!firstOrLastEdit && leftCigarSegments.size() == 0))){
-                    aln.criteriaCode = 0x10;
-                    return false;
+                    secondChanceFirstOrLastEdit = firstOrLastEdit;
+                } else if (secondChance && ((secondChanceFirstOrLastEdit && rightCigarSegments.size() == 0) || (!secondChanceFirstOrLastEdit && leftCigarSegments.size() == 0))){
+                    if(cigarStr.length() < regionSize) {
+                        aln.criteriaCode = 0x10;
+                        return false;
+                    } //else give it the last chances
                 }
             }
             if(secondChance) {
                 if(DEBUG_MODE) cout << "second chancce" << endl;
                 if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
-                if (firstOrLastEdit && rightCigarSegments.size() > 0) {
+                if (secondChanceFirstOrLastEdit && rightCigarSegments.size() > 0) {
                     string rightCigarSegment = rightCigarSegments.top();
                     rightCigarSegments.pop();
-                    if(DEBUG_MODE) cout << "second chance an righ and rightCigarSegment: " << rightCigarSegment << endl;
+                    if(DEBUG_MODE) cout << "second chance an right and rightCigarSegment: " << rightCigarSegment << endl;
                     cigarStr = cigarStr + rightCigarSegment;
                     if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
                     size_t insertionsInRightCigarSegment = 0, deletionsInRightCigarSegment = 0;
@@ -242,7 +252,7 @@ public:
                     util.parseCigar(tmpAln.cigar, tmpAln.matches, tmpAln.substitutions, tmpAln.inDels, tmpAln.editLocations);
                     tmpAln.partialMatchSize = tmpAln.matches + tmpAln.substitutions + tmpAln.inDels;
                     tmpAln.editDistance = tmpAln.substitutions + tmpAln.inDels;
-                } else if (!firstOrLastEdit && leftCigarSegments.size() > 0) {
+                } else if (!secondChanceFirstOrLastEdit && leftCigarSegments.size() > 0) {
                     string leftCigarSegment = leftCigarSegments.top();
                     leftCigarSegments.pop();
                     if(DEBUG_MODE) cout << "second chance an left and leftCigarSegment: " << leftCigarSegment << endl;
@@ -278,11 +288,10 @@ public:
                 }
                 return false;
             }
-            if (cigarStr.size() - (uint16_t)lastEditLocation - 1 < (uint16_t)firstEditLocation){
+            if ((!secondChance && (cigarStr.size() - (uint16_t)lastEditLocation - 1 < (uint16_t)firstEditLocation)) || (secondChance && !secondChanceFirstOrLastEdit)){
                 firstOrLastEdit = false;
-                string rightCigarSegment = cigarStr.substr(lastEditLocation + 1);
-                if (!secondChance)
-                    rightCigarSegments.push(rightCigarSegment);
+                string rightCigarSegment = cigarStr.substr(lastEditLocation);
+                rightCigarSegments.push(rightCigarSegment);
                 if(DEBUG_MODE) cout << "rightCigarSegment: " << rightCigarSegment << endl;
                 cigarStr = cigarStr.substr(0, lastEditLocation);
                 size_t insertionsBeforeEnd = 0, deletionsBeforeEnd = 0;
@@ -300,11 +309,10 @@ public:
                 util.parseCigar(tmpAln.cigar, tmpAln.matches, tmpAln.substitutions, tmpAln.inDels, tmpAln.editLocations);
                 tmpAln.partialMatchSize = tmpAln.matches + tmpAln.substitutions + tmpAln.inDels;
                 tmpAln.editDistance = tmpAln.substitutions + tmpAln.inDels;
-            } else {
+            } else if ((!secondChance && (cigarStr.size() - (uint16_t)lastEditLocation - 1 >= (uint16_t)firstEditLocation)) || (secondChance && secondChanceFirstOrLastEdit)){
                 firstOrLastEdit = true;
                 string leftCigarSegment = cigarStr.substr(0, firstEditLocation + 1);
-                if (!secondChance)
-                    leftCigarSegments.push(leftCigarSegment);
+                leftCigarSegments.push(leftCigarSegment);
                 if(DEBUG_MODE) cout << "leftCigarSegment: " << leftCigarSegment << endl;
                 size_t insertionsBeforeStart = 0, deletionsBeforeStart = 0;
                 for (size_t i = 0; i <= (uint16_t) firstEditLocation; i++) {
