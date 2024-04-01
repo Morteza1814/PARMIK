@@ -80,7 +80,7 @@ public:
         totalBlastFP = 0,
         blastTP_noParmikMatches_allQ = 0, blastTP_blastOutperfomed_allQ = 0, blastTP_parmikOutperfomed_allQ = 0, blastTP_blastEqualParmik_allQ = 0,
         parmikTP_noBlastMatches_allQ = 0,
-        blastFP_editsExceed_allQ = 0, blastFP_lowAlnLen_allQ = 0, blastFP_editPos_allQ = 0, blastFP_lowerExactMatchKmers_allQ = 0,
+        blastFP_editsExceed_allQ = 0, blastFP_lowAlnLen_allQ = 0, blastFP_editPos_allQ = 0, blastFP_lowerExactMatchKmers_allQ = 0, blastFP_lowPercentageIdentity_allQ = 0,
         blastBest_blastOutperfomed_allQ = 0, blastBest_parmikOutperfomed_allQ = 0, blastBest_blastEqualParmik_allQ = 0;
         //all query level parameters sets (if total is needed, just add all the elements in the set)
         set<uint32_t> pmReadPerQuerySet, blastReadPerQuerySet;
@@ -95,8 +95,8 @@ public:
         set<uint32_t> blastBest_blastOutperfomed_ed_allQ, blastBest_parmikOutperfomed_ed_allQ, blastBest_blastEqualParmik_ed_allQ; 
         set<uint32_t> parmikBest_blastOutperfomed_alnLen_allQ, parmikBest_parmikOutperfomed_alnLen_allQ, parmikBest_blastEqualParmik_alnLen_allQ; 
         set<uint32_t> parmikBest_blastOutperfomed_ed_allQ, parmikBest_parmikOutperfomed_ed_allQ, parmikBest_blastEqualParmik_ed_allQ; 
-        set<uint32_t> blastFP_editsExceed_alnLen_allQ, blastFP_lowAlnLen_alnLen_allQ, blastFP_editPos_alnLen_allQ, blastFP_lowerExactMatchKmers_alnLen_allQ;
-        set<uint32_t> blastFP_editsExceed_ed_allQ, blastFP_lowAlnLen_ed_allQ, blastFP_editPos_ed_allQ, blastFP_lowerExactMatchKmers_ed_allQ;
+        set<uint32_t> blastFP_editsExceed_alnLen_allQ, blastFP_lowAlnLen_alnLen_allQ, blastFP_editPos_alnLen_allQ, blastFP_lowerExactMatchKmers_alnLen_allQ, blastFP_lowPercentageIdentity_alnLen_allQ;
+        set<uint32_t> blastFP_editsExceed_ed_allQ, blastFP_lowAlnLen_ed_allQ, blastFP_editPos_ed_allQ, blastFP_lowerExactMatchKmers_ed_allQ, blastFP_lowPercentageIdentity_ed_allQ;
         set<uint32_t> blastFN_parmik_alnLen_allQ, blastFN_parmik_ed_allQ;// PARMIK alignment characteristics for all queries when BLAST did not find a match
         set<uint32_t> blastFN_noCriteria_parmik_alnLen_allQ, blastFN_noCriteria_parmik_ed_allQ;
         set<uint32_t> pmFN_blast_alnLen_allQ, pmFN_blast_ed_allQ;// BLAST alignment characteristics for all queries when PARMIK did not find a match
@@ -116,7 +116,7 @@ public:
             uint32_t blastTP_noParmikMatches = 0, blastTP_blastOutperfomed = 0, blastTP_parmikOutperfomed = 0, blastTP_blastEqualParmik = 0;
             uint32_t parmikTP_noBlastMatches = 0;
             uint32_t blastBest_blastOutperfomed = 0, blastBest_parmikOutperfomed = 0, blastBest_blastEqualParmik = 0;
-            uint32_t blastFP_editsExceed = 0, blastFP_lowAlnLen = 0, blastFP_editPos = 0, blastFP_lowerExactMatchKmers = 0;
+            uint32_t blastFP_editsExceed = 0, blastFP_lowAlnLen = 0, blastFP_editPos = 0, blastFP_lowerExactMatchKmers = 0, blastFP_lowPercentageIdentity;
             cmp << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
             cmp << "Q : " << query << ", queryInd: " << queryInd << endl;
             Alignment bestAlnBlast;
@@ -190,6 +190,10 @@ public:
                             blastFP_lowerExactMatchKmers++;
                             blastFP_lowerExactMatchKmers_alnLen_allQ.insert(aln.partialMatchSize);
                             blastFP_lowerExactMatchKmers_ed_allQ.insert(aln.substitutions + aln.inDels);
+                        } else if(aln.criteriaCode == 0x80) {
+                            blastFP_lowPercentageIdentity++;
+                            blastFP_lowPercentageIdentity_alnLen_allQ.insert(aln.partialMatchSize);
+                            blastFP_lowPercentageIdentity_ed_allQ.insert(aln.substitutions + aln.inDels);
                         }
                     }
                     // if (aln.criteriaCode == 0x08)
@@ -397,6 +401,7 @@ public:
             blastFP_lowAlnLen_allQ += blastFP_lowAlnLen; 
             blastFP_editPos_allQ += blastFP_editPos;
             blastFP_lowerExactMatchKmers_allQ += blastFP_lowerExactMatchKmers;
+            blastFP_lowPercentageIdentity_allQ += blastFP_lowPercentageIdentity;
             cmp << "blastFP_editsExceed: " << blastFP_editsExceed << ", blastFP_lowAlnLen: " << blastFP_lowAlnLen << ", blastFP_editPos: " << blastFP_editPos << ", blastFP_lowerExactMatchKmers: " << blastFP_lowerExactMatchKmers << endl;
             blastBest_parmikOutperfomed_allQ += blastBest_parmikOutperfomed;
             blastBest_blastOutperfomed_allQ += blastBest_blastOutperfomed;
@@ -534,6 +539,12 @@ public:
         pair<uint32_t, uint32_t> avgblastFP_lowerExactMatchKmers_ed_allQ = util.calculateStatistics2(blastFP_lowerExactMatchKmers_ed_allQ);
         cmp << left << setw(80) << "(avg, median) BLAST's alignment length where # of kmers < MinExactNumberOfKmers" <<  avgblastFP_lowerExactMatchKmers_alnLen_allQ.first << ", " << avgblastFP_lowerExactMatchKmers_alnLen_allQ.second << endl;
         cmp << left << setw(80) << "(avg, median) BLAST's edit distance where # of kmers < MinExactNumberOfKmers" << avgblastFP_lowerExactMatchKmers_ed_allQ.first << ", " << avgblastFP_lowerExactMatchKmers_ed_allQ.second << endl;
+        
+        cmp << left << setw(80) << "# Of BLAST (FP) that percentage identity is lower than PI" << blastFP_lowPercentageIdentity_allQ << endl;
+        pair<uint32_t, uint32_t> avgblastFP_lowPercentageIdentity_alnLen_allQ = util.calculateStatistics2(blastFP_lowPercentageIdentity_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgblastFP_lowPercentageIdentity_ed_allQ = util.calculateStatistics2(blastFP_lowPercentageIdentity_ed_allQ);
+        cmp << left << setw(80) << "(avg, median) BLAST's alignment length where percentage identity is lower than PI" <<  avgblastFP_lowPercentageIdentity_alnLen_allQ.first << ", " << avgblastFP_lowPercentageIdentity_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) BLAST's edit distance where percentage identity is lower than PI" << avgblastFP_lowPercentageIdentity_ed_allQ.first << ", " << avgblastFP_lowPercentageIdentity_ed_allQ.second << endl;
         
         // cmp << left << setw(80) << "# Of BLAST (FP) that edit pos breaks criteria: " << blastFP_editPos_allQ << endl;
         // pair<uint32_t, uint32_t> avgblastFP_editPos_alnLen_allQ = util.calculateStatistics2(blastFP_editPos_alnLen_allQ);

@@ -185,8 +185,11 @@ public:
         while (true){
             if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
             if(cigarStr.length() < regionSize) {
+                if(foundValidAlignment) {
+                    return true;
+                }
                 if(!secondChance && ((firstOrLastEdit && rightCigarSegments.size() > 0) || (!firstOrLastEdit && leftCigarSegments.size() > 0))) {
-                    if(DEBUG_MODE) cout << "second chancce" << endl;
+                    if(DEBUG_MODE) cout << "second chance" << endl;
                     //give it another chance
                     secondChance = true;
                     secondChanceFirstOrLastEdit = firstOrLastEdit;
@@ -202,28 +205,32 @@ public:
                         return false;
                     }
                 }
-                if(((firstOrLastEdit && rightCigarSegments.size() > 0) || (!firstOrLastEdit && leftCigarSegments.size() > 0))){
+                if(!secondChance && ((firstOrLastEdit && rightCigarSegments.size() > 0) || (!firstOrLastEdit && leftCigarSegments.size() > 0))){
                     secondChance = true;
                     secondChanceFirstOrLastEdit = firstOrLastEdit;
                     foundValidAlignment = true;
                     aln = tmpAln;
+                } else if(secondChance && ((secondChanceFirstOrLastEdit && rightCigarSegments.size() > 0) || (!secondChanceFirstOrLastEdit && leftCigarSegments.size() > 0))){
+                    if (tmpAln.partialMatchSize > aln.partialMatchSize){
+                        aln = tmpAln;
+                        foundValidAlignment = true;
+                    }
                 } else {
                     aln = tmpAln;
                     return true;
                 }
             } else {
-                if(secondChance && foundValidAlignment) {
+                if(foundValidAlignment) {
                     return true;
                 } 
-                // else if(secondChance && !foundValidAlignment) {
-                //     return false;
-                // }
-                if(!secondChance && ((firstOrLastEdit && rightCigarSegments.size() > 0) || (!firstOrLastEdit && leftCigarSegments.size() > 0))) {
-                    secondChance = true;
-                    secondChanceFirstOrLastEdit = firstOrLastEdit;
-                } else if (secondChance && ((secondChanceFirstOrLastEdit && rightCigarSegments.size() == 0) || (!secondChanceFirstOrLastEdit && leftCigarSegments.size() == 0))){
+                // if(!secondChance && ((firstOrLastEdit && rightCigarSegments.size() > 0) || (!firstOrLastEdit && leftCigarSegments.size() > 0))) {
+                //     cout << "44444\n";
+                //     secondChance = true;
+                //     secondChanceFirstOrLastEdit = firstOrLastEdit;
+                // } 
+                 if (secondChance && ((secondChanceFirstOrLastEdit && rightCigarSegments.size() == 0) || (!secondChanceFirstOrLastEdit && leftCigarSegments.size() == 0))){
                     if(cigarStr.length() < regionSize) {
-                        aln.criteriaCode = 0x10;
+                        aln.criteriaCode = 0x80;
                         return false;
                     } //else give it the last chances
                 }
@@ -288,9 +295,10 @@ public:
                 }
                 return false;
             }
-            if ((!secondChance && (cigarStr.size() - (uint16_t)lastEditLocation - 1 < (uint16_t)firstEditLocation)) || (secondChance && !secondChanceFirstOrLastEdit)){
+            string rightCigarSegment = cigarStr.substr(lastEditLocation);
+            string leftCigarSegment = cigarStr.substr(0, firstEditLocation + 1);
+            if ((!secondChance && (countMatches(rightCigarSegment) < countMatches(leftCigarSegment))) || (secondChance && !secondChanceFirstOrLastEdit)){
                 firstOrLastEdit = false;
-                string rightCigarSegment = cigarStr.substr(lastEditLocation);
                 rightCigarSegments.push(rightCigarSegment);
                 if(DEBUG_MODE) cout << "rightCigarSegment: " << rightCigarSegment << endl;
                 cigarStr = cigarStr.substr(0, lastEditLocation);
@@ -309,9 +317,8 @@ public:
                 util.parseCigar(tmpAln.cigar, tmpAln.matches, tmpAln.substitutions, tmpAln.inDels, tmpAln.editLocations);
                 tmpAln.partialMatchSize = tmpAln.matches + tmpAln.substitutions + tmpAln.inDels;
                 tmpAln.editDistance = tmpAln.substitutions + tmpAln.inDels;
-            } else if ((!secondChance && (cigarStr.size() - (uint16_t)lastEditLocation - 1 >= (uint16_t)firstEditLocation)) || (secondChance && secondChanceFirstOrLastEdit)){
+            } else if ((!secondChance && (countMatches(rightCigarSegment) >= countMatches(leftCigarSegment))) || (secondChance && secondChanceFirstOrLastEdit)){
                 firstOrLastEdit = true;
-                string leftCigarSegment = cigarStr.substr(0, firstEditLocation + 1);
                 leftCigarSegments.push(leftCigarSegment);
                 if(DEBUG_MODE) cout << "leftCigarSegment: " << leftCigarSegment << endl;
                 size_t insertionsBeforeStart = 0, deletionsBeforeStart = 0;
@@ -334,6 +341,14 @@ public:
             if(DEBUG_MODE) cout << "after: queryRegionStartPos: " << tmpAln.queryRegionStartPos << ", queryRegionEndPos: " << tmpAln.queryRegionEndPos << ", readRegionStartPos: " << tmpAln.readRegionStartPos << ", readRegionEndPos: " << tmpAln.readRegionEndPos << endl;
         }
         return false;
+    }
+
+    uint16_t countMatches(string cigarStr){
+        uint16_t matches = 0;
+        for(char c : cigarStr){
+            if(c == '=') matches++; 
+        }
+        return matches;
     }
 
 };
