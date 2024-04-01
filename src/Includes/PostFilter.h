@@ -205,6 +205,7 @@ public:
                         return false;
                     }
                 }
+                if(DEBUG_MODE) cout << "rightCigarSegments.size() : " << rightCigarSegments.size() << ", leftCigarSegments.size(): " << leftCigarSegments.size() << ", second chance: " << ((secondChance==true)?"T":"F") << ", firstOrLastEdit: " << ((firstOrLastEdit==true)?"T":"F") << endl;
                 if(!secondChance && ((firstOrLastEdit && rightCigarSegments.size() > 0) || (!firstOrLastEdit && leftCigarSegments.size() > 0))){
                     secondChance = true;
                     secondChanceFirstOrLastEdit = firstOrLastEdit;
