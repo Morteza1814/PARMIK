@@ -5,6 +5,8 @@
 #include <stack>
 #include "Alignment.h"
 
+#define CHECK_REGION_SIZE 0
+
 using namespace std;
 
 class PostFilter {
@@ -177,14 +179,14 @@ public:
         string cigarStr = convertCigarToStr(aln.cigar);
         cigarStr = trimClips(cigarStr);
         if(DEBUG_MODE) cout << "-----------------------------------------------------\n";
-        if(cigarStr.length() == 0 || cigarStr.length() < regionSize) {
-            if(DEBUG_MODE) cout << "cigar len was smaller than the R at the beginning\n";
+        if(cigarStr.length() < k_ || (cigarStr.length() < regionSize && CHECK_REGION_SIZE)) {
+            if(DEBUG_MODE) cout << "cigar len was smaller than the R or K at the beginning\n";
             aln.criteriaCode = 0x10;
             return false;
         }
         while (true){
             if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
-            if(cigarStr.length() < regionSize) {
+            if((cigarStr.length() < regionSize && CHECK_REGION_SIZE) || cigarStr.length() < k_) {
                 if(foundValidAlignment) {
                     return true;
                 }
@@ -224,13 +226,8 @@ public:
                 if(foundValidAlignment) {
                     return true;
                 } 
-                // if(!secondChance && ((firstOrLastEdit && rightCigarSegments.size() > 0) || (!firstOrLastEdit && leftCigarSegments.size() > 0))) {
-                //     cout << "44444\n";
-                //     secondChance = true;
-                //     secondChanceFirstOrLastEdit = firstOrLastEdit;
-                // } 
-                 if (secondChance && ((secondChanceFirstOrLastEdit && rightCigarSegments.size() == 0) || (!secondChanceFirstOrLastEdit && leftCigarSegments.size() == 0))){
-                    if(cigarStr.length() < regionSize) {
+                if (secondChance && ((secondChanceFirstOrLastEdit && rightCigarSegments.size() == 0) || (!secondChanceFirstOrLastEdit && leftCigarSegments.size() == 0))){
+                    if((cigarStr.length() < regionSize && CHECK_REGION_SIZE) || cigarStr.length() < k_) {
                         aln.criteriaCode = 0x80;
                         return false;
                     } //else give it the last chances
@@ -291,7 +288,7 @@ public:
             if(DEBUG_MODE) cout << "lastEditLocation: " << lastEditLocation << ", firstEditLocation: " << firstEditLocation << endl;
             if(DEBUG_MODE) cout << "Before: queryRegionStartPos: " << tmpAln.queryRegionStartPos << ", queryRegionEndPos: " << tmpAln.queryRegionEndPos << ", readRegionStartPos: " << tmpAln.readRegionStartPos << ", readRegionEndPos: " << tmpAln.readRegionEndPos << endl;
             if (lastEditLocation < 0 || firstEditLocation < 0) {
-                if(cigarStr.size() > regionSize){
+                if((cigarStr.size() > regionSize && CHECK_REGION_SIZE) || cigarStr.size() > k_) {
                     return true;
                 }
                 return false;

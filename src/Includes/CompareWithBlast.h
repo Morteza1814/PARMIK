@@ -61,6 +61,7 @@ public:
 
     void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, IndexContainer<uint32_t, Alignment>& pmAlignments, vector<pair<uint32_t, uint32_t>>& alnPmBLASTHisto, const uint32_t queryCount, const uint16_t minNumExactMatchKmer, const string alnPerQueryFileAddress, const string parmikFnReadsFileAddress, const string bestAlnCmpFileAddress)
     {
+        uint64_t blastChangedAlignmentsAfterPostFilteringGreater = 0, blastChangedAlignmentsAfterPostFilteringLower = 0, blastUnChangedAlignmentsAfterPostFiltering = 0;
         ofstream cmp(comparisonResultsFileAddress);
         cout << "cmp file address: " << comparisonResultsFileAddress << endl;
         if(!cmp.is_open())
@@ -179,7 +180,14 @@ public:
                     string cigarStr = getCigarStr(aln.queryRegionStartPos, aln.alignedQuery, aln.alignedRead, cfg.contigSize);
                     aln.cigar = pf.convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
                     //TODO: check for the new implementation
+                    uint16_t aln_sz = aln.partialMatchSize;
                     bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln, true);
+                    if(aln_sz == aln.partialMatchSize)
+                        blastUnChangedAlignmentsAfterPostFiltering++;
+                    else if(aln_sz < aln.partialMatchSize)
+                        blastChangedAlignmentsAfterPostFilteringGreater++;
+                    else if(aln_sz > aln.partialMatchSize)
+                        blastChangedAlignmentsAfterPostFilteringLower++;
                     if(!criteriaCheck){
                         isFP = true;
                         if(aln.criteriaCode == 0x10) {
@@ -567,6 +575,9 @@ public:
         pair<uint32_t, uint32_t> blastReadPerQuery_allQ  = util.calculateStatistics2(blastReadPerQuerySet);
         cmp << left << setw(80) << "(avg, median) PARMIKS's Matches per Query: " << pmReadPerQuery_allQ.first << ", " << pmReadPerQuery_allQ.second << endl;
         cmp << left << setw(80) << "(avg, median) BLAST's Matches per Query: " << blastReadPerQuery_allQ.first << ", " << blastReadPerQuery_allQ.second << endl;
+        cmp << "------------------------------------------------------------------------------------------" << endl;
+
+        cmp << "blastChangedAlignmentsAfterPostFilteringGreater: " << blastChangedAlignmentsAfterPostFilteringGreater << ", blastChangedAlignmentsAfterPostFilteringLower: " << blastChangedAlignmentsAfterPostFilteringLower <<  ", blastUnChangedAlignmentsAfterPostFiltering: " << blastUnChangedAlignmentsAfterPostFiltering << endl;
 
         cmp.close();
         alnPerQ.close();

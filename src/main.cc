@@ -254,8 +254,10 @@ int run(int argc, char *argv[]) {
     } else {
         cfg.editDistance = (uint32_t)(round(cfg.regionSize * (1-cfg.identityPercentage)));
         uint16_t exactMatchSize = cfg.regionSize - cfg.editDistance;
-        minNumExactMatchKmer = (uint32_t)(floor((exactMatchSize/cfg.kmerLength) + (exactMatchSize%cfg.kmerLength)));
-        cfg.editDistance = minNumExactMatchKmer - 1;
+        uint32_t regionKmers = (uint32_t)(floor(exactMatchSize/cfg.kmerLength));
+        cout << "regionKmers: " << regionKmers << ", exactMatchSize: " << exactMatchSize << ", editDistance: " << cfg.editDistance << endl;
+        assert(regionKmers > cfg.editDistance && "k-mers in a region must be greater than E for cheap k-mer matching");
+        minNumExactMatchKmer = (uint32_t)(regionKmers + floor(exactMatchSize%cfg.kmerLength));
     }
     assert(cfg.minExactMatchLen == 0 && "min exact match len should be 0 for this version");
     assert(minNumExactMatchKmer > 0 && "minNumExactMatchKmer must be greater than 0 for cheap k-mer matching");
