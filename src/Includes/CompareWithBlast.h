@@ -181,7 +181,7 @@ public:
                     aln.cigar = pf.convertStrToCigar(cigarStr, aln.queryRegionStartPos, aln.queryRegionEndPos);
                     //TODO: check for the new implementation
                     uint16_t aln_sz = aln.partialMatchSize;
-                    bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln, true);
+                    bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln, false);
                     if(aln_sz == aln.partialMatchSize)
                         blastUnChangedAlignmentsAfterPostFiltering++;
                     else if(aln_sz < aln.partialMatchSize)
