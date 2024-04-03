@@ -238,9 +238,14 @@ public:
                 if(DEBUG_MODE) cout << "cigar string: " << cigarStr << endl;
                 if (secondChanceFirstOrLastEdit && rightCigarSegments.size() > 0) {
                     string rightCigarSegment = "";
-                    while(rightCigarSegments.size() > 0 && rightCigarSegments.top().size() == 1 && rightCigarSegments.top()[rightCigarSegments.top().size()-1] != '=') {
-                        rightCigarSegment = rightCigarSegments.top() + rightCigarSegment;
-                        rightCigarSegments.pop();
+                    while(rightCigarSegments.size() > 0) {
+                        string top = rightCigarSegments.top();
+                        if(top.size() == 1 && top[top.size()-1] != '='){
+                            rightCigarSegment = top + rightCigarSegment;
+                            rightCigarSegments.pop();
+                        } else {
+                            break;
+                        }
                     }
                     if(rightCigarSegments.size() > 0){
                         rightCigarSegment = rightCigarSegments.top() + rightCigarSegment;
@@ -266,9 +271,14 @@ public:
                     tmpAln.editDistance = tmpAln.substitutions + tmpAln.inDels;
                 } else if (!secondChanceFirstOrLastEdit && leftCigarSegments.size() > 0) {
                     string leftCigarSegment = "";
-                    while(leftCigarSegments.size() > 0 && leftCigarSegments.top().size() == 1 && leftCigarSegments.top()[leftCigarSegments.top().size()-1]!= '=') {
-                        leftCigarSegment += leftCigarSegments.top();
-                        leftCigarSegments.pop();
+                    while(leftCigarSegments.size() > 0) {
+                        string top = leftCigarSegments.top();
+                        if(top.size() == 1 && top[0] != '='){
+                            leftCigarSegment += top;
+                            leftCigarSegments.pop();
+                        } else {
+                            break;
+                        }
                     }
                     if(leftCigarSegments.size() > 0){
                         leftCigarSegment += leftCigarSegments.top();
