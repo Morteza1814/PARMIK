@@ -325,7 +325,7 @@ public:
                 if(DEBUG_MODE) cout << "rightCigarSegment: " << rightCigarSegment << endl;
                 cigarStr = cigarStr.substr(0, lastEditLocation);
                 if(DEBUG_MODE) cout << "cigar string before pop: " << cigarStr << endl;
-                while(cigarStr[cigarStr.length() - 1] != '=') {
+                while(cigarStr.length() > 0 && cigarStr[cigarStr.length() - 1] != '=') {
                     string lastChar = "";
                     lastChar += cigarStr[cigarStr.length() - 1];
                     cigarStr = cigarStr.substr(0, cigarStr.size() - 1);
@@ -354,7 +354,7 @@ public:
                 if(DEBUG_MODE) cout << "leftCigarSegment: " << leftCigarSegment << endl;
                 cigarStr = cigarStr.substr(firstEditLocation + 1);
                 if(DEBUG_MODE) cout << "cigar string before pop: " << cigarStr << endl;
-                while(cigarStr[0] != '=') {
+                while(cigarStr.length() > 0 && cigarStr[0] != '=') {
                     string firstChar = "";
                     firstChar += cigarStr[0];
                     cigarStr = cigarStr.substr(1, cigarStr.size() - 1);
