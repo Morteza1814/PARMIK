@@ -251,13 +251,13 @@ public:
                     while(rightCigarSegments.size() > 0) {
                         string top = rightCigarSegments.top();
                         if(top.size() == 1 && top[top.size()-1] != '='){
-                            rightCigarSegment += rightCigarSegment;
+                            rightCigarSegment += top;
                             rightCigarSegments.pop();
                         } else {
                             break;
                         }
                     }
-                    if (rightCigarSegment.size() > 0) {
+                    if (rightCigarSegments.size() > 0) {
                         rightCigarSegment += rightCigarSegments.top();
                         rightCigarSegments.pop();
                     }
