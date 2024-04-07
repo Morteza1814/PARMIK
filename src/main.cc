@@ -252,7 +252,7 @@ int run(int argc, char *argv[]) {
     if(cfg.minExactMatchLen > 0) {
         minNumExactMatchKmer = cfg.minExactMatchLen - (cfg.kmerLength - 1);
     } else {
-        cfg.editDistance = (uint32_t)(floor(cfg.regionSize * (1-cfg.identityPercentage)));
+        cfg.editDistance = (uint32_t)(round(cfg.regionSize * (1-cfg.identityPercentage)));
         uint16_t exactMatchSize = cfg.regionSize - cfg.editDistance;
         uint32_t regionKmers = (uint32_t)(floor(exactMatchSize/cfg.kmerLength));
         cout << "regionKmers: " << regionKmers << ", exactMatchSize: " << exactMatchSize << ", editDistance: " << cfg.editDistance << endl;
