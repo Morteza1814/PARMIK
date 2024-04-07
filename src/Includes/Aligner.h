@@ -294,6 +294,7 @@ public:
                 return bestAlignment;
             }
         }
+        vector<string> repeatedCigars;
         for (auto penalty : penalties)
         {
             if(DEBUG_MODE) 
@@ -308,6 +309,10 @@ public:
             if (!isForwardStran) aln.flag = 16;
             // cout << "penalties: " << penalty.matchPenalty <<  penalty.mismatchPenalty <<  penalty.gapOpenPenalty << penalty.gapExtendPenalty << endl;
             align(aln, penalty.matchPenalty, penalty.mismatchPenalty, penalty.gapOpenPenalty, penalty.gapExtendPenalty);
+            if(find(repeatedCigars.begin(), repeatedCigars.end(), aln.cigar) != repeatedCigars.end())
+                continue;
+            else
+                repeatedCigars.push_back(aln.cigar);
             //check the alignment based on the criteria
             bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln);
             if (criteriaCheck){
@@ -357,6 +362,8 @@ public:
 
      void dumpSam(ofstream &oSam, Alignment l)
     {
+        cerr << "queryID: " << l.queryID << ", readID: "<< l.readID << "readRegionStartPos: " << l.readRegionStartPos << endl;
+        assert((l.readRegionStartPos >= 0 && l.readRegionEndPos < regionSize) && "wrong readRegionStartPos");
         oSam << l.queryID << '\t' << l.flag << '\t' << l.readID << '\t' << l.readRegionStartPos << '\t'
                 << "*" << '\t' << l.cigar << '\t' << "*" << '\t' << "*" << '\t' << "*" << '\t' 
                 << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.substitutions) << '\t' << "CC" << l.criteriaCode << '\n';
