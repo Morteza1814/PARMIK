@@ -122,6 +122,7 @@ public:
                 queryCount++;
                 continue;
             }
+            // cout << queryID << " " << readID << " " << flag << " " << pos << " " << mapQ << " " << cigar << " " << rNext << " " << pNext << " " << tLen << " " << seq << " " << qual << endl;
             if (flag.find("*") != string::npos) sam.flag = 0; else sam.flag = stoi(flag.c_str());
             if (pos.find("*") != string::npos) sam.pos = 0; else sam.pos = stoi(pos.c_str());
             if (mapQ.find("*") != string::npos) sam.mapQ = 0; else sam.mapQ = stoi(mapQ.c_str());

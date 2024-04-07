@@ -289,7 +289,9 @@ int run(int argc, char *argv[]) {
         cout << "readCount : " << readCount << endl;
         // unordered_map<uint32_t, unordered_set<LevAlign>> alignments;
         string offlineCheapIndexAddress = cfg.offlineIndexAddress + "ck_T" + to_string(cfg.cheapKmerThreshold) + "_K"+ to_string(cfg.kmerLength) + "_r" + to_string(cfg.readsCount);
-        string parmikAlignmentsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+        cout << "offlineCheapIndexAddress: " << offlineCheapIndexAddress << endl;
+        string parmikAlignmentsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string(cfg.identityPercentage) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+        cout << "pmrkAlignmentsAddress: " << parmikAlignmentsAddress << endl;
         if (cfg.parmikMode != PARMIK_MODE_COMPARE)
         {
             if (cfg.kmerLength <= 16)
@@ -417,10 +419,14 @@ int run(int argc, char *argv[]) {
             }
             // cout<<"finished \n";
             //check the alignment results with another aligner
-            string comparisonResultsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/cmp_" + "R" + to_string(cfg.regionSize) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
-            string alnPerQueryFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/AlnPerQ_" + "R" + to_string(cfg.regionSize) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
-            string parmikFnReadsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/ParmikFnReads_" + "R" + to_string(cfg.regionSize) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
-            string bestAlnCmpFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/BestAlnCmp_" + "R" + to_string(cfg.regionSize) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+            string comparisonResultsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/cmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string(cfg.identityPercentage) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+            cout << "Comparison Results File Address: " << comparisonResultsFileAddress << endl;
+            string alnPerQueryFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/AlnPerQ_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string(cfg.identityPercentage) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+            cout << "Aln Per Query File Address: " << alnPerQueryFileAddress << endl;
+            string parmikFnReadsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/ParmikFnReads_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string(cfg.identityPercentage) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+            cout << "Parmik Fn Reads File Address: " << parmikFnReadsFileAddress << endl;
+            string bestAlnCmpFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/BestAlnCmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string(cfg.identityPercentage) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+            cout << "Best Aln Cmp File Address: " << bestAlnCmpFileAddress << endl;
             vector<std::pair<uint32_t, uint32_t>> alnPmVsOtherAlnSizesMap;
             // (BWA)
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
