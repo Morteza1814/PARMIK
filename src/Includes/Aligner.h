@@ -362,8 +362,8 @@ public:
 
      void dumpSam(ofstream &oSam, Alignment l)
     {
-        cerr << "queryID: " << l.queryID << ", readID: "<< l.readID << "readRegionStartPos: " << l.readRegionStartPos << endl;
-        assert((l.readRegionStartPos >= 0 && l.readRegionEndPos < regionSize) && "wrong readRegionStartPos");
+        // cerr << "queryID: " << l.queryID << ", readID: "<< l.readID << "readRegionStartPos: " << l.readRegionStartPos << endl;
+        assert((l.readRegionStartPos >= 0 && l.readRegionStartPos < contigSize) && "wrong readRegionStartPos");
         oSam << l.queryID << '\t' << l.flag << '\t' << l.readID << '\t' << l.readRegionStartPos << '\t'
                 << "*" << '\t' << l.cigar << '\t' << "*" << '\t' << "*" << '\t' << "*" << '\t' 
                 << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.substitutions) << '\t' << "CC" << l.criteriaCode << '\n';
