@@ -402,6 +402,7 @@ public:
     void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, Container<contigIndT, contigIndT>& minThCheapSeedReads, contigIndT queryCount, bool isForwardStrand, string parmikAlignments, vector<Penalty> penalties)
     {
         ofstream pAln(parmikAlignments, ios::app);
+        set<uint32_t> matchesPerQuery;
         cout << "Starting alignment for all queries [" << (isForwardStrand ? ("fwd"):("rev")) << "]..." << endl;
         for (size_t i = 0; i < queryCount; i++)
         {
@@ -435,8 +436,12 @@ public:
                 dumpSam(pAln, it->second);
                 matchesAccepted++;
             }
+            matchesPerQuery.insert(alignments.size());
             // cout << "queryID: " << i << ", " << (isForwardStrand ? ("fwd"):("rev")) <<", total matches: " << alignments.size() << i << ", matches accepted: " << matchesAccepted << ", matches passed with starting pos over ED: " << matchesPassedWithStartingPosOverED << endl;
         }
+        Utilities<uint32_t> util; 
+        tuple<uint32_t, uint32_t, uint32_t> matchesPerQueryTuple = util.calculateStatistics(matchesPerQuery);
+        printf("PARMIK's matches per query up to q (%d) => [average: %d, median: %d, sum: %d]\n", queryCount, get<0>(matchesPerQueryTuple), get<1>(matchesPerQueryTuple), get<2>(matchesPerQueryTuple));
     }
 
     void smithWatermanAligner(Alignment &aln, uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
