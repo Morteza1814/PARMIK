@@ -1,0 +1,41 @@
+no kmerRangesFileAddressArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  2
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads
+readFileName:                 SRR12432009_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries
+queryFileName:                NC_045512_queries
+otherToolOutputFileAddress:   /p/lava/parmik/partialMatcherProject/tools/blast/SRR12432009/NC_045512/blastn_ws11_pi90_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/NC_045512
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/2484_1111_2444_2288_2848
+kmerRangesFileAddress:        
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   11
+regionSize:                   48
+cheapKmerThreshold:           0
+identityPercentage:           0.9
+minExactMatchLen:             16
+minNumExactMatchKmer:         6
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/
+max editDistance in min region: 2
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 2, s: 4, go: 8, ge: 4
+m: 1, s: 1, go: 1, ge: 1
+m: 2, s: 4, go: 4, ge: 4
+m: 2, s: 2, go: 8, ge: 8
+m: 2, s: 8, go: 4, ge: 8
+------------------------------------
+numberOfReadsWithN : 0
+queryCount : 29754
+numberOfReadsWithN : 0
+readCount : 16344647
+offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/ck_T0_K11_r17000000
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/NC_045512/aln/pmAln_R48_PI90_L16_M6_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+Comparison Results File Address: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/NC_045512/cmp/blast/cmp_R48_PI90_L16_M6_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+Aln Per Query File Address: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/NC_045512/cmp/blast/AlnPerQ_R48_PI90_L16_M6_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+Parmik Fn Reads File Address: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/NC_045512/cmp/blast/ParmikFnReads_R48_PI90_L16_M6_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+Best Aln Cmp File Address: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/NC_045512/cmp/blast/BestAlnCmp_R48_PI90_L16_M6_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+cmp file address: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/NC_045512/cmp/blast/cmp_R48_PI90_L16_M6_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
