@@ -1,0 +1,404 @@
+no penaltyFileAddress!
+no identityPercentage (default = 0.9)!
+no otherToolArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  0
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR14381428/SRR14381428_reads
+readFileName:                 SRR14381428_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries
+queryFileName:                NC_045512_queries
+otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR12432009/NC_045512/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/NC_045512
+penaltyFileAddress:           
+kmerRangesFileAddress:        /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/SRR12432009/index/kmerRanges/kmerRanges
+readsCount:                   40000000
+queryCount:                   30000
+kmerLength:                   10
+regionSize:                   50
+cheapKmerThreshold:           0
+identityPercentage:           0.9
+minExactMatchLen:             0
+minNumExactMatchKmer:         0
+isIndexOffline:               0
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381428/
+max editDistance in min region: 2
+**********************CONFIGURATIONS*****************************
+Error opening file 
+--------------Penalties--------------
+m: 1, s: 1, go: 1, ge: 1
+------------------------------------
+numberOfReadsWithN : 0
+readCount : 31525405
+offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381428/ck_T0_K10_r40000000
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/NC_045512/aln/pmAln_R50_PI90_L0_M0_E2_K10_T0_P_1111.txt
+k-mer max size : 16, stringSize = 10
+bp_jump_size : 1
+<<<<<<<<<<<<<<<<<<<<<<<< Index Construction Started!!>>>>>>>>>>>>>>>>>>>>>>>>
+The 0 100k contigs have been processed!
+The 1 100k contigs have been processed!
+The 2 100k contigs have been processed!
+The 3 100k contigs have been processed!
+The 4 100k contigs have been processed!
+The 5 100k contigs have been processed!
+The 6 100k contigs have been processed!
+The 7 100k contigs have been processed!
+The 8 100k contigs have been processed!
+The 9 100k contigs have been processed!
+The 10 100k contigs have been processed!
+The 11 100k contigs have been processed!
+The 12 100k contigs have been processed!
+The 13 100k contigs have been processed!
+The 14 100k contigs have been processed!
+The 15 100k contigs have been processed!
+The 16 100k contigs have been processed!
+The 17 100k contigs have been processed!
+The 18 100k contigs have been processed!
+The 19 100k contigs have been processed!
+The 20 100k contigs have been processed!
+The 21 100k contigs have been processed!
+The 22 100k contigs have been processed!
+The 23 100k contigs have been processed!
+The 24 100k contigs have been processed!
+The 25 100k contigs have been processed!
+The 26 100k contigs have been processed!
+The 27 100k contigs have been processed!
+The 28 100k contigs have been processed!
+The 29 100k contigs have been processed!
+The 30 100k contigs have been processed!
+The 31 100k contigs have been processed!
+The 32 100k contigs have been processed!
+The 33 100k contigs have been processed!
+The 34 100k contigs have been processed!
+The 35 100k contigs have been processed!
+The 36 100k contigs have been processed!
+The 37 100k contigs have been processed!
+The 38 100k contigs have been processed!
+The 39 100k contigs have been processed!
+The 40 100k contigs have been processed!
+The 41 100k contigs have been processed!
+The 42 100k contigs have been processed!
+The 43 100k contigs have been processed!
+The 44 100k contigs have been processed!
+The 45 100k contigs have been processed!
+The 46 100k contigs have been processed!
+The 47 100k contigs have been processed!
+The 48 100k contigs have been processed!
+The 49 100k contigs have been processed!
+The 50 100k contigs have been processed!
+The 51 100k contigs have been processed!
+The 52 100k contigs have been processed!
+The 53 100k contigs have been processed!
+The 54 100k contigs have been processed!
+The 55 100k contigs have been processed!
+The 56 100k contigs have been processed!
+The 57 100k contigs have been processed!
+The 58 100k contigs have been processed!
+The 59 100k contigs have been processed!
+The 60 100k contigs have been processed!
+The 61 100k contigs have been processed!
+The 62 100k contigs have been processed!
+The 63 100k contigs have been processed!
+The 64 100k contigs have been processed!
+The 65 100k contigs have been processed!
+The 66 100k contigs have been processed!
+The 67 100k contigs have been processed!
+The 68 100k contigs have been processed!
+The 69 100k contigs have been processed!
+The 70 100k contigs have been processed!
+The 71 100k contigs have been processed!
+The 72 100k contigs have been processed!
+The 73 100k contigs have been processed!
+The 74 100k contigs have been processed!
+The 75 100k contigs have been processed!
+The 76 100k contigs have been processed!
+The 77 100k contigs have been processed!
+The 78 100k contigs have been processed!
+The 79 100k contigs have been processed!
+The 80 100k contigs have been processed!
+The 81 100k contigs have been processed!
+The 82 100k contigs have been processed!
+The 83 100k contigs have been processed!
+The 84 100k contigs have been processed!
+The 85 100k contigs have been processed!
+The 86 100k contigs have been processed!
+The 87 100k contigs have been processed!
+The 88 100k contigs have been processed!
+The 89 100k contigs have been processed!
+The 90 100k contigs have been processed!
+The 91 100k contigs have been processed!
+The 92 100k contigs have been processed!
+The 93 100k contigs have been processed!
+The 94 100k contigs have been processed!
+The 95 100k contigs have been processed!
+The 96 100k contigs have been processed!
+The 97 100k contigs have been processed!
+The 98 100k contigs have been processed!
+The 99 100k contigs have been processed!
+The 100 100k contigs have been processed!
+The 101 100k contigs have been processed!
+The 102 100k contigs have been processed!
+The 103 100k contigs have been processed!
+The 104 100k contigs have been processed!
+The 105 100k contigs have been processed!
+The 106 100k contigs have been processed!
+The 107 100k contigs have been processed!
+The 108 100k contigs have been processed!
+The 109 100k contigs have been processed!
+The 110 100k contigs have been processed!
+The 111 100k contigs have been processed!
+The 112 100k contigs have been processed!
+The 113 100k contigs have been processed!
+The 114 100k contigs have been processed!
+The 115 100k contigs have been processed!
+The 116 100k contigs have been processed!
+The 117 100k contigs have been processed!
+The 118 100k contigs have been processed!
+The 119 100k contigs have been processed!
+The 120 100k contigs have been processed!
+The 121 100k contigs have been processed!
+The 122 100k contigs have been processed!
+The 123 100k contigs have been processed!
+The 124 100k contigs have been processed!
+The 125 100k contigs have been processed!
+The 126 100k contigs have been processed!
+The 127 100k contigs have been processed!
+The 128 100k contigs have been processed!
+The 129 100k contigs have been processed!
+The 130 100k contigs have been processed!
+The 131 100k contigs have been processed!
+The 132 100k contigs have been processed!
+The 133 100k contigs have been processed!
+The 134 100k contigs have been processed!
+The 135 100k contigs have been processed!
+The 136 100k contigs have been processed!
+The 137 100k contigs have been processed!
+The 138 100k contigs have been processed!
+The 139 100k contigs have been processed!
+The 140 100k contigs have been processed!
+The 141 100k contigs have been processed!
+The 142 100k contigs have been processed!
+The 143 100k contigs have been processed!
+The 144 100k contigs have been processed!
+The 145 100k contigs have been processed!
+The 146 100k contigs have been processed!
+The 147 100k contigs have been processed!
+The 148 100k contigs have been processed!
+The 149 100k contigs have been processed!
+The 150 100k contigs have been processed!
+The 151 100k contigs have been processed!
+The 152 100k contigs have been processed!
+The 153 100k contigs have been processed!
+The 154 100k contigs have been processed!
+The 155 100k contigs have been processed!
+The 156 100k contigs have been processed!
+The 157 100k contigs have been processed!
+The 158 100k contigs have been processed!
+The 159 100k contigs have been processed!
+The 160 100k contigs have been processed!
+The 161 100k contigs have been processed!
+The 162 100k contigs have been processed!
+The 163 100k contigs have been processed!
+The 164 100k contigs have been processed!
+The 165 100k contigs have been processed!
+The 166 100k contigs have been processed!
+The 167 100k contigs have been processed!
+The 168 100k contigs have been processed!
+The 169 100k contigs have been processed!
+The 170 100k contigs have been processed!
+The 171 100k contigs have been processed!
+The 172 100k contigs have been processed!
+The 173 100k contigs have been processed!
+The 174 100k contigs have been processed!
+The 175 100k contigs have been processed!
+The 176 100k contigs have been processed!
+The 177 100k contigs have been processed!
+The 178 100k contigs have been processed!
+The 179 100k contigs have been processed!
+The 180 100k contigs have been processed!
+The 181 100k contigs have been processed!
+The 182 100k contigs have been processed!
+The 183 100k contigs have been processed!
+The 184 100k contigs have been processed!
+The 185 100k contigs have been processed!
+The 186 100k contigs have been processed!
+The 187 100k contigs have been processed!
+The 188 100k contigs have been processed!
+The 189 100k contigs have been processed!
+The 190 100k contigs have been processed!
+The 191 100k contigs have been processed!
+The 192 100k contigs have been processed!
+The 193 100k contigs have been processed!
+The 194 100k contigs have been processed!
+The 195 100k contigs have been processed!
+The 196 100k contigs have been processed!
+The 197 100k contigs have been processed!
+The 198 100k contigs have been processed!
+The 199 100k contigs have been processed!
+The 200 100k contigs have been processed!
+The 201 100k contigs have been processed!
+The 202 100k contigs have been processed!
+The 203 100k contigs have been processed!
+The 204 100k contigs have been processed!
+The 205 100k contigs have been processed!
+The 206 100k contigs have been processed!
+The 207 100k contigs have been processed!
+The 208 100k contigs have been processed!
+The 209 100k contigs have been processed!
+The 210 100k contigs have been processed!
+The 211 100k contigs have been processed!
+The 212 100k contigs have been processed!
+The 213 100k contigs have been processed!
+The 214 100k contigs have been processed!
+The 215 100k contigs have been processed!
+The 216 100k contigs have been processed!
+The 217 100k contigs have been processed!
+The 218 100k contigs have been processed!
+The 219 100k contigs have been processed!
+The 220 100k contigs have been processed!
+The 221 100k contigs have been processed!
+The 222 100k contigs have been processed!
+The 223 100k contigs have been processed!
+The 224 100k contigs have been processed!
+The 225 100k contigs have been processed!
+The 226 100k contigs have been processed!
+The 227 100k contigs have been processed!
+The 228 100k contigs have been processed!
+The 229 100k contigs have been processed!
+The 230 100k contigs have been processed!
+The 231 100k contigs have been processed!
+The 232 100k contigs have been processed!
+The 233 100k contigs have been processed!
+The 234 100k contigs have been processed!
+The 235 100k contigs have been processed!
+The 236 100k contigs have been processed!
+The 237 100k contigs have been processed!
+The 238 100k contigs have been processed!
+The 239 100k contigs have been processed!
+The 240 100k contigs have been processed!
+The 241 100k contigs have been processed!
+The 242 100k contigs have been processed!
+The 243 100k contigs have been processed!
+The 244 100k contigs have been processed!
+The 245 100k contigs have been processed!
+The 246 100k contigs have been processed!
+The 247 100k contigs have been processed!
+The 248 100k contigs have been processed!
+The 249 100k contigs have been processed!
+The 250 100k contigs have been processed!
+The 251 100k contigs have been processed!
+The 252 100k contigs have been processed!
+The 253 100k contigs have been processed!
+The 254 100k contigs have been processed!
+The 255 100k contigs have been processed!
+The 256 100k contigs have been processed!
+The 257 100k contigs have been processed!
+The 258 100k contigs have been processed!
+The 259 100k contigs have been processed!
+The 260 100k contigs have been processed!
+The 261 100k contigs have been processed!
+The 262 100k contigs have been processed!
+The 263 100k contigs have been processed!
+The 264 100k contigs have been processed!
+The 265 100k contigs have been processed!
+The 266 100k contigs have been processed!
+The 267 100k contigs have been processed!
+The 268 100k contigs have been processed!
+The 269 100k contigs have been processed!
+The 270 100k contigs have been processed!
+The 271 100k contigs have been processed!
+The 272 100k contigs have been processed!
+The 273 100k contigs have been processed!
+The 274 100k contigs have been processed!
+The 275 100k contigs have been processed!
+The 276 100k contigs have been processed!
+The 277 100k contigs have been processed!
+The 278 100k contigs have been processed!
+The 279 100k contigs have been processed!
+The 280 100k contigs have been processed!
+The 281 100k contigs have been processed!
+The 282 100k contigs have been processed!
+The 283 100k contigs have been processed!
+The 284 100k contigs have been processed!
+The 285 100k contigs have been processed!
+The 286 100k contigs have been processed!
+The 287 100k contigs have been processed!
+The 288 100k contigs have been processed!
+The 289 100k contigs have been processed!
+The 290 100k contigs have been processed!
+The 291 100k contigs have been processed!
+The 292 100k contigs have been processed!
+The 293 100k contigs have been processed!
+The 294 100k contigs have been processed!
+The 295 100k contigs have been processed!
+The 296 100k contigs have been processed!
+The 297 100k contigs have been processed!
+The 298 100k contigs have been processed!
+The 299 100k contigs have been processed!
+The 300 100k contigs have been processed!
+The 301 100k contigs have been processed!
+The 302 100k contigs have been processed!
+The 303 100k contigs have been processed!
+The 304 100k contigs have been processed!
+The 305 100k contigs have been processed!
+The 306 100k contigs have been processed!
+The 307 100k contigs have been processed!
+The 308 100k contigs have been processed!
+The 309 100k contigs have been processed!
+The 310 100k contigs have been processed!
+The 311 100k contigs have been processed!
+The 312 100k contigs have been processed!
+The 313 100k contigs have been processed!
+The 314 100k contigs have been processed!
+The 315 100k contigs have been processed!
+Index Construction took: 2322.42 seconds
+Number of kmers:                        150114809
+Number of contigs:                      31525405
+Size of inverted index:                 4445082105
+Number of Reads Containing N:           0
+<<<<<<<<<<<<<<<<<<<<<<<Index Construction Ended!!>>>>>>>>>>>>>>>>>>>>>>> 
+start : 0 end : 500
+start : 501 end : 1000
+start : 1001 end : 2500
+start : 2501 end : 5000
+start : 5001 end : 7500
+start : 7501 end : 10000
+start : 10001 end : 15000
+start : 15001 end : 25000
+start : 25001 end : 50000
+start : 50001 end : 100000
+start : 100001 end : 1000000
+start : 1000001 end : 5000000
+start : 5000001 end : 10000000
+start : 10000001 end : 50000000
+start : 50000001 end : 100000000
+start : 100000001 end : 500000000
+start : 500000001 end : 1000000000
+<<<<<<<<<<<<<<<<<<<<<<<<Cheap Kmers Collection Started!!>>>>>>>>>>>>>>>>>>>>>>>>
+cheap k-mer threshold:        0
+Cheap Kmers Collection Time:  1670.65 seconds
+Total k-mers:                 4445082105
+Distinct k-mers:              1048576 [0% of totalkmers]
+Unique k-mers:                0 [0% of distinctKmers]
+Cheap k-mers:                 1048576 [100% of distinctKmers]
+Expensive k-mers:             0 [0% of distinctKmers]
+Most expensive k-mer has:     0 read ptr
+Histogram of k-mer ranges:
+[0-500]: 3320 k-mers
+[501-1000]: 37188 k-mers
+[1001-2500]: 366830 k-mers
+[2501-5000]: 393554 k-mers
+[5001-7500]: 131211 k-mers
+[7501-10000]: 53367 k-mers
+[10001-15000]: 37725 k-mers
+[15001-25000]: 17504 k-mers
+[25001-50000]: 7032 k-mers
+[50001-100000]: 693 k-mers
+[100001-1000000]: 144 k-mers
+[1000001-5000000]: 8 k-mers
+[5000001-10000000]: 0 k-mers
+[10000001-50000000]: 0 k-mers
+[50000001-100000000]: 0 k-mers
+[100000001-500000000]: 0 k-mers
+[500000001-1000000000]: 0 k-mers
+<<<<<<<<<<<<<<<<<<<<<<<<CollectCheapKmers Ended!!>>>>>>>>>>>>>>>>>>>>>>>>
+Cheap Kmers Serialization Time: 1346.31 seconds
