@@ -21,10 +21,25 @@ public:
         // Calculate average
         T average = (data.size() > 0) ? sum / data.size() : 0;
 
-        // Calculate median
-        typename set<T>::const_iterator it = data.begin();
-        advance(it, data.size() / 2);
-        T median = *it;
+        // Calculate the index of the middle element
+        int size = data.size();
+        int middleIndex = size / 2;
+
+        // If the size is odd, return the middle element
+        T median;
+        if (size % 2 != 0) {
+            typename set<T>::const_iterator it = data.begin();
+            advance(it, middleIndex);
+            median = *it;
+        } 
+        // If the size is even, return the average of the two middle elements
+        else {
+            typename set<T>::const_iterator mid = data.begin();
+            typename set<T>::const_iterator mid_1 = data.begin();
+            advance(mid, middleIndex);
+            advance(mid_1, middleIndex-1);
+            median = ((*mid_1) + (*mid)) / 2.0;
+        }
 
         // Return the results as a tuple
         return make_tuple(average, median, sum);
@@ -32,6 +47,10 @@ public:
 
     pair<T, T> calculateStatistics2(const set<T>& data) 
     {
+        //initial check
+        if(data.size() == 0) {
+            return make_pair(0, 0);
+        }
         // Calculate sum
         T sum = 0;
         for (T num : data) {
@@ -40,10 +59,25 @@ public:
         // Calculate average
         T average = (data.size() > 0) ? sum / data.size() : 0;
 
-        // Calculate median
-        typename set<T>::const_iterator it = data.begin();
-        advance(it, data.size() / 2);
-        T median = *it;
+        // Calculate the index of the middle element
+        int size = data.size();
+        int middleIndex = size / 2;
+
+         // If the size is odd, return the middle element
+        T median;
+        if (size % 2 != 0) {
+            typename set<T>::const_iterator it = data.begin();
+            advance(it, middleIndex);
+            median = *it;
+        } 
+        // If the size is even, return the average of the two middle elements
+        else {
+            typename set<T>::const_iterator mid = data.begin();
+            typename set<T>::const_iterator mid_1 = data.begin();
+            advance(mid, middleIndex);
+            advance(mid_1, middleIndex-1);
+            median = ((*mid_1) + (*mid)) / 2.0;
+        }
 
         // Return the results as a tuple
         return make_pair(average, median);
