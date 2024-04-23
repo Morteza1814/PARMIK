@@ -21,7 +21,7 @@ public:
         onlyGTFoundMatchForQuery = 0, pmReadIdNotFoundInGT = 0, gtReadIdNotFoundInPM = 0, 
         onlyPmFoundMatchForQuery = 0, nonePmGTFoundAlignmentForQuery = 0, numberOfGTbetterNotObserveOurCriteria = 0, 
         numberOfQueryContainN = 0, queriesGTFoundMatch = 0, pmTotalNumberOfReadIDs = 0, gtTotalNumberOfReadIDs = 0;
-        set<uint32_t> pmReadPerQuerySet, gtReadPerQuerySet;
+        multiset<uint32_t> pmReadPerQuerySet, gtReadPerQuerySet;
         uint32_t pmQueriesFound = 0;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {

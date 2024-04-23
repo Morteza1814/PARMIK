@@ -929,7 +929,7 @@ public:
     void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, IndexContainer<contigIndT, contigIndT>& frontMinThCheapSeedReads, IndexContainer<contigIndT, contigIndT>& backMinThCheapSeedReads, contigIndT queryCount, map<contigIndT, LevAlign> &pmres, bool isForwardStrand, string parmikAlignments)
     {      
         Utilities<double> utildouble;   
-        set<double> seedAndExtend_times;
+        multiset<double> seedAndExtend_times;
         uint32_t pmNotFoundMatchQueries = 0;
         ofstream pAln(parmikAlignments, ios::app);
         for (size_t i = 0; i < queryCount; i++)

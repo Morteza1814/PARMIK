@@ -65,11 +65,11 @@ public:
         queryIndT currentContigId;
         cout <<  "<<<<<<<<<<<<<<<<< Pre-filtering based on Cheap Kmers Started!! >>>>>>>>>>>>>>>>>>" << endl;
         clock_t start_time = clock();
-        set<uint32_t> queriesNumCheapKmers; 
+        multiset<uint32_t> queriesNumCheapKmers; 
         // set<uint32_t> queriesnumberOfCheapSeedsInMatchedRead;
         // set<uint32_t> queriesNumReadsWithAtLeastOneSimilarCheapKmer;
-        set<uint32_t> queriesMinThCheapSeeds;
-        set<double> queriesPMtime;
+        multiset<uint32_t> queriesMinThCheapSeeds;
+        multiset<double> queriesPMtime;
         queryIndT queryCount = 0;
         long long extractKmersFromRegions_totalExeTime = 0, collectCheapSeeds_totalExeTime = 0, findMatchedReadWithHihestSeeds_totalExeTime = 0;
         // long long collectReadsWithMinThCheapSeedsNumber_totalExeTime = 0;

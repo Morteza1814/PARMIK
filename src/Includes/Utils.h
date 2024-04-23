@@ -11,8 +11,12 @@ using namespace std;
 template<typename T>
 class Utilities {
 public:
-    tuple<T, T, T> calculateStatistics(const set<T>& data) 
+    tuple<T, T, T> calculateStatistics(const multiset<T>& data) 
     {
+        //initial check
+        if(data.size() == 0) {
+            return make_tuple(0, 0, 0);
+        }
         // Calculate sum
         T sum = 0;
         for (T num : data) {
@@ -28,14 +32,14 @@ public:
         // If the size is odd, return the middle element
         T median;
         if (size % 2 != 0) {
-            typename set<T>::const_iterator it = data.begin();
+            auto it = data.begin();
             advance(it, middleIndex);
             median = *it;
         } 
         // If the size is even, return the average of the two middle elements
         else {
-            typename set<T>::const_iterator mid = data.begin();
-            typename set<T>::const_iterator mid_1 = data.begin();
+            auto mid = data.begin();
+            auto mid_1 = data.begin();
             advance(mid, middleIndex);
             advance(mid_1, middleIndex-1);
             median = ((*mid_1) + (*mid)) / 2.0;
@@ -45,7 +49,7 @@ public:
         return make_tuple(average, median, sum);
     }
 
-    pair<T, T> calculateStatistics2(const set<T>& data) 
+    pair<T, T> calculateStatistics2(const multiset<T>& data) 
     {
         //initial check
         if(data.size() == 0) {
@@ -66,14 +70,14 @@ public:
          // If the size is odd, return the middle element
         T median;
         if (size % 2 != 0) {
-            typename set<T>::const_iterator it = data.begin();
+            auto it = data.begin();
             advance(it, middleIndex);
             median = *it;
         } 
         // If the size is even, return the average of the two middle elements
         else {
-            typename set<T>::const_iterator mid = data.begin();
-            typename set<T>::const_iterator mid_1 = data.begin();
+            auto mid = data.begin();
+            auto mid_1 = data.begin();
             advance(mid, middleIndex);
             advance(mid_1, middleIndex-1);
             median = ((*mid_1) + (*mid)) / 2.0;

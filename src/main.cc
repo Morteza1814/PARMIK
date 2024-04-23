@@ -17,11 +17,13 @@
 #include "Includes/CheckKmersFrequency.h"
 #include "Includes/Aligner.h"
 #include "Includes/Alignment.h"
+#include "Includes/SSW_BaseLine.h"
 #include <cmath>
 
-#define PARMIK_MODE_INDEX   0
-#define PARMIK_MODE_ALIGN   1
-#define PARMIK_MODE_COMPARE 2
+#define PARMIK_MODE_INDEX       0
+#define PARMIK_MODE_ALIGN       1
+#define PARMIK_MODE_COMPARE     2
+#define PARMIK_MODE_BASELINE    3
 
 int argParse(int argc, char** argv, Config &cfg){
 	args::ArgumentParser parser("=========================Arguments===========================", "======================================================");
@@ -225,6 +227,14 @@ string getPenaltiesSubstr(vector<Penalty> penalties)
     return substr;
 }
 
+string getTextAfterLastSlash(const string& filePath) {
+    size_t pos = filePath.find_last_of('/');
+    if (pos != string::npos) {
+        return filePath.substr(pos + 1);
+    }
+    return filePath; // If no '/' found, return the original string
+}
+
 int run(int argc, char *argv[]) {
     Config cfg;
 	ofstream out;
@@ -293,8 +303,20 @@ int run(int argc, char *argv[]) {
         cout << "offlineCheapIndexAddress: " << offlineCheapIndexAddress << endl;
         string parmikAlignmentsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
         cout << "pmrkAlignmentsAddress: " << parmikAlignmentsAddress << endl;
-        if (cfg.parmikMode != PARMIK_MODE_COMPARE)
-        {
+        //baseline
+        if (cfg.parmikMode == PARMIK_MODE_BASELINE) {
+            string queryFileName = getTextAfterLastSlash(cfg.queryFileAddress);
+            if(queryFileName == cfg.queryFileAddress){
+                cerr << "Error: query file name is not valid" << endl;
+                return 1;
+            }
+            string baselineAlignmentsAddress = cfg.outputDir + "/BL_Aln_Q" + queryFileName + "_RS" + to_string(cfg.kmerLength) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+            SSW_BaseLine aligner(cfg.kmerLength, cfg.identityPercentage); 
+            aligner.findPartiaMatches(reads, queries, queryCount, true, baselineAlignmentsAddress, penalties);
+            //do it again for the reverse strand
+            tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
+            aligner.findPartiaMatches(reads, revQueries, queryCount, false, baselineAlignmentsAddress, penalties);
+        } else if (cfg.parmikMode != PARMIK_MODE_COMPARE) {
             if (cfg.kmerLength <= 16)
             {
                 Container<uint32_t, uint32_t> cheapKmers;
@@ -398,8 +420,7 @@ int run(int argc, char *argv[]) {
             //     }
             //     matches.close();
             // }
-        } else
-        {
+        } else {
             if(cfg.noOutputFileDump)
             {
                 cout << "no noOutputFileDump!!" << endl;
@@ -428,7 +449,7 @@ int run(int argc, char *argv[]) {
             cout << "Parmik Fn Reads File Address: " << parmikFnReadsFileAddress << endl;
             string bestAlnCmpFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/BestAlnCmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
             cout << "Best Aln Cmp File Address: " << bestAlnCmpFileAddress << endl;
-            vector<std::pair<uint32_t, uint32_t>> alnPmVsOtherAlnSizesMap;
+            vector<pair<uint32_t, uint32_t>> alnPmVsOtherAlnSizesMap;
             // (BWA)
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
             {

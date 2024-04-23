@@ -360,7 +360,7 @@ public:
         // }
     }
 
-     void dumpSam(ofstream &oSam, Alignment l)
+    void dumpSam(ofstream &oSam, Alignment l)
     {
         // cerr << "queryID: " << l.queryID << ", readID: "<< l.readID << "readRegionStartPos: " << l.readRegionStartPos << endl;
         assert((l.readRegionStartPos >= 0 && l.readRegionStartPos < contigSize) && "wrong readRegionStartPos");
@@ -402,7 +402,7 @@ public:
     void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, Container<contigIndT, contigIndT>& minThCheapSeedReads, contigIndT queryCount, bool isForwardStrand, string parmikAlignments, vector<Penalty> penalties)
     {
         ofstream pAln(parmikAlignments, ios::app);
-        set<uint32_t> matchesPerQuery;
+        multiset<uint32_t> matchesPerQuery;
         cout << "Starting alignment for all queries [" << (isForwardStrand ? ("fwd"):("rev")) << "]..." << endl;
         for (size_t i = 0; i < queryCount; i++)
         {
