@@ -104,7 +104,7 @@ public:
         uint32_t currentContigId = 0;
         queryIndT queryCount = 0;
         long long extractKmersFromRegions_totalExeTime = 0, collectQueryRegionSeeds_totalExeTime = 0, collectReadsCountsSimilarToQ_totalExeTime = 0;
-        set<uint32_t> queriesFrontNumSimilarReads, queriesBackNumSimilarReads;
+        multiset<uint32_t> queriesFrontNumSimilarReads, queriesBackNumSimilarReads;
         cout <<  "<<<<<<<<<<<<<<<<< BaseLine Seed Finding Started!! >>>>>>>>>>>>>>>>>>" << endl;
         clock_t start_time = clock();
         Utilities<queryIndT> utl;

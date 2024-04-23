@@ -1,12 +1,24 @@
 #ifndef SSW_BASELINE_H
 #define SSW_BASELINE_H
 
+#include "Alignment.h"
+
 class SSW_BaseLine {
 private:
     uint16_t regionSize; // min region size to be considered for the alignement
     double identityPercentage;
 public:
     SSW_BaseLine(uint16_t R, double i) : regionSize(R), identityPercentage(i) {}
+
+    uint32_t getMatchesCount(string cigarStr) {
+        uint32_t cnt = 0;
+        for (size_t i = 0; i < cigarStr.length(); i++) {
+            if (cigarStr[i] == '=') {
+                cnt++;
+            }
+        }
+        return cnt;
+    }
 
     bool checkIdentityPercentange(string cigarStr){
         uint32_t matches = getMatchesCount(cigarStr);
@@ -74,33 +86,6 @@ public:
         return simplifiedCigar.str();
     }
 
-    string convertStrToCigar(const string cigarStr, uint32_t queryS, uint32_t queryE) {
-        stringstream cigar;
-        char prev = cigarStr[0];
-        uint16_t num = 0;
-        // cout << "queryS: " << queryS << ", queryE: " << queryE << endl;
-        if (queryS > 0) {
-            cigar << queryS << 'S';
-        }
-        for (size_t i = 1; i < cigarStr.length(); ++i) {
-            char cur = cigarStr[i];
-            num++;
-            if (prev != cur)
-            {
-                cigar << num << prev;
-                num = 0;
-                prev = cur;
-            }
-        }
-        num++;
-        cigar << num << prev;
-        int remainedClips = contigSize - queryE - 1;
-        if (remainedClips > 0) {
-            cigar << remainedClips << 'S';
-        }
-        return cigar.str();
-    }
-
     void smithWatermanAligner(Alignment &aln, uint16_t matchPen, uint16_t subPen, uint16_t gapoPen, uint16_t gapextPen)
     {
         Utilities<uint32_t> util;
@@ -153,7 +138,6 @@ public:
                 return bestAlignment;
             }
         }
-        vector<string> repeatedCigars;
         for (auto penalty : penalties)
         {
             if(DEBUG_MODE) 
@@ -166,11 +150,7 @@ public:
             aln.read = read;
             aln.query = query;
             if (!isForwardStran) aln.flag = 16;
-            align(aln, penalty.matchPenalty, penalty.mismatchPenalty, penalty.gapOpenPenalty, penalty.gapExtendPenalty);
-            if(find(repeatedCigars.begin(), repeatedCigars.end(), aln.cigar) != repeatedCigars.end())
-                continue;
-            else
-                repeatedCigars.push_back(aln.cigar);
+            smithWatermanAligner(aln, penalty.matchPenalty, penalty.mismatchPenalty, penalty.gapOpenPenalty, penalty.gapExtendPenalty);
             //check the alignment based on the criteria
             string cigarStr = convertCigarToStr(aln.cigar);
             cigarStr = trimClips(cigarStr);
@@ -186,11 +166,11 @@ public:
     void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, uint32_t queryCount, bool isForwardStrand, string parmikAlignments, vector<Penalty> penalties)
     {
         ofstream pAln(parmikAlignments, ios::app);
-        set<uint32_t> matchesPerQuery;
+        multiset<uint32_t> matchesPerQuery;
         cout << "Starting alignment for all queries [" << (isForwardStrand ? ("fwd"):("rev")) << "]..." << endl;
         for (size_t i = 0; i < queryCount; i++)
         {
-            if(i % 10000 == 0)
+            if(i % 20 == 0)
                 cout << i << " queries processed..." << endl;
             auto itq = queries.find(i);
             if (itq == queries.end())
@@ -203,24 +183,24 @@ public:
             auto start = chrono::high_resolution_clock::now();
             for (size_t j = 0; j < reads.size(); j++)
             {
+                if(j % 100000 == 0)
+                    cout << j << " reads processed..." << endl;
                 auto itr = reads.find(j);
                 if (itr == reads.end())
                     continue;
                 string read = itr->second;
                 Alignment aln = alignDifferentPenaltyScores(query, read, i, j, isForwardStrand, penalties);
                 if (aln.partialMatchSize > 0){
-                    alignments.insert(make_pair(it->first, aln));
+                    alignments.insert(make_pair(j, aln));
                 }
             }
             auto end = chrono::high_resolution_clock::now();
             auto duration = chrono::duration_cast<chrono::nanoseconds>(end - start);
             cout << "query [" << i << "]: # of matches found " << alignments.size() << " and it took: " << static_cast<double>(duration.count()) / 1'000'000.0 << "ms" << endl;
             //dump the alignments
-            uint32_t matchesAccepted = 0;
             for (auto it = alignments.begin(); it!= alignments.end(); it++)
             {
                 dumpSam(pAln, it->second);
-                matchesAccepted++;
             }
             matchesPerQuery.insert(alignments.size());
             // cout << "queryID: " << i << ", " << (isForwardStrand ? ("fwd"):("rev")) <<", total matches: " << alignments.size() << i << ", matches accepted: " << matchesAccepted << ", matches passed with starting pos over ED: " << matchesPassedWithStartingPosOverED << endl;
@@ -230,7 +210,14 @@ public:
         printf("PARMIK's matches per query up to q (%d) => [average: %d, median: %d, sum: %d]\n", queryCount, get<0>(matchesPerQueryTuple), get<1>(matchesPerQueryTuple), get<2>(matchesPerQueryTuple));
     }
 
-
+    void dumpSam(ofstream &oSam, Alignment l)
+    {
+        // cerr << "queryID: " << l.queryID << ", readID: "<< l.readID << "readRegionStartPos: " << l.readRegionStartPos << endl;
+        // assert((l.readRegionStartPos >= 0 && l.readRegionStartPos < contigSize) && "wrong readRegionStartPos");
+        oSam << l.queryID << '\t' << l.flag << '\t' << l.readID << '\t' << l.readRegionStartPos << '\t'
+                << "*" << '\t' << l.cigar << '\t' << "*" << '\t' << "*" << '\t' << "*" << '\t' 
+                << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.substitutions) << '\n';
+    }
 };
 
 #endif

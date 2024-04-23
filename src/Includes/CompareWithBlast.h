@@ -92,23 +92,23 @@ public:
         blastFP_editsExceed_allQ = 0, blastFP_lowAlnLen_allQ = 0, blastFP_editPos_allQ = 0, blastFP_lowerExactMatchKmers_allQ = 0, blastFP_lowPercentageIdentity_allQ = 0,
         blastBest_blastOutperfomed_allQ = 0, blastBest_parmikOutperfomed_allQ = 0, blastBest_blastEqualParmik_allQ = 0;
         //all query level parameters sets (if total is needed, just add all the elements in the set)
-        set<uint32_t> pmReadPerQuerySet, blastReadPerQuerySet;
-        set<uint32_t> blastTPPerQuery, blastFPPerQuery;
-        set<uint32_t> blastTP_noParmikMatches_alnLen_allQ, blastTP_blastOutperfomed_alnLen_allQ, blastTP_parmikOutperfomed_alnLen_allQ, blastTP_blastEqualParmik_alnLen_allQ; 
-        set<uint32_t> blastTP_noParmikMatches_ed_allQ, blastTP_blastOutperfomed_ed_allQ, blastTP_parmikOutperfomed_ed_allQ, blastTP_blastEqualParmik_ed_allQ; 
-        set<uint32_t> parmikTP_noBlastMatches_alnLen_allQ, parmikTP_noBlastMatches_ed_allQ;
-        set<uint32_t> parmikTP_blastOutperfomed_alnLen_allQ, parmikTP_parmikOutperfomed_alnLen_allQ, parmikTP_blastEqualParmik_alnLen_allQ; 
-        set<uint32_t> parmikTP_blastOutperfomed_ed_allQ, parmikTP_parmikOutperfomed_ed_allQ, parmikTP_blastEqualParmik_ed_allQ; 
+        multiset<uint32_t> pmReadPerQuerySet, blastReadPerQuerySet;
+        multiset<uint32_t> blastTPPerQuery, blastFPPerQuery;
+        multiset<uint32_t> blastTP_noParmikMatches_alnLen_allQ, blastTP_blastOutperfomed_alnLen_allQ, blastTP_parmikOutperfomed_alnLen_allQ, blastTP_blastEqualParmik_alnLen_allQ; 
+        multiset<uint32_t> blastTP_noParmikMatches_ed_allQ, blastTP_blastOutperfomed_ed_allQ, blastTP_parmikOutperfomed_ed_allQ, blastTP_blastEqualParmik_ed_allQ; 
+        multiset<uint32_t> parmikTP_noBlastMatches_alnLen_allQ, parmikTP_noBlastMatches_ed_allQ;
+        multiset<uint32_t> parmikTP_blastOutperfomed_alnLen_allQ, parmikTP_parmikOutperfomed_alnLen_allQ, parmikTP_blastEqualParmik_alnLen_allQ; 
+        multiset<uint32_t> parmikTP_blastOutperfomed_ed_allQ, parmikTP_parmikOutperfomed_ed_allQ, parmikTP_blastEqualParmik_ed_allQ; 
         // best alignment comparisons
-        set<uint32_t> blastBest_blastOutperfomed_alnLen_allQ, blastBest_parmikOutperfomed_alnLen_allQ, blastBest_blastEqualParmik_alnLen_allQ; 
-        set<uint32_t> blastBest_blastOutperfomed_ed_allQ, blastBest_parmikOutperfomed_ed_allQ, blastBest_blastEqualParmik_ed_allQ; 
-        set<uint32_t> parmikBest_blastOutperfomed_alnLen_allQ, parmikBest_parmikOutperfomed_alnLen_allQ, parmikBest_blastEqualParmik_alnLen_allQ; 
-        set<uint32_t> parmikBest_blastOutperfomed_ed_allQ, parmikBest_parmikOutperfomed_ed_allQ, parmikBest_blastEqualParmik_ed_allQ; 
-        set<uint32_t> blastFP_editsExceed_alnLen_allQ, blastFP_lowAlnLen_alnLen_allQ, blastFP_editPos_alnLen_allQ, blastFP_lowerExactMatchKmers_alnLen_allQ, blastFP_lowPercentageIdentity_alnLen_allQ;
-        set<uint32_t> blastFP_editsExceed_ed_allQ, blastFP_lowAlnLen_ed_allQ, blastFP_editPos_ed_allQ, blastFP_lowerExactMatchKmers_ed_allQ, blastFP_lowPercentageIdentity_ed_allQ;
-        set<uint32_t> blastFN_parmik_alnLen_allQ, blastFN_parmik_ed_allQ;// PARMIK alignment characteristics for all queries when BLAST did not find a match
-        set<uint32_t> blastFN_noCriteria_parmik_alnLen_allQ, blastFN_noCriteria_parmik_ed_allQ;
-        set<uint32_t> pmFN_blast_alnLen_allQ, pmFN_blast_ed_allQ;// BLAST alignment characteristics for all queries when PARMIK did not find a match
+        multiset<uint32_t> blastBest_blastOutperfomed_alnLen_allQ, blastBest_parmikOutperfomed_alnLen_allQ, blastBest_blastEqualParmik_alnLen_allQ; 
+        multiset<uint32_t> blastBest_blastOutperfomed_ed_allQ, blastBest_parmikOutperfomed_ed_allQ, blastBest_blastEqualParmik_ed_allQ; 
+        multiset<uint32_t> parmikBest_blastOutperfomed_alnLen_allQ, parmikBest_parmikOutperfomed_alnLen_allQ, parmikBest_blastEqualParmik_alnLen_allQ; 
+        multiset<uint32_t> parmikBest_blastOutperfomed_ed_allQ, parmikBest_parmikOutperfomed_ed_allQ, parmikBest_blastEqualParmik_ed_allQ; 
+        multiset<uint32_t> blastFP_editsExceed_alnLen_allQ, blastFP_lowAlnLen_alnLen_allQ, blastFP_editPos_alnLen_allQ, blastFP_lowerExactMatchKmers_alnLen_allQ, blastFP_lowPercentageIdentity_alnLen_allQ;
+        multiset<uint32_t> blastFP_editsExceed_ed_allQ, blastFP_lowAlnLen_ed_allQ, blastFP_editPos_ed_allQ, blastFP_lowerExactMatchKmers_ed_allQ, blastFP_lowPercentageIdentity_ed_allQ;
+        multiset<uint32_t> blastFN_parmik_alnLen_allQ, blastFN_parmik_ed_allQ;// PARMIK alignment characteristics for all queries when BLAST did not find a match
+        multiset<uint32_t> blastFN_noCriteria_parmik_alnLen_allQ, blastFN_noCriteria_parmik_ed_allQ;
+        multiset<uint32_t> pmFN_blast_alnLen_allQ, pmFN_blast_ed_allQ;// BLAST alignment characteristics for all queries when PARMIK did not find a match
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
             uint32_t blastMatchSize = 0, pmMatchSize = 0;
@@ -484,10 +484,20 @@ public:
 
         cmp << left << setw(80) << "# Of BLAST (TP) where BLAST outperformed: " << blastTP_blastOutperfomed_allQ << endl;
         pair<uint32_t, uint32_t> avgblastTP_blastOutperfomed_alnLen_allQ = util.calculateStatistics2(blastTP_blastOutperfomed_alnLen_allQ);
+        cout << "blastTP_blastOutperfomed_alnLen_allQ: " << endl;
+        for (const auto& element : blastTP_blastOutperfomed_alnLen_allQ) {
+            cout << element << ", ";
+        }
+        cout << endl;
         pair<uint32_t, uint32_t> avgblastTP_blastOutperfomed_ed_allQ = util.calculateStatistics2(blastTP_blastOutperfomed_ed_allQ);
         cmp << left << setw(80) << "(avg, median) BLAST's alignment length where BLAST outperformed: " << avgblastTP_blastOutperfomed_alnLen_allQ.first << ", " << avgblastTP_blastOutperfomed_alnLen_allQ.second << endl;
         cmp << left << setw(80) << "(avg, median) BLAST's edit distance where BLAST outperformed: " << avgblastTP_blastOutperfomed_ed_allQ.first << ", " << avgblastTP_blastOutperfomed_ed_allQ.second << endl;
         pair<uint32_t, uint32_t> avgparmikTP_blastOutperfomed_alnLen_allQ = util.calculateStatistics2(parmikTP_blastOutperfomed_alnLen_allQ);
+        cout << "parmikTP_blastOutperfomed_alnLen_allQ: " << endl;
+        for (const auto& element : parmikTP_blastOutperfomed_alnLen_allQ) {
+            cout << element << ", ";
+        }
+        cout << endl;
         pair<uint32_t, uint32_t> avgparmikTP_blastOutperfomed_ed_allQ = util.calculateStatistics2(parmikTP_blastOutperfomed_ed_allQ);
         cmp << left << setw(80) << "(avg, median) PARMIK's alignment length where BLAST outperformed: " << avgparmikTP_blastOutperfomed_alnLen_allQ.first << ", " << avgparmikTP_blastOutperfomed_alnLen_allQ.second << endl;
         cmp << left << setw(80) << "(avg, median) PARMIK's edit distance where BLAST outperformed: " << avgparmikTP_blastOutperfomed_ed_allQ.first << ", " << avgparmikTP_blastOutperfomed_ed_allQ.second << endl;
