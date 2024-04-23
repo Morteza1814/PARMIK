@@ -1,0 +1,75 @@
+no kmerRangesFileAddressArg!
+no otherToolArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  3
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads
+readFileName:                 SRR12432009_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_chunks/NC_045512_queries_6000-6999
+queryFileName:                NC_045512_queries_6000-6999
+otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR12432009/NC_045512/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR12432009/NC_045512
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/2484_1111_2444_2288_2848
+kmerRangesFileAddress:        
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   11
+regionSize:                   48
+cheapKmerThreshold:           0
+identityPercentage:           0.95
+minExactMatchLen:             0
+regionKmers: 4, exactMatchSize: 46, editDistance: 2
+minNumExactMatchKmer:         6
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/
+max editDistance in min region: 2
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 2, s: 4, go: 8, ge: 4
+m: 1, s: 1, go: 1, ge: 1
+m: 2, s: 4, go: 4, ge: 4
+m: 2, s: 2, go: 8, ge: 8
+m: 2, s: 8, go: 4, ge: 8
+------------------------------------
+numberOfReadsWithN : 0
+queryCount : 1000
+numberOfReadsWithN : 0
+readCount : 16344647
+offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/ck_T0_K11_r17000000
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR12432009/NC_045512/aln/pmAln_R48_PI95_L0_M6_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+Starting alignment for all queries [fwd]...
+queryBaseIndex: 6000
+query [0]: # of matches found 32979 and it took: 57711.3ms
+query [1]: # of matches found 33058 and it took: 58530.3ms
+query [2]: # of matches found 33071 and it took: 60380.8ms
+query [3]: # of matches found 33176 and it took: 58722ms
+query [4]: # of matches found 32886 and it took: 60551.9ms
+query [5]: # of matches found 32891 and it took: 60611ms
+query [6]: # of matches found 32882 and it took: 60460.2ms
+query [7]: # of matches found 32909 and it took: 62876.7ms
+query [8]: # of matches found 32921 and it took: 59788.2ms
+query [9]: # of matches found 32683 and it took: 60481.2ms
+query [10]: # of matches found 32459 and it took: 63208.2ms
+query [11]: # of matches found 32056 and it took: 60537.2ms
+query [12]: # of matches found 31575 and it took: 61693.5ms
+query [13]: # of matches found 31546 and it took: 62112.9ms
+query [14]: # of matches found 31708 and it took: 61680.7ms
+query [15]: # of matches found 31703 and it took: 62241.5ms
+query [16]: # of matches found 32222 and it took: 62103.2ms
+query [17]: # of matches found 33668 and it took: 60436.4ms
+query [18]: # of matches found 33749 and it took: 65001.9ms
+query [19]: # of matches found 33872 and it took: 62208.5ms
+query [20]: # of matches found 33747 and it took: 62463ms
+query [21]: # of matches found 33857 and it took: 65060.5ms
+query [22]: # of matches found 34077 and it took: 65128.6ms
+query [23]: # of matches found 34085 and it took: 66081.8ms
+query [24]: # of matches found 34267 and it took: 64411.4ms
+query [25]: # of matches found 34328 and it took: 65311.6ms
+query [26]: # of matches found 33375 and it took: 64337.6ms
+query [27]: # of matches found 32958 and it took: 64325.7ms
+query [28]: # of matches found 32886 and it took: 64509.4ms
+query [29]: # of matches found 32699 and it took: 63045.1ms
+query [30]: # of matches found 32842 and it took: 65949.3ms
+query [31]: # of matches found 32888 and it took: 65025.6ms
+query [32]: # of matches found 33048 and it took: 64127.5ms
+query [33]: # of matches found 32907 and it took: 64054.2ms
+query [34]: # of matches found 33713 and it took: 64781.7ms

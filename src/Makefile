@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++20 -O3 -Wall 
+CFLAGS = -std=c++20 -O3 -Wall -fopenmp 
 # CFLAGS = -Wall -std=c++11 -Iinclude
 all: parmik
 

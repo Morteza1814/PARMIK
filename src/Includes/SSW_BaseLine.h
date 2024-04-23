@@ -1,6 +1,7 @@
 #ifndef SSW_BASELINE_H
 #define SSW_BASELINE_H
 
+#include <omp.h>
 #include "Alignment.h"
 
 class SSW_BaseLine {
@@ -163,16 +164,17 @@ public:
         return bestAlignment;
     }
 
-    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, uint32_t queryCount, bool isForwardStrand, string parmikAlignments, vector<Penalty> penalties)
+    void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, uint32_t queryCount, bool isForwardStrand, string parmikAlignments, vector<Penalty> penalties, uint32_t queryBaseIndex)
     {
         ofstream pAln(parmikAlignments, ios::app);
         multiset<uint32_t> matchesPerQuery;
         cout << "Starting alignment for all queries [" << (isForwardStrand ? ("fwd"):("rev")) << "]..." << endl;
+        cout << "queryBaseIndex: " << queryBaseIndex << endl;
         for (size_t i = 0; i < queryCount; i++)
         {
-            if(i % 20 == 0)
-                cout << i << " queries processed..." << endl;
-            auto itq = queries.find(i);
+            // if(i % 100 == 0)
+                // cout << i << " queries processed..." << endl;
+            auto itq = queries.find(i + queryBaseIndex);
             if (itq == queries.end())
                 continue;
             string query = itq->second;
@@ -181,17 +183,21 @@ public:
             // read the candidate reads of cheap k-mer filter of front
             tsl::robin_map <uint32_t, Alignment> alignments;
             auto start = chrono::high_resolution_clock::now();
+            #pragma omp parallel for
             for (size_t j = 0; j < reads.size(); j++)
             {
-                if(j % 100000 == 0)
-                    cout << j << " reads processed..." << endl;
+                // if(j % 10000 == 0)
+                //     cout << j << " reads processed in Thread: " << omp_get_thread_num() << endl;
                 auto itr = reads.find(j);
                 if (itr == reads.end())
                     continue;
                 string read = itr->second;
                 Alignment aln = alignDifferentPenaltyScores(query, read, i, j, isForwardStrand, penalties);
                 if (aln.partialMatchSize > 0){
-                    alignments.insert(make_pair(j, aln));
+                    #pragma omp critical
+                    {
+                        alignments.insert(make_pair(j, aln));
+                    }
                 }
             }
             auto end = chrono::high_resolution_clock::now();

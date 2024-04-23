@@ -83,8 +83,9 @@ public:
     {
         tsl::robin_map <uint32_t, string> reads, queries;
         Utilities<uint32_t> util;
-        util.readContigsFromFile(queryFileAddress, numbQueries, queries);
-        size_t readCount = util.readContigsFromFile(readFileAddress, numReads, reads);
+        uint32_t baseIndex = 0;
+        util.readContigsFromFile(queryFileAddress, numbQueries, queries, baseIndex);
+        size_t readCount = util.readContigsFromFile(readFileAddress, numReads, reads, baseIndex);
         
         cout << "create index started\n";
         //create the index
