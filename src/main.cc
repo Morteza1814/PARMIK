@@ -290,13 +290,15 @@ int run(int argc, char *argv[]) {
         tsl::robin_map <uint32_t, string> reads, queries;
         uint32_t queryCount = 0;
         vector<Penalty> penalties = readPenalties(cfg.penaltyFileAddress);
+        uint32_t queryBaseIndex = 0;
         if (cfg.parmikMode != PARMIK_MODE_INDEX)
         {
-            queryCount = util.readContigsFromFile(cfg.queryFileAddress, cfg.queryCount, queries);
+            queryCount = util.readContigsFromFile(cfg.queryFileAddress, cfg.queryCount, queries, queryBaseIndex);
             cout << "queryCount : " << queryCount << endl;
             // read the penalties
         }
-        uint32_t readCount = util.readContigsFromFile(cfg.readDatabaseAddress, cfg.readsCount, reads);
+        uint32_t readBaseIndex = 0;
+        uint32_t readCount = util.readContigsFromFile(cfg.readDatabaseAddress, cfg.readsCount, reads, readBaseIndex);
         cout << "readCount : " << readCount << endl;
         // unordered_map<uint32_t, unordered_set<LevAlign>> alignments;
         string offlineCheapIndexAddress = cfg.offlineIndexAddress + "ck_T" + to_string(cfg.cheapKmerThreshold) + "_K"+ to_string(cfg.kmerLength) + "_r" + to_string(cfg.readsCount);
@@ -312,10 +314,10 @@ int run(int argc, char *argv[]) {
             }
             string baselineAlignmentsAddress = cfg.outputDir + "/BL_Aln_Q" + queryFileName + "_RS" + to_string(cfg.kmerLength) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
             SSW_BaseLine aligner(cfg.kmerLength, cfg.identityPercentage); 
-            aligner.findPartiaMatches(reads, queries, queryCount, true, baselineAlignmentsAddress, penalties);
+            aligner.findPartiaMatches(reads, queries, queryCount, true, baselineAlignmentsAddress, penalties, queryBaseIndex);
             //do it again for the reverse strand
             tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
-            aligner.findPartiaMatches(reads, revQueries, queryCount, false, baselineAlignmentsAddress, penalties);
+            aligner.findPartiaMatches(reads, revQueries, queryCount, false, baselineAlignmentsAddress, penalties, queryBaseIndex);
         } else if (cfg.parmikMode != PARMIK_MODE_COMPARE) {
             if (cfg.kmerLength <= 16)
             {

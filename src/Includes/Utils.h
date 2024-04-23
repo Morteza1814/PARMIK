@@ -140,7 +140,7 @@ public:
         return 0;
     }
 
-    uint32_t readContigsFromFile(string fileAddress, T numberOfEntriesToRead, tsl::robin_map <uint32_t, string>& queries)
+    uint32_t readContigsFromFile(string fileAddress, T numberOfEntriesToRead, tsl::robin_map <uint32_t, string>& queries, uint32_t& baseIndex)
     {
         ifstream file(fileAddress);
         if (!file.is_open()) {
@@ -159,6 +159,9 @@ public:
             if (line[0] == '>') {
                 // Line contains the contig ID
                 currentContigId = extractContigId(line);
+                if (queryCount == 0) {
+                    baseIndex = currentContigId;
+                }
             } else 
             {
                 queryCount++;
