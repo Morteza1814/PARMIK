@@ -259,7 +259,7 @@ int run(int argc, char *argv[]) {
     cout << left << setw(30) << "identityPercentage: " << cfg.identityPercentage << endl;
     cout << left << setw(30) << "minExactMatchLen: " << cfg.minExactMatchLen << endl;
     uint32_t minNumExactMatchKmer = 0;
-    if (cfg.parmikMode != PARMIK_MODE_INDEX) {
+    if (cfg.parmikMode != PARMIK_MODE_INDEX && cfg.parmikMode != PARMIK_MODE_BASELINE) {
         if(cfg.minExactMatchLen > 0) {
             minNumExactMatchKmer = cfg.minExactMatchLen - (cfg.kmerLength - 1);
         } else {
@@ -312,7 +312,7 @@ int run(int argc, char *argv[]) {
                 cerr << "Error: query file name is not valid" << endl;
                 return 1;
             }
-            string baselineAlignmentsAddress = cfg.outputDir + "/BL_Aln_Q" + queryFileName + "_RS" + to_string(cfg.kmerLength) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+            string baselineAlignmentsAddress = cfg.outputDir + "/BL_Aln" + "_RS" + to_string(cfg.kmerLength) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_P" + getPenaltiesSubstr(penalties) + "_Q" + queryFileName + ".txt";
             SSW_BaseLine aligner(cfg.kmerLength, cfg.identityPercentage); 
             aligner.findPartiaMatches(reads, queries, queryCount, true, baselineAlignmentsAddress, penalties, queryBaseIndex);
             //do it again for the reverse strand
@@ -358,10 +358,8 @@ int run(int argc, char *argv[]) {
                     // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
                     Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage);
-                    // pm.findPartiaMatches(reads, queries, minThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
                     aligner.findPartiaMatches(reads, queries, minThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
-                    // pm.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
                     aligner.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
                 }
             } else
@@ -403,10 +401,8 @@ int run(int argc, char *argv[]) {
                     // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
                     Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage);
-                    // pm.findPartiaMatches(reads, queries, minThCheapSeedReads, backMinThCheapSeedReads, queryCount, pmr, true, parmikAlignmentsAddress);
                     aligner.findPartiaMatches(reads, queries, minThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
-                    // pm.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, revBackMinThCheapSeedReads, queryCount, pmr, false, parmikAlignmentsAddress);
                     aligner.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
                 }
             }
@@ -527,6 +523,9 @@ void testAligner(int argc, char *argv[]){
     cout << "aln.readRegionStartPos: " << aln.readRegionStartPos << endl;
     cout << "aln.readRegionEndPos: " << aln.readRegionEndPos << endl;
     cout << "aln.criteriaCode: " << aln.criteriaCode << endl;
+    cout << "aln.editDistance: " << aln.editDistance << endl;
+    cout << "aln.substitutions: " << aln.substitutions << endl;
+    cout << "aln.inDels: " << aln.inDels << endl;
 }
 
 int main(int argc, char *argv[])
