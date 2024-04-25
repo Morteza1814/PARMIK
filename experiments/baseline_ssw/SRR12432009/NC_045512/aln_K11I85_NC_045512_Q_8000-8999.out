@@ -1,0 +1,55 @@
+no kmerRangesFileAddressArg!
+no otherToolArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  3
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads
+readFileName:                 SRR12432009_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_chunks/NC_045512_queries_8000-8999
+queryFileName:                NC_045512_queries_8000-8999
+otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR12432009/NC_045512/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR12432009/NC_045512
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/2484_1111_2444_2288_2848
+kmerRangesFileAddress:        
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   11
+regionSize:                   48
+cheapKmerThreshold:           0
+identityPercentage:           0.85
+minExactMatchLen:             0
+minNumExactMatchKmer:         0
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/
+max editDistance in min region: 2
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 2, s: 4, go: 8, ge: 4
+m: 1, s: 1, go: 1, ge: 1
+m: 2, s: 4, go: 4, ge: 4
+m: 2, s: 2, go: 8, ge: 8
+m: 2, s: 8, go: 4, ge: 8
+------------------------------------
+numberOfReadsWithN : 0
+queryCount : 1000
+numberOfReadsWithN : 0
+readCount : 16344647
+offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/ck_T0_K11_r17000000
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR12432009/NC_045512/aln/pmAln_R48_PI85_L0_M0_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+Starting alignment for all queries [fwd]...
+queryBaseIndex: 8000
+query [8000]: # of matches found 30079 and it took: 61271.6ms
+query [8001]: # of matches found 29326 and it took: 61110.7ms
+query [8002]: # of matches found 29230 and it took: 61707.2ms
+query [8003]: # of matches found 29334 and it took: 63923ms
+query [8004]: # of matches found 29435 and it took: 63749.7ms
+query [8005]: # of matches found 29363 and it took: 63869.9ms
+query [8006]: # of matches found 29171 and it took: 63587.4ms
+query [8007]: # of matches found 29247 and it took: 63260ms
+query [8008]: # of matches found 29207 and it took: 63438.6ms
+query [8009]: # of matches found 29137 and it took: 62506.6ms
+query [8010]: # of matches found 29123 and it took: 61674.5ms
+query [8011]: # of matches found 28735 and it took: 62120.7ms
+query [8012]: # of matches found 28600 and it took: 61990.7ms
+query [8013]: # of matches found 28658 and it took: 62312.6ms
+query [8014]: # of matches found 28613 and it took: 62713.8ms
+query [8015]: # of matches found 28527 and it took: 62087ms
