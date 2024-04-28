@@ -1,0 +1,54 @@
+no kmerRangesFileAddressArg!
+no otherToolArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  3
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads
+readFileName:                 SRR12432009_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/SarsGenome_chunks/SarsGenome_queries_21000-21999
+queryFileName:                SarsGenome_queries_21000-21999
+otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR12432009/SarsGenome/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR12432009/SarsGenome
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/2484_1111_2444_2288_2848
+kmerRangesFileAddress:        
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   11
+regionSize:                   48
+cheapKmerThreshold:           0
+identityPercentage:           0.85
+minExactMatchLen:             0
+minNumExactMatchKmer:         0
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/
+max editDistance in min region: 2
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 2, s: 4, go: 8, ge: 4
+m: 1, s: 1, go: 1, ge: 1
+m: 2, s: 4, go: 4, ge: 4
+m: 2, s: 2, go: 8, ge: 8
+m: 2, s: 8, go: 4, ge: 8
+------------------------------------
+numberOfReadsWithN : 0
+queryCount : 1000
+numberOfReadsWithN : 0
+readCount : 16344647
+offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/ck_T0_K11_r17000000
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR12432009/SarsGenome/aln/pmAln_R48_PI85_L0_M0_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+Starting alignment for all queries [fwd]...
+queryBaseIndex: 21000
+query [21000]: # of matches found 43463 and it took: 97527.2ms
+query [21001]: # of matches found 43592 and it took: 97304.2ms
+query [21002]: # of matches found 43492 and it took: 96954.1ms
+query [21003]: # of matches found 43499 and it took: 96881.8ms
+query [21004]: # of matches found 43518 and it took: 97303.2ms
+query [21005]: # of matches found 43521 and it took: 97369.4ms
+query [21006]: # of matches found 42243 and it took: 97938.7ms
+query [21007]: # of matches found 42142 and it took: 99171.2ms
+query [21008]: # of matches found 32587 and it took: 99056.5ms
+query [21009]: # of matches found 32444 and it took: 99250.3ms
+query [21010]: # of matches found 32588 and it took: 99544.1ms
+query [21011]: # of matches found 32768 and it took: 100593ms
+query [21012]: # of matches found 32853 and it took: 99669.7ms
+query [21013]: # of matches found 32994 and it took: 100329ms
+query [21014]: # of matches found 33068 and it took: 100399ms

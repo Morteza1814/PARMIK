@@ -1,0 +1,69 @@
+no kmerRangesFileAddressArg!
+no otherToolArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  3
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads
+readFileName:                 SRR12432009_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/SarsGenome_chunks/SarsGenome_queries_3000-3999
+queryFileName:                SarsGenome_queries_3000-3999
+otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR12432009/SarsGenome/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR12432009/SarsGenome
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/2484_1111_2444_2288_2848
+kmerRangesFileAddress:        
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   11
+regionSize:                   48
+cheapKmerThreshold:           0
+identityPercentage:           0.85
+minExactMatchLen:             0
+minNumExactMatchKmer:         0
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/
+max editDistance in min region: 2
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 2, s: 4, go: 8, ge: 4
+m: 1, s: 1, go: 1, ge: 1
+m: 2, s: 4, go: 4, ge: 4
+m: 2, s: 2, go: 8, ge: 8
+m: 2, s: 8, go: 4, ge: 8
+------------------------------------
+numberOfReadsWithN : 0
+queryCount : 1000
+numberOfReadsWithN : 0
+readCount : 16344647
+offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/ck_T0_K11_r17000000
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR12432009/SarsGenome/aln/pmAln_R48_PI85_L0_M0_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+Starting alignment for all queries [fwd]...
+queryBaseIndex: 3000
+query [3000]: # of matches found 33895 and it took: 101288ms
+query [3001]: # of matches found 33689 and it took: 101272ms
+query [3002]: # of matches found 33567 and it took: 101727ms
+query [3003]: # of matches found 33483 and it took: 102759ms
+query [3004]: # of matches found 33328 and it took: 102635ms
+query [3005]: # of matches found 34596 and it took: 102152ms
+query [3006]: # of matches found 34470 and it took: 102886ms
+query [3007]: # of matches found 34388 and it took: 102890ms
+query [3008]: # of matches found 34331 and it took: 102752ms
+query [3009]: # of matches found 34680 and it took: 102190ms
+query [3010]: # of matches found 34623 and it took: 102056ms
+query [3011]: # of matches found 34521 and it took: 102176ms
+query [3012]: # of matches found 33999 and it took: 102686ms
+query [3013]: # of matches found 34196 and it took: 103379ms
+query [3014]: # of matches found 34130 and it took: 102437ms
+query [3015]: # of matches found 34069 and it took: 102350ms
+query [3016]: # of matches found 33799 and it took: 102810ms
+query [3017]: # of matches found 33795 and it took: 102871ms
+query [3018]: # of matches found 33862 and it took: 102609ms
+query [3019]: # of matches found 34029 and it took: 102077ms
+query [3020]: # of matches found 34093 and it took: 102391ms
+query [3021]: # of matches found 34044 and it took: 101699ms
+query [3022]: # of matches found 34058 and it took: 102708ms
+query [3023]: # of matches found 33670 and it took: 103007ms
+query [3024]: # of matches found 33655 and it took: 102236ms
+query [3025]: # of matches found 33916 and it took: 103521ms
+query [3026]: # of matches found 34027 and it took: 103561ms
+query [3027]: # of matches found 34106 and it took: 103918ms
+query [3028]: # of matches found 34100 and it took: 104158ms
+query [3029]: # of matches found 34064 and it took: 103570ms

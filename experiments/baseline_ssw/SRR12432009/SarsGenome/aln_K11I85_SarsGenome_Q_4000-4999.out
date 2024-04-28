@@ -1,0 +1,75 @@
+no kmerRangesFileAddressArg!
+no otherToolArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  3
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads
+readFileName:                 SRR12432009_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/SarsGenome_chunks/SarsGenome_queries_4000-4999
+queryFileName:                SarsGenome_queries_4000-4999
+otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR12432009/SarsGenome/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR12432009/SarsGenome
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/2484_1111_2444_2288_2848
+kmerRangesFileAddress:        
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   11
+regionSize:                   48
+cheapKmerThreshold:           0
+identityPercentage:           0.85
+minExactMatchLen:             0
+minNumExactMatchKmer:         0
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/
+max editDistance in min region: 2
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 2, s: 4, go: 8, ge: 4
+m: 1, s: 1, go: 1, ge: 1
+m: 2, s: 4, go: 4, ge: 4
+m: 2, s: 2, go: 8, ge: 8
+m: 2, s: 8, go: 4, ge: 8
+------------------------------------
+numberOfReadsWithN : 0
+queryCount : 1000
+numberOfReadsWithN : 0
+readCount : 16344647
+offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/ck_T0_K11_r17000000
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR12432009/SarsGenome/aln/pmAln_R48_PI85_L0_M0_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+Starting alignment for all queries [fwd]...
+queryBaseIndex: 4000
+query [4000]: # of matches found 24521 and it took: 82593.6ms
+query [4001]: # of matches found 25423 and it took: 81865.3ms
+query [4002]: # of matches found 25582 and it took: 82184.4ms
+query [4003]: # of matches found 25634 and it took: 81580.2ms
+query [4004]: # of matches found 25420 and it took: 82262.9ms
+query [4005]: # of matches found 25054 and it took: 82510.5ms
+query [4006]: # of matches found 24577 and it took: 82019.6ms
+query [4007]: # of matches found 24133 and it took: 82169.5ms
+query [4008]: # of matches found 24119 and it took: 83978.3ms
+query [4009]: # of matches found 24024 and it took: 84617.6ms
+query [4010]: # of matches found 23977 and it took: 84423.2ms
+query [4011]: # of matches found 24009 and it took: 84005.7ms
+query [4012]: # of matches found 24266 and it took: 83964.3ms
+query [4013]: # of matches found 24246 and it took: 81839.7ms
+query [4014]: # of matches found 24283 and it took: 83702.2ms
+query [4015]: # of matches found 24794 and it took: 84887.3ms
+query [4016]: # of matches found 24997 and it took: 83541.1ms
+query [4017]: # of matches found 25012 and it took: 83660.2ms
+query [4018]: # of matches found 25234 and it took: 84851.6ms
+query [4019]: # of matches found 25341 and it took: 86593ms
+query [4020]: # of matches found 25565 and it took: 84768.7ms
+query [4021]: # of matches found 24805 and it took: 84031ms
+query [4022]: # of matches found 24733 and it took: 83829.9ms
+query [4023]: # of matches found 24620 and it took: 82847.7ms
+query [4024]: # of matches found 24569 and it took: 83660.1ms
+query [4025]: # of matches found 24622 and it took: 83868.1ms
+query [4026]: # of matches found 24257 and it took: 82864.5ms
+query [4027]: # of matches found 24064 and it took: 83101.5ms
+query [4028]: # of matches found 23970 and it took: 84292.2ms
+query [4029]: # of matches found 23842 and it took: 83993.5ms
+query [4030]: # of matches found 23922 and it took: 84278.1ms
+query [4031]: # of matches found 23848 and it took: 84163.9ms
+query [4032]: # of matches found 23826 and it took: 84199.4ms
+query [4033]: # of matches found 23804 and it took: 82776.4ms
+query [4034]: # of matches found 23783 and it took: 84422.5ms
+query [4035]: # of matches found 23796 and it took: 85015.9ms
