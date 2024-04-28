@@ -20,7 +20,7 @@ def split_file(input_file, output_dir, batch_size=1000):
                     break
                 line = lines[line_num]
                 line_num += 1
-                if "NC_045512" not in line:
+                if "SARS" not in line:
                     batch_query+=1
                 of.writelines(line)
 if __name__ == "__main__":

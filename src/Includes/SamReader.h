@@ -96,7 +96,7 @@ public:
         return extractEditTypes(cigar).clipCount;
     }
 
-    vector<Sam> parseFile(uint32_t lastQueryID) {
+    vector<Sam> parseFile(uint32_t lastQueryID, bool compressedFormat = false) {
         vector<Sam> alignments;
         ifstream samFile(filename_);
         Utilities<uint32_t> utl;
@@ -114,7 +114,11 @@ public:
             Sam sam;
             istringstream iss(line);
             string queryID, readID, flag, pos, mapQ, cigar, rNext, pNext, tLen, seq, qual;
-            iss >> queryID >>  flag >> readID >>  pos >>  mapQ >> cigar >>   rNext >>  pNext >>  tLen >>  seq >>  qual;
+            if (compressedFormat) {
+                iss >> queryID >>  flag >> readID >>  pos >> cigar;
+            } else {
+                iss >> queryID >>  flag >> readID >>  pos >>  mapQ >> cigar >>   rNext >>  pNext >>  tLen >>  seq >>  qual;
+            }
             
             size_t found = readID.find("*");
             if (found != string::npos)
@@ -125,13 +129,15 @@ public:
             // cout << queryID << " " << readID << " " << flag << " " << pos << " " << mapQ << " " << cigar << " " << rNext << " " << pNext << " " << tLen << " " << seq << " " << qual << endl;
             if (flag.find("*") != string::npos) sam.flag = 0; else sam.flag = stoi(flag.c_str());
             if (pos.find("*") != string::npos) sam.pos = 0; else sam.pos = stoi(pos.c_str());
-            if (mapQ.find("*") != string::npos) sam.mapQ = 0; else sam.mapQ = stoi(mapQ.c_str());
             if (cigar.find("*") != string::npos) sam.cigar = ""; else sam.cigar = cigar;
-            if (rNext.find("*") != string::npos) sam.rNext = ""; else sam.rNext = rNext;
-            if (pNext.find("*") != string::npos) sam.pNext = ""; else sam.pNext = pNext;
-            if (tLen.find("*") != string::npos) sam.tLen = 0; else sam.tLen = stoi(tLen.c_str());
-            if (seq.find("*") != string::npos) sam.seq = ""; else sam.seq = seq;
-            if (qual.find("*") != string::npos) sam.qual = ""; else sam.qual = qual;
+            if (!compressedFormat) {
+                if (mapQ.find("*") != string::npos) sam.mapQ = 0; else sam.mapQ = stoi(mapQ.c_str());
+                if (rNext.find("*") != string::npos) sam.rNext = ""; else sam.rNext = rNext;
+                if (pNext.find("*") != string::npos) sam.pNext = ""; else sam.pNext = pNext;
+                if (tLen.find("*") != string::npos) sam.tLen = 0; else sam.tLen = stoi(tLen.c_str());
+                if (seq.find("*") != string::npos) sam.seq = ""; else sam.seq = seq;
+                if (qual.find("*") != string::npos) sam.qual = ""; else sam.qual = qual;
+            }
 
             sam.queryId = utl.extractContigId(queryID);
             sam.readId = utl.extractContigId(readID);
