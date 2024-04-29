@@ -18,12 +18,14 @@
 #include "Includes/Aligner.h"
 #include "Includes/Alignment.h"
 #include "Includes/SSW_BaseLine.h"
+#include "Includes/CompareWithBaseLine.h"
 #include <cmath>
 
-#define PARMIK_MODE_INDEX       0
-#define PARMIK_MODE_ALIGN       1
-#define PARMIK_MODE_COMPARE     2
-#define PARMIK_MODE_BASELINE    3
+#define PARMIK_MODE_INDEX           0
+#define PARMIK_MODE_ALIGN           1
+#define PARMIK_MODE_COMPARE         2
+#define PARMIK_MODE_BASELINE        3
+#define PARMIK_MODE_CMP_BASELINE    4
 
 int argParse(int argc, char** argv, Config &cfg){
 	args::ArgumentParser parser("=========================Arguments===========================", "======================================================");
@@ -48,10 +50,7 @@ int argParse(int argc, char** argv, Config &cfg){
     args::ValueFlag<int> cheapKmerThresholdArg(parser, "", "Cheap Kmer Threshold",              {'t', "cheapKmerThreshold"});
 	args::Flag isVerboseLogArg(parser, "", "Verbose Logging",                                   {'v', "verboseLog"});
 	args::Flag isIndexOfflineArg(parser, "", "Is the read index offline",                       {'x', "isIndexOffline"});
-    // args::ValueFlag<int> overlapSizeArg(parser, "", "Overlap Size",                         {'z', "overlapSize"});
-	// args::Flag isFreqAndMemReportArg(parser, "", "Report Seed Frequencies and Avg MEM sizes", {'z', "memfreq"});
-	// args::Flag isReverseStrandArg(parser, "", "Check the Reverse Strand of Queries", {'y', "reverseStrand"});
-	// args::Flag isOnlyBestAlignmentArg(parser, "", "Only Output the Largest Alignment for Each Query", {'b', "bestAlign"});
+    args::ValueFlag<string> baselineBaseAddressArg(parser, "", "BaseLine file base address",    {'z', "baselineBaseAddress"});
     try
     {
         parser.ParseCLI(argc, argv);
@@ -89,6 +88,7 @@ int argParse(int argc, char** argv, Config &cfg){
     if (offlineIndexAddressArg) {cfg.offlineIndexAddress = args::get(offlineIndexAddressArg); } else {cout << "no offlineIndexAddress!"<< endl; return 0;}
     if (otherToolAddressArg) {cfg.otherToolOutputFileAddress = args::get(otherToolAddressArg); } else {cout << "no otherToolOutputFileAddress!"<< endl; return 0;}
     if (parmikModeArg) {cfg.parmikMode = args::get(parmikModeArg); } else {cout << "no parmik mode is determined!"<< endl; return 0;}
+    if (baselineBaseAddressArg) {cfg.baselineBaseAddress = args::get(baselineBaseAddressArg); } else {cout << "no baselineBaseAddress!"<< endl; if(cfg.parmikMode == PARMIK_MODE_CMP_BASELINE){return 0;}}
     if (otherToolArg) {cfg.otherTool = args::get(otherToolArg);} else {cout << "no otherToolArg!"<< endl;if(cfg.parmikMode == PARMIK_MODE_COMPARE) return 0;}
 	if (editDistanceArg) {cfg.editDistance = args::get(editDistanceArg); } else {cfg.editDistance = NUMBER_OF_ALLOWED_EDIT_DISTANCES;}
     if (minExactMatchLenArg) {cfg.minExactMatchLen = args::get(minExactMatchLenArg); } else {cfg.minExactMatchLen = 0;}
@@ -275,6 +275,7 @@ int run(int argc, char *argv[]) {
     cout << left << setw(30) << "minNumExactMatchKmer: " << minNumExactMatchKmer << endl;
     cout << left << setw(30) << "isIndexOffline: " << cfg.isIndexOffline << endl;
     cout << left << setw(30) << "offlineIndexAddress: " << cfg.offlineIndexAddress << endl;
+    cout << left << setw(30) << "baselineBaseAddress: " << cfg.baselineBaseAddress << endl;
     cout << left << setw(30) << "max editDistance in min region: " << cfg.editDistance << endl;
 	cout << "**********************CONFIGURATIONS*****************************" << endl;
 
@@ -318,7 +319,7 @@ int run(int argc, char *argv[]) {
             //do it again for the reverse strand
             tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
             aligner.findPartiaMatches(reads, revQueries, queryCount, false, baselineAlignmentsAddress, penalties, queryBaseIndex);
-        } else if (cfg.parmikMode != PARMIK_MODE_COMPARE) {
+        } else if (cfg.parmikMode == PARMIK_MODE_INDEX && cfg.parmikMode == PARMIK_MODE_ALIGN) {
             if (cfg.kmerLength <= 16)
             {
                 Container<uint32_t, uint32_t> cheapKmers;
@@ -418,6 +419,11 @@ int run(int argc, char *argv[]) {
             //     }
             //     matches.close();
             // }
+        } else if (cfg.parmikMode == PARMIK_MODE_CMP_BASELINE){
+            string comparisonResultsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/cmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+            string alnReportAddressBase = cfg.outputDir + "/cmp/" + cfg.otherTool + "/cmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties);
+            CompareWithBaseLine blCmp(cfg.identityPercentage);
+            blCmp.compareWithBaseLine(cfg, reads, queries, comparisonResultsFileAddress, queryCount, alnReportAddressBase, cfg.otherTool, cfg.baselineBaseAddress);
         } else {
             if(cfg.noOutputFileDump)
             {
