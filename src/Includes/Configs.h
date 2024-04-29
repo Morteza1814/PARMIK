@@ -33,6 +33,7 @@ typedef struct config
     string offlineIndexAddress;
     string penaltyFileAddress;
     string kmerRangesFileAddress;
+    string baselineBaseAddress;
     unsigned int readsCount;
     unsigned int queryCount;
     unsigned int kmerLength;

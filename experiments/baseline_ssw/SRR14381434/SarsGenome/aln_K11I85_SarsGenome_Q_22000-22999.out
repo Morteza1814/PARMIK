@@ -1,0 +1,298 @@
+no kmerRangesFileAddressArg!
+no otherToolArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  3
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR14381434/SRR14381434_reads
+readFileName:                 SRR14381434_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/SarsGenome_chunks/SarsGenome_queries_22000-22999
+queryFileName:                SarsGenome_queries_22000-22999
+otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR14381434/SarsGenome/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381434/SarsGenome
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/2484_1111_2444_2288_2848
+kmerRangesFileAddress:        
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   11
+regionSize:                   48
+cheapKmerThreshold:           0
+identityPercentage:           0.85
+minExactMatchLen:             0
+minNumExactMatchKmer:         0
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381434/
+max editDistance in min region: 2
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 2, s: 4, go: 8, ge: 4
+m: 1, s: 1, go: 1, ge: 1
+m: 2, s: 4, go: 4, ge: 4
+m: 2, s: 2, go: 8, ge: 8
+m: 2, s: 8, go: 4, ge: 8
+------------------------------------
+numberOfReadsWithN : 0
+queryCount : 1000
+numberOfReadsWithN : 0
+readCount : 9488668
+offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381434/ck_T0_K11_r17000000
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381434/SarsGenome/aln/pmAln_R48_PI85_L0_M0_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+Starting alignment for all queries [fwd]...
+queryBaseIndex: 22000
+query [22000]: # of matches found 19034 and it took: 53121.8ms
+query [22001]: # of matches found 19103 and it took: 53592.1ms
+query [22002]: # of matches found 19323 and it took: 53203.6ms
+query [22003]: # of matches found 19479 and it took: 53254.4ms
+query [22004]: # of matches found 19439 and it took: 52848.2ms
+query [22005]: # of matches found 19558 and it took: 52835.3ms
+query [22006]: # of matches found 19582 and it took: 53123.3ms
+query [22007]: # of matches found 19390 and it took: 52898.9ms
+query [22008]: # of matches found 19384 and it took: 52936.5ms
+query [22009]: # of matches found 19192 and it took: 53057.1ms
+query [22010]: # of matches found 19153 and it took: 53160ms
+query [22011]: # of matches found 19052 and it took: 53243.9ms
+query [22012]: # of matches found 19057 and it took: 53041.9ms
+query [22013]: # of matches found 19082 and it took: 53180.8ms
+query [22014]: # of matches found 19069 and it took: 52961.5ms
+query [22015]: # of matches found 19087 and it took: 53104.1ms
+query [22016]: # of matches found 19098 and it took: 53072.7ms
+query [22017]: # of matches found 19063 and it took: 52913.8ms
+query [22018]: # of matches found 18975 and it took: 52921.1ms
+query [22019]: # of matches found 18945 and it took: 53060.9ms
+query [22020]: # of matches found 19008 and it took: 53045.8ms
+query [22021]: # of matches found 18785 and it took: 53075ms
+query [22022]: # of matches found 18726 and it took: 52856.9ms
+query [22023]: # of matches found 18494 and it took: 53521.8ms
+query [22024]: # of matches found 18299 and it took: 52832.4ms
+query [22025]: # of matches found 18021 and it took: 52920.8ms
+query [22026]: # of matches found 17672 and it took: 53056.7ms
+query [22027]: # of matches found 18107 and it took: 52884.5ms
+query [22028]: # of matches found 18165 and it took: 52951.1ms
+query [22029]: # of matches found 18253 and it took: 52986.7ms
+query [22030]: # of matches found 19245 and it took: 52971.2ms
+query [22031]: # of matches found 19280 and it took: 52953.4ms
+query [22032]: # of matches found 19811 and it took: 52902ms
+query [22033]: # of matches found 20006 and it took: 52764.6ms
+query [22034]: # of matches found 20202 and it took: 52671.3ms
+query [22035]: # of matches found 20371 and it took: 52820.6ms
+query [22036]: # of matches found 20433 and it took: 52995.6ms
+query [22037]: # of matches found 20384 and it took: 52643.1ms
+query [22038]: # of matches found 18558 and it took: 52799.7ms
+query [22039]: # of matches found 18527 and it took: 52979.3ms
+query [22040]: # of matches found 18473 and it took: 52902.3ms
+query [22041]: # of matches found 18227 and it took: 53088.7ms
+query [22042]: # of matches found 18018 and it took: 53123.2ms
+query [22043]: # of matches found 17866 and it took: 53008.3ms
+query [22044]: # of matches found 17760 and it took: 52999.4ms
+query [22045]: # of matches found 17678 and it took: 53135.4ms
+query [22046]: # of matches found 17546 and it took: 53214.5ms
+query [22047]: # of matches found 17651 and it took: 52981ms
+query [22048]: # of matches found 17452 and it took: 53110.8ms
+query [22049]: # of matches found 17322 and it took: 53176.8ms
+query [22050]: # of matches found 16918 and it took: 53136.1ms
+query [22051]: # of matches found 15591 and it took: 53239.5ms
+query [22052]: # of matches found 15333 and it took: 53241.4ms
+query [22053]: # of matches found 14635 and it took: 53349.1ms
+query [22054]: # of matches found 14331 and it took: 53216.7ms
+query [22055]: # of matches found 14259 and it took: 53255.9ms
+query [22056]: # of matches found 13863 and it took: 53308.7ms
+query [22057]: # of matches found 13817 and it took: 53556.8ms
+query [22058]: # of matches found 13824 and it took: 53251.8ms
+query [22059]: # of matches found 13834 and it took: 53301.4ms
+query [22060]: # of matches found 13805 and it took: 53010.3ms
+query [22061]: # of matches found 13823 and it took: 52808.5ms
+query [22062]: # of matches found 13873 and it took: 52832.7ms
+query [22063]: # of matches found 13895 and it took: 53105.5ms
+query [22064]: # of matches found 13956 and it took: 53074.4ms
+query [22065]: # of matches found 14100 and it took: 53106.9ms
+query [22066]: # of matches found 14131 and it took: 53179.1ms
+query [22067]: # of matches found 14462 and it took: 53099.1ms
+query [22068]: # of matches found 14522 and it took: 53505.7ms
+query [22069]: # of matches found 14509 and it took: 53476.1ms
+query [22070]: # of matches found 14699 and it took: 53290.2ms
+query [22071]: # of matches found 14794 and it took: 53592.8ms
+query [22072]: # of matches found 14757 and it took: 53520.7ms
+query [22073]: # of matches found 14721 and it took: 53452.4ms
+query [22074]: # of matches found 14554 and it took: 53437.2ms
+query [22075]: # of matches found 14514 and it took: 53487.9ms
+query [22076]: # of matches found 14464 and it took: 53480.3ms
+query [22077]: # of matches found 14455 and it took: 53389.6ms
+query [22078]: # of matches found 14469 and it took: 53343.2ms
+query [22079]: # of matches found 14532 and it took: 53706.6ms
+query [22080]: # of matches found 14619 and it took: 53723.8ms
+query [22081]: # of matches found 14615 and it took: 53697.2ms
+query [22082]: # of matches found 14710 and it took: 54219.5ms
+query [22083]: # of matches found 14706 and it took: 54161.7ms
+query [22084]: # of matches found 14761 and it took: 54410.7ms
+query [22085]: # of matches found 14743 and it took: 54620.1ms
+query [22086]: # of matches found 14759 and it took: 54708.3ms
+query [22087]: # of matches found 24895 and it took: 54574.4ms
+query [22088]: # of matches found 24944 and it took: 54736.1ms
+query [22089]: # of matches found 24949 and it took: 55353.9ms
+query [22090]: # of matches found 24968 and it took: 55778.5ms
+query [22091]: # of matches found 25079 and it took: 55411.5ms
+query [22092]: # of matches found 25198 and it took: 55901.1ms
+query [22093]: # of matches found 25473 and it took: 56407.3ms
+query [22094]: # of matches found 25962 and it took: 56495.1ms
+query [22095]: # of matches found 25977 and it took: 56540.4ms
+query [22096]: # of matches found 26226 and it took: 56736.4ms
+query [22097]: # of matches found 25794 and it took: 56607.7ms
+query [22098]: # of matches found 25726 and it took: 56478.2ms
+query [22099]: # of matches found 25607 and it took: 56854.4ms
+query [22100]: # of matches found 25628 and it took: 56637.5ms
+query [22101]: # of matches found 25614 and it took: 56593.5ms
+query [22102]: # of matches found 25615 and it took: 56472.5ms
+query [22103]: # of matches found 25663 and it took: 56943.4ms
+query [22104]: # of matches found 25959 and it took: 56872.4ms
+query [22105]: # of matches found 26351 and it took: 57125.1ms
+query [22106]: # of matches found 26464 and it took: 56978ms
+query [22107]: # of matches found 28582 and it took: 56884.9ms
+query [22108]: # of matches found 28622 and it took: 56936.4ms
+query [22109]: # of matches found 28647 and it took: 57193.2ms
+query [22110]: # of matches found 28669 and it took: 56757.5ms
+query [22111]: # of matches found 28860 and it took: 56882.1ms
+query [22112]: # of matches found 28933 and it took: 56897.3ms
+query [22113]: # of matches found 28826 and it took: 57259.3ms
+query [22114]: # of matches found 28809 and it took: 57254.7ms
+query [22115]: # of matches found 28817 and it took: 57514.3ms
+query [22116]: # of matches found 28787 and it took: 57699.3ms
+query [22117]: # of matches found 28789 and it took: 57495.5ms
+query [22118]: # of matches found 28818 and it took: 57482.4ms
+query [22119]: # of matches found 28825 and it took: 57747ms
+query [22120]: # of matches found 28752 and it took: 57504.5ms
+query [22121]: # of matches found 28728 and it took: 57527.6ms
+query [22122]: # of matches found 28533 and it took: 57871.5ms
+query [22123]: # of matches found 28499 and it took: 58038.5ms
+query [22124]: # of matches found 28425 and it took: 57977.5ms
+query [22125]: # of matches found 28577 and it took: 57952.4ms
+query [22126]: # of matches found 28539 and it took: 58255ms
+query [22127]: # of matches found 28460 and it took: 58059ms
+query [22128]: # of matches found 28373 and it took: 57738.6ms
+query [22129]: # of matches found 28412 and it took: 58196.5ms
+query [22130]: # of matches found 28436 and it took: 57883.1ms
+query [22131]: # of matches found 28477 and it took: 57713ms
+query [22132]: # of matches found 26661 and it took: 57716.5ms
+query [22133]: # of matches found 26602 and it took: 58034.1ms
+query [22134]: # of matches found 26646 and it took: 58109.9ms
+query [22135]: # of matches found 26649 and it took: 58426.4ms
+query [22136]: # of matches found 26659 and it took: 58253.3ms
+query [22137]: # of matches found 26633 and it took: 58637.8ms
+query [22138]: # of matches found 26619 and it took: 58076.1ms
+query [22139]: # of matches found 26614 and it took: 58385.5ms
+query [22140]: # of matches found 26545 and it took: 58525.8ms
+query [22141]: # of matches found 26211 and it took: 58262.4ms
+query [22142]: # of matches found 25977 and it took: 58468.3ms
+query [22143]: # of matches found 25787 and it took: 58902.9ms
+query [22144]: # of matches found 25796 and it took: 58964.7ms
+query [22145]: # of matches found 25682 and it took: 59049.7ms
+query [22146]: # of matches found 25670 and it took: 59368ms
+query [22147]: # of matches found 26273 and it took: 59382.5ms
+query [22148]: # of matches found 26529 and it took: 59096.2ms
+query [22149]: # of matches found 26792 and it took: 59122.1ms
+query [22150]: # of matches found 26905 and it took: 59242.8ms
+query [22151]: # of matches found 27036 and it took: 59022.2ms
+query [22152]: # of matches found 27143 and it took: 59446.5ms
+query [22153]: # of matches found 27164 and it took: 59732.7ms
+query [22154]: # of matches found 27181 and it took: 59431.6ms
+query [22155]: # of matches found 27226 and it took: 59220.5ms
+query [22156]: # of matches found 27229 and it took: 59348.5ms
+query [22157]: # of matches found 27214 and it took: 59407.7ms
+query [22158]: # of matches found 27218 and it took: 59001.7ms
+query [22159]: # of matches found 27175 and it took: 59242.4ms
+query [22160]: # of matches found 27107 and it took: 59379ms
+query [22161]: # of matches found 27146 and it took: 59208.9ms
+query [22162]: # of matches found 27155 and it took: 59000.5ms
+query [22163]: # of matches found 27222 and it took: 59154ms
+query [22164]: # of matches found 27305 and it took: 59246.8ms
+query [22165]: # of matches found 27359 and it took: 59042.2ms
+query [22166]: # of matches found 27269 and it took: 59287.3ms
+query [22167]: # of matches found 36147 and it took: 59450.4ms
+query [22168]: # of matches found 35818 and it took: 59192.7ms
+query [22169]: # of matches found 35494 and it took: 59430.5ms
+query [22170]: # of matches found 34566 and it took: 59248.4ms
+query [22171]: # of matches found 34618 and it took: 59302.6ms
+query [22172]: # of matches found 34101 and it took: 59018.6ms
+query [22173]: # of matches found 34416 and it took: 59209.2ms
+query [22174]: # of matches found 34279 and it took: 59388.8ms
+query [22175]: # of matches found 34110 and it took: 59066.3ms
+query [22176]: # of matches found 34132 and it took: 59503.9ms
+query [22177]: # of matches found 34006 and it took: 59421.8ms
+query [22178]: # of matches found 34016 and it took: 59291.4ms
+query [22179]: # of matches found 34266 and it took: 59375.8ms
+query [22180]: # of matches found 34313 and it took: 59490.9ms
+query [22181]: # of matches found 34375 and it took: 59322.9ms
+query [22182]: # of matches found 34659 and it took: 59220.9ms
+query [22183]: # of matches found 34711 and it took: 59844.1ms
+query [22184]: # of matches found 34800 and it took: 59269.3ms
+query [22185]: # of matches found 34919 and it took: 58618.6ms
+query [22186]: # of matches found 34923 and it took: 59013.2ms
+query [22187]: # of matches found 34703 and it took: 58904.7ms
+query [22188]: # of matches found 34759 and it took: 58588.8ms
+query [22189]: # of matches found 34988 and it took: 58218.7ms
+query [22190]: # of matches found 35049 and it took: 58259.9ms
+query [22191]: # of matches found 35069 and it took: 58097.9ms
+query [22192]: # of matches found 35090 and it took: 58070.5ms
+query [22193]: # of matches found 35099 and it took: 58149.9ms
+query [22194]: # of matches found 35166 and it took: 58516.8ms
+query [22195]: # of matches found 35209 and it took: 58062ms
+query [22196]: # of matches found 35233 and it took: 58586.8ms
+query [22197]: # of matches found 35290 and it took: 58450.9ms
+query [22198]: # of matches found 35274 and it took: 58329.3ms
+query [22199]: # of matches found 35420 and it took: 58204.9ms
+query [22200]: # of matches found 35421 and it took: 58200.5ms
+query [22201]: # of matches found 35486 and it took: 58027ms
+query [22202]: # of matches found 35416 and it took: 57988.7ms
+query [22203]: # of matches found 35416 and it took: 58076.7ms
+query [22204]: # of matches found 35381 and it took: 58168.1ms
+query [22205]: # of matches found 35297 and it took: 57803.7ms
+query [22206]: # of matches found 35302 and it took: 58335.9ms
+query [22207]: # of matches found 35141 and it took: 57820.5ms
+query [22208]: # of matches found 34917 and it took: 57572ms
+query [22209]: # of matches found 34880 and it took: 57440.3ms
+query [22210]: # of matches found 34719 and it took: 57408.4ms
+query [22211]: # of matches found 34634 and it took: 57322.9ms
+query [22212]: # of matches found 34646 and it took: 57281.7ms
+query [22213]: # of matches found 34645 and it took: 57302.5ms
+query [22214]: # of matches found 34593 and it took: 57397.9ms
+query [22215]: # of matches found 34524 and it took: 57237.5ms
+query [22216]: # of matches found 34480 and it took: 57616.4ms
+query [22217]: # of matches found 34473 and it took: 57875.4ms
+query [22218]: # of matches found 34459 and it took: 57851.5ms
+query [22219]: # of matches found 34397 and it took: 58038.1ms
+query [22220]: # of matches found 34333 and it took: 57962ms
+query [22221]: # of matches found 34325 and it took: 57645ms
+query [22222]: # of matches found 34337 and it took: 57967.8ms
+query [22223]: # of matches found 34368 and it took: 57986ms
+query [22224]: # of matches found 34236 and it took: 57764.5ms
+query [22225]: # of matches found 34351 and it took: 57964.7ms
+query [22226]: # of matches found 34367 and it took: 58263.9ms
+query [22227]: # of matches found 24282 and it took: 57760.1ms
+query [22228]: # of matches found 24218 and it took: 57584.3ms
+query [22229]: # of matches found 24177 and it took: 57353.3ms
+query [22230]: # of matches found 24189 and it took: 57479.2ms
+query [22231]: # of matches found 24100 and it took: 57072ms
+query [22232]: # of matches found 24304 and it took: 57513.4ms
+query [22233]: # of matches found 23982 and it took: 57574.1ms
+query [22234]: # of matches found 23573 and it took: 57567ms
+query [22235]: # of matches found 23538 and it took: 57613.7ms
+query [22236]: # of matches found 23425 and it took: 58091.4ms
+query [22237]: # of matches found 23318 and it took: 57946.4ms
+query [22238]: # of matches found 23369 and it took: 57710ms
+query [22239]: # of matches found 23443 and it took: 57672.2ms
+query [22240]: # of matches found 23476 and it took: 57917.7ms
+query [22241]: # of matches found 23485 and it took: 57608.2ms
+query [22242]: # of matches found 23491 and it took: 57938.6ms
+query [22243]: # of matches found 23477 and it took: 57909.6ms
+query [22244]: # of matches found 23437 and it took: 57579.1ms
+query [22245]: # of matches found 22856 and it took: 58368.3ms
+query [22246]: # of matches found 23555 and it took: 58348.3ms
+query [22247]: # of matches found 22235 and it took: 58248.8ms
+query [22248]: # of matches found 21635 and it took: 58172.1ms
+query [22249]: # of matches found 21971 and it took: 58131.5ms
+query [22250]: # of matches found 21946 and it took: 58428.7ms
+query [22251]: # of matches found 21804 and it took: 57852.2ms
+query [22252]: # of matches found 21749 and it took: 58291.2ms
+query [22253]: # of matches found 21866 and it took: 58184ms
+query [22254]: # of matches found 21815 and it took: 58101.5ms
+query [22255]: # of matches found 21839 and it took: 58165.7ms
+query [22256]: # of matches found 22703 and it took: 58647.5ms
+query [22257]: # of matches found 22735 and it took: 58481.9ms
+query [22258]: # of matches found 22707 and it took: 58208.2ms
