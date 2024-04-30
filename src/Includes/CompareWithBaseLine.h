@@ -10,6 +10,7 @@
 #include "PostFilter.h"
 #include "Alignment.h"
 #include "SamReader.h"
+#include "Container.h"
 
 #define REPORT_BEST_ALN 0
 #define REPORT_baseLine_FN 0
@@ -158,11 +159,13 @@ public:
  
     }
 
-    string blastGetCigarStr(uint32_t queryS, string queryAligned, string readAligned, uint32_t contigSize)
+    string blastGetCigarStr(uint32_t queryS, string queryAligned, string readAligned, uint32_t contigSize, bool skipClips = false)
     {
         stringstream cigar;
-        for(uint32_t i = 0; i < queryS; i++) {
-            cigar << 'S';
+        if(!skipClips) {
+            for(uint32_t i = 0; i < queryS; i++) {
+                cigar << 'S';
+            }
         }
         for(uint32_t i = 0; i < queryAligned.size(); i++){
             if(queryAligned[i] == readAligned[i])
@@ -177,7 +180,7 @@ public:
             }
         }
         int remainedClips = contigSize - (queryS + queryAligned.size());
-        if(remainedClips > 0){
+        if(remainedClips > 0 && !skipClips){
             for(int i = 0; i < remainedClips; i++) {
                 cigar << 'S';
             }
@@ -185,49 +188,18 @@ public:
         return cigar.str();
     }
 
-    void convertSamToAln(SamReader::Sam baseLineSamAlignment, Alignment& baseLineAlignment)
+    void readChunkOfBaseLine(vector<Alignment> &baseLineSamAlignments, const string alignmentFileAddressPrefix, uint32_t queryRangeBase, uint32_t queryRangeSize)
     {
-        SamReader sam("");
-        baseLineAlignment.readID = baseLineSamAlignment.readId;
-        baseLineAlignment.queryID = baseLineSamAlignment.queryId;
-        baseLineAlignment.cigar = baseLineSamAlignment.cigar;
-        baseLineAlignment.substitutions = sam.countSubstitutions(baseLineSamAlignment.cigar);
-        baseLineAlignment.matches = sam.countMatches(baseLineSamAlignment.cigar);
-        baseLineAlignment.inDels = sam.countInsertions(baseLineSamAlignment.cigar) + sam.countDeletions(baseLineSamAlignment.cigar);
-        baseLineAlignment.editDistance  = baseLineAlignment.substitutions + baseLineAlignment.inDels;
-        baseLineAlignment.flag = baseLineSamAlignment.flag;                
-    }
-
-    void readToolAlignments(const string toolname, const string alignmentFileAddress, uint32_t queryCount, bool compressedFormat, IndexContainer<uint32_t, Alignment>& alignments){
-        if(toolname == "blast" || toolname == "BLAST") {
-            BlastReader blastReader(alignmentFileAddress);
-            blastReader.parseFile(queryCount, alignments);
-        } else if(toolname == "baseLine" || toolname == "baseline" || toolname == "BASELINE" || toolname == "BaseLine" || toolname == "parmik" || toolname == "PARMIK") {
-            SamReader baseLineSam(alignmentFileAddress);
-            vector<SamReader::Sam> baseLineSamAlignments = baseLineSam.parseFile(queryCount, compressedFormat);
-            for (const SamReader::Sam& aln : baseLineSamAlignments) 
-            {
-                // LevAlign l;
-                Alignment l;
-                string cigarStr = convertCigarToStr(aln.cigar);
-                // only add alignments whose pi > PI
-                if (checkIdentityPercentange(cigarStr)) {
-                    // convertSamToLev(aln, l);
-                    convertSamToAln(aln, l);
-                    alignments.put(aln.queryId, l);
-                }
-            }
-        }
-    }
-
-    void readChunkOfBaseLine(const string alignmentFileAddressPrefix, uint32_t queryRangeBase, uint32_t queryRangeSize, IndexContainer<uint32_t, Alignment>& alignments)
-    {
-        alignments.clear();
+        baseLineSamAlignments.clear();
         string alignmentFileAddress = alignmentFileAddressPrefix + "_" + to_string(queryRangeBase) + "-" + to_string(queryRangeBase + queryRangeSize - 1) + ".txt";
-        readToolAlignments("baseLine", alignmentFileAddress, queryRangeSize, true, alignments);
+        // cout << "alignmentFileAddress: " << alignmentFileAddress << endl;
+        uint32_t queryCount = queryRangeBase + queryRangeSize - 1;
+        SamReader baseLineSam(alignmentFileAddress);
+        baseLineSam.parseFile(queryCount, baseLineSamAlignments, true);
+        cout << "Sam: Read " << baseLineSamAlignments.size() << " alignments." << endl;
     }
 
-    string convertCigarToStr(const string& cigar) {
+    string convertCigarToStr(const string& cigar, bool skipClips = false) {
         stringstream simplifiedCigar;
         int len = cigar.length();
 
@@ -262,7 +234,7 @@ public:
                     break;
                 case 'S':
                     // Soft clipping
-                    simplifiedCigar << string(num, 'S');
+                    if(!skipClips) simplifiedCigar << string(num, 'S');
                     break;
                 default:
                     // Handle other CIGAR operations if needed
@@ -275,9 +247,9 @@ public:
 
     string getCigarStr(Alignment aln, Config cfg, string toolName){
         if(toolName == "BLAST" || toolName == "blast") {
-            return blastGetCigarStr(aln.queryRegionStartPos, aln.alignedQuery, aln.alignedRead, cfg.contigSize);
+            return blastGetCigarStr(aln.queryRegionStartPos, aln.alignedQuery, aln.alignedRead, cfg.contigSize, true);
         } else {
-            return convertCigarToStr(aln.cigar);
+            return convertCigarToStr(aln.cigar, true);
         }
     }
 
@@ -306,7 +278,19 @@ public:
         return cnt;
     }
 
-    bool checkIdentityPercentange(string cigarStr) {
+    string trimClips(string cigarStr){
+        string trimmedCigarStr = "";
+        for (size_t i = 0; i < cigarStr.length(); i++) {
+            if (cigarStr[i] == 'S' || cigarStr[i] == 'H') {
+                continue;
+            }
+            trimmedCigarStr += cigarStr[i];
+        }
+        return trimmedCigarStr;
+    }
+
+    bool checkIdentityPercentange(string cigarStr, bool isTrimClips = false) {
+        if (isTrimClips) cigarStr = trimClips(cigarStr);
         uint32_t matches = getMatchesCount(cigarStr);
         double identity =  (double) matches / (double) cigarStr.size();
         if(DEBUG_MODE) cout << "matches: " << matches << ", cigarStr.size : " << cigarStr.size() << ", identity: " << identity << endl;
@@ -320,7 +304,7 @@ public:
     void compareWithBaseLine(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, 
     const uint32_t queryCount, const string alnReportAddressBase, const string tool2Name, string baseLineFilePrefixAddress)
     {
-        cout << "Comparing Baseline and " << tool2Name << endl;
+        cout << "Comparing Baseline and " + tool2Name << endl;
         ofstream cmp(comparisonResultsFileAddress);
         cout << "cmp file address: " << comparisonResultsFileAddress << endl;
         if(!cmp.is_open())
@@ -339,8 +323,14 @@ public:
         tpAlnSz.open(alnReportAddressBase + "AlnSz_tp.txt");
         bestAlnSz.open(alnReportAddressBase + "AlnSz_Best.txt");
         //read the alignment files
-        IndexContainer<uint32_t, Alignment> tool2Alignments;
-        readToolAlignments(tool2Name, cfg.otherToolOutputFileAddress, queryCount, true, tool2Alignments);
+        vector<Alignment> tool2Alignments;
+        if(tool2Name == "BLAST" || tool2Name == "blast") {
+            BlastReader blastReader(cfg.otherToolOutputFileAddress);
+            blastReader.parseFile(queryCount, tool2Alignments);
+        } else if(tool2Name == "parmik" || tool2Name == "PARMIK") {
+            SamReader parmikSam(cfg.otherToolOutputFileAddress);
+            parmikSam.parseFile(queryCount, tool2Alignments, false);
+        }
 
         uint32_t numberOfQueryContainN = 0, numberOfTool2ReadsContainingN = 0, 
         queriestool2FoundMatch = 0, queriesblfoundMatch = 0,
@@ -352,7 +342,7 @@ public:
         totaltool2FP = 0,
         tool2TP_nobaseLineMatches_allQ = 0, tool2TP_tool2Outperfomed_allQ = 0, tool2TP_baseLineOutperfomed_allQ = 0, tool2TP_tool2EqualbaseLine_allQ = 0,
         baseLineTP_notool2Matches_allQ = 0,
-        tool2FP_lowAlnLen_allQ = 0, tool2FP_lowerExactMatchKmers_allQ = 0, tool2FP_lowPercentageIdentity_allQ = 0,
+        tool2FP_lowAlnLen_allQ = 0, tool2FP_lowPercentageIdentity_allQ = 0,
         tool2Best_tool2Outperfomed_allQ = 0, tool2Best_baseLineOutperfomed_allQ = 0, tool2Best_tool2EqualbaseLine_allQ = 0;
         //all query level parameters sets (if total is needed, just add all the elements in the set)
         multiset<uint32_t> baseLineReadPerQuerySet, tool2ReadPerQuerySet;
@@ -372,7 +362,8 @@ public:
         multiset<uint32_t> tool2FN_baseLine_alnLen_allQ, tool2FN_baseLine_ed_allQ;// baseLine alignment characteristics for all queries when tool2 did not find a match
         multiset<uint32_t> tool2FN_noCriteria_baseLine_alnLen_allQ, tool2FN_noCriteria_tool1_ed_allQ;
         multiset<uint32_t> tool2FN_noCriteria_baseLine_ed_allQ, baseLineFN_tool2_alnLen_allQ, baseLineFN_tool2_ed_allQ;// tool2 alignment characteristics for all queries when baseLine did not find a match
-        IndexContainer<uint32_t, Alignment> baseLineAlignments;
+        // IndexContainer<uint32_t, Alignment> baseLineAlignments;
+        vector<Alignment> baseLineSamAlignments;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
             uint32_t baseLineBestAlnSize = 0;
@@ -384,34 +375,62 @@ public:
                 if(REPORT_ALN_PER_Q) alnPerQ << queryInd << " 0 0"<< endl;
                 continue;
             }
-            if(queryInd % 1000 == 0)
-                readChunkOfBaseLine(baseLineFilePrefixAddress, queryInd, 1000, baseLineAlignments);
+            if(queryInd % 1000 == 0) {
+                cout << "queries processed: " << queryInd << " / " << queryCount << endl;
+                readChunkOfBaseLine(baseLineSamAlignments, baseLineFilePrefixAddress, queryInd, 1000);
+                // cout << "baseLineAlignments: " << baseLineAlignments2.size() << endl;
+            }
+            //baseline alignments for query
+            vector<Alignment> baseLineAlignments;
+            for (const Alignment& aln : baseLineSamAlignments) 
+            {
+                if ((uint32_t)aln.queryID == queryInd) {
+                    string cigarStr = convertCigarToStr(aln.cigar, true);
+                    // only add alignments whose pi > PI
+                    if (checkIdentityPercentange(cigarStr)) {
+                        baseLineAlignments.push_back(aln);
+                    }
+                }
+            }
+            // cout << "baseLineAlignments: " << baseLineAlignments.size() << endl;
             //query level parameters
             uint32_t tool2TP = 0, tool2FP = 0;
             uint32_t tool2TP_nobaseLineMatches = 0, tool2TP_tool2Outperfomed = 0, tool2TP_baseLineOutperfomed = 0, tool2TP_tool2EqualbaseLine = 0;
             uint32_t baseLineTP_notool2Matches = 0;
             uint32_t tool2Best_tool2Outperfomed = 0, tool2Best_baseLineOutperfomed = 0, tool2Best_tool2EqualbaseLine = 0;
-            uint32_t tool2FP_lowAlnLen = 0, tool2FP_lowerExactMatchKmers = 0, tool2FP_lowPercentageIdentity;
+            uint32_t tool2FP_lowAlnLen = 0, tool2FP_lowPercentageIdentity = 0;
             cmp << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
             cmp << "Q : " << query << ", queryInd: " << queryInd << endl;
             Alignment bestAlntool2;
-            auto baseLineRange = baseLineAlignments.getRange(queryInd);
-            size_t baseLineReadPerQuery = distance(baseLineRange.first, baseLineRange.second);
+            // auto baseLineRange = baseLineAlignments.getRange(queryInd);
+            // size_t baseLineReadPerQuery = distance(baseLineRange.first, baseLineRange.second);
+            size_t baseLineReadPerQuery = baseLineAlignments.size();
             baseLineTotalNumberOfReadIDs += baseLineReadPerQuery;
             baseLineReadPerQuerySet.insert(baseLineReadPerQuery);
-            auto tool2Rrange = tool2Alignments.getRange(queryInd);
-            size_t tool2ReadPerQuery = distance(tool2Rrange.first, tool2Rrange.second);
+
+            vector<Alignment> query_t2Alignments;
+            for (const Alignment& aln : tool2Alignments) 
+            {
+                if ((uint32_t)aln.queryID == queryInd) {
+                    query_t2Alignments.push_back(aln);
+                }
+            }
+            // cout << "tool2Alignments: " << query_t2Alignments.size() << endl;
+            // auto tool2Rrange = tool2Alignments.getRange(queryInd);
+            size_t tool2ReadPerQuery = query_t2Alignments.size();
             tool2TotalNumberOfReadIDs += tool2ReadPerQuery;
             tool2ReadPerQuerySet.insert(tool2ReadPerQuery);
-            cmp << "# of reads found by " << tool2Name << " : " << tool2ReadPerQuery << endl;
+            cmp << "# of reads found by " + tool2Name + " : " << tool2ReadPerQuery << endl;
             cmp << "# of reads found by Baseline : " << baseLineReadPerQuery << endl;
             Alignment baseLineBestAln;
             vector<uint32_t> tool2TPReadIds;
+            IndexContainer<uint32_t, Alignment> baselineReadID_Aln;
             //get the best baseLine alignment
             if(baseLineReadPerQuery > 0){
                 queriesblfoundMatch++;
-                for (auto it = baseLineRange.first; it != baseLineRange.second; it++) {
-                    Alignment baseLineAln = it->second;
+                for (auto it = baseLineAlignments.begin(); it != baseLineAlignments.end(); it++) {
+                    Alignment baseLineAln = (*it);
+                    baselineReadID_Aln.put(baseLineAln.readID, baseLineAln);//this will be used for the future searches in the baseline alignemnts
                     addBaselineTPAlnSz(baseLineAln.matches + baseLineAln.inDels + baseLineAln.substitutions);
                     if (baseLineAln.matches + baseLineAln.inDels + baseLineAln.substitutions > baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions) // only exact matches
                     {
@@ -436,17 +455,17 @@ public:
             if(tool2ReadPerQuery == 0 && baseLineReadPerQuery == 0){
                 //TN
                 totalTool2TN++;
-                cmp << "TN for " << tool2Name << endl;
+                cmp << "TN for " + tool2Name << endl;
             } else if(tool2ReadPerQuery == 0 && baseLineReadPerQuery > 0) {
                 //tool2 FN
                 tool2FN++;
                 tool2FN_baseLine_alnLen_allQ.insert(baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions);
                 tool2FN_baseLine_ed_allQ.insert(baseLineBestAln.inDels + baseLineBestAln.substitutions);
-                cmp << "FN for " << tool2Name << ", Baseline alnlen : " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", ed : " << baseLineBestAln.inDels + baseLineBestAln.substitutions << ", readID: " <<  baseLineBestAln.readID << endl;
+                cmp << "FN for " + tool2Name + ", Baseline alnlen : " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", ed : " << baseLineBestAln.inDels + baseLineBestAln.substitutions << ", readID: " <<  baseLineBestAln.readID << endl;
             } else {    // if both tool2 and baseLine have alignments or only tool2 has alignments
-                for (auto it = tool2Rrange.first; it != tool2Rrange.second; it++) 
+                for (auto it = query_t2Alignments.begin(); it != query_t2Alignments.end(); it++) 
                 {
-                    Alignment aln = it->second;
+                    Alignment aln = (*it);
                     string tool2R = reads[aln.readID]; 
                     if(tool2R.find('N') != string::npos || tool2R.find('n') != string::npos)
                     {
@@ -478,28 +497,29 @@ public:
                         addTool2TPAlnSz(aln.partialMatchSize);
                         bool blfound = false;
                         Alignment baselineAln;
-                        for (auto itt = baseLineRange.first; itt != baseLineRange.second; itt++) 
+                        auto baselineReadIDRange = baselineReadID_Aln.getRange(aln.readID);
+                        for (auto itt = baselineReadIDRange.first; itt != baselineReadIDRange.second; itt++) 
                         {
                             Alignment tmpAln = itt->second;
-                            if(tmpAln.readID == aln.readID)
+                            // if(tmpAln.readID == aln.readID)
+                            // {
+                            if (!blfound)
+                                baselineAln = itt->second;
+                            blfound = true;
+                            if ((tmpAln.matches + tmpAln.inDels + tmpAln.substitutions > baselineAln.matches + baselineAln.inDels + baselineAln.substitutions) || 
+                            ((tmpAln.matches + tmpAln.inDels + tmpAln.substitutions == baselineAln.matches + baselineAln.inDels + baselineAln.substitutions) && 
+                            (tmpAln.inDels + tmpAln.substitutions <  baselineAln.inDels + baselineAln.substitutions))) 
                             {
-                                if (!blfound)
-                                    baselineAln = itt->second;
-                                blfound = true;
-                                if ((tmpAln.matches + tmpAln.inDels + tmpAln.substitutions > baselineAln.matches + baselineAln.inDels + baselineAln.substitutions) || 
-                                ((tmpAln.matches + tmpAln.inDels + tmpAln.substitutions == baselineAln.matches + baselineAln.inDels + baselineAln.substitutions) && 
-                                (tmpAln.inDels + tmpAln.substitutions <  baselineAln.inDels + baselineAln.substitutions))) 
-                                {
-                                    baselineAln = tmpAln;
-                                }
+                                baselineAln = tmpAln;
                             }
+                            // }
                         }
                         if (!blfound)
                         {
                             tool2TP_nobaseLineMatches++;
                             tool2TP_nobaseLineMatches_alnLen_allQ.insert(aln.partialMatchSize);
                             tool2TP_nobaseLineMatches_ed_allQ.insert(aln.substitutions + aln.inDels);
-                            cmp << "TP for " << tool2Name << ", no baseLine match, alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << endl;
+                            cmp << "TP for " + tool2Name + ", no baseLine match, alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << endl;
                             if(REPORT_baseLine_FN) baseLineFn << queryInd << "\t" << aln.readID << "\t" << aln.flag << endl;
                         } else {
                             if (baselineAln.matches + baselineAln.inDels + baselineAln.substitutions > aln.partialMatchSize){ //baseLine outperformed
@@ -515,7 +535,7 @@ public:
                                 tool2TP_tool2Outperfomed_ed_allQ.insert(aln.substitutions + aln.inDels);
                                 baseLineTP_tool2Outperfomed_alnLen_allQ.insert(baselineAln.matches + baselineAln.inDels + baselineAln.substitutions);
                                 baseLineTP_tool2Outperfomed_ed_allQ.insert(baselineAln.substitutions + baselineAln.inDels);
-                                cmp << "TP for " << tool2Name << ", " << tool2Name << " outperformed in terms of alnlen, " << tool2Name << " alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", baseLine alnlen: " << baselineAln.matches + baselineAln.inDels + baselineAln.substitutions << ", ed: " << baselineAln.substitutions + baselineAln.inDels << ", readID: " << baselineAln.readID << endl;
+                                cmp << "TP for " + tool2Name + ", " + tool2Name + " outperformed in terms of alnlen, " + tool2Name + " alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", baseLine alnlen: " << baselineAln.matches + baselineAln.inDels + baselineAln.substitutions << ", ed: " << baselineAln.substitutions + baselineAln.inDels << ", readID: " << baselineAln.readID << endl;
                                 addTool2TPOutperform(aln.partialMatchSize - baselineAln.matches - baselineAln.inDels - baselineAln.substitutions);
                             } else {
                                 if (baselineAln.substitutions + baselineAln.inDels < aln.substitutions + aln.inDels)//baseLine outperformed
@@ -525,7 +545,7 @@ public:
                                     tool2TP_baseLineOutperfomed_ed_allQ.insert(aln.substitutions + aln.inDels);
                                     baseLineTP_baseLineOutperfomed_alnLen_allQ.insert(baselineAln.matches + baselineAln.inDels + baselineAln.substitutions);
                                     baseLineTP_baseLineOutperfomed_ed_allQ.insert(baselineAln.substitutions + baselineAln.inDels);
-                                    cmp << "TP for " << tool2Name << ", baseLine outperformed in terms of ed, " << tool2Name << " alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", baseLine alnlen: " << baselineAln.matches + baselineAln.inDels << ", ed: " << baselineAln.substitutions + baselineAln.inDels << ", readID: " << baselineAln.readID << endl;
+                                    cmp << "TP for " + tool2Name + ", baseLine outperformed in terms of ed, " + tool2Name + " alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", baseLine alnlen: " << baselineAln.matches + baselineAln.inDels << ", ed: " << baselineAln.substitutions + baselineAln.inDels << ", readID: " << baselineAln.readID << endl;
                                     addBaselineTPOutperform_edit(baselineAln.substitutions + baselineAln.inDels - aln.substitutions - aln.inDels);
                                 } else if (baselineAln.substitutions + baselineAln.inDels > aln.substitutions + aln.inDels)//tool2 outperformed
                                 {
@@ -534,7 +554,7 @@ public:
                                     tool2TP_tool2Outperfomed_ed_allQ.insert(aln.substitutions + aln.inDels);
                                     baseLineTP_tool2Outperfomed_alnLen_allQ.insert(baselineAln.matches + baselineAln.inDels + baselineAln.substitutions);
                                     baseLineTP_tool2Outperfomed_ed_allQ.insert(baselineAln.substitutions + baselineAln.inDels);
-                                    cmp << "TP for " << tool2Name << ", " << tool2Name << " outperformed in terms of ed, " << tool2Name << " alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", baseLine alnlen: " << baselineAln.matches + baselineAln.inDels << ", ed: " << baselineAln.substitutions + baselineAln.inDels << ", readID: " << baselineAln.readID << endl;
+                                    cmp << "TP for " + tool2Name + ", " + tool2Name + " outperformed in terms of ed, " + tool2Name + " alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", baseLine alnlen: " << baselineAln.matches + baselineAln.inDels << ", ed: " << baselineAln.substitutions + baselineAln.inDels << ", readID: " << baselineAln.readID << endl;
                                     addTool2TPOutperform_edit(aln.substitutions + aln.inDels - baselineAln.substitutions - baselineAln.inDels);
                                 } // tool2 and baseLine performed equally
                                 else{
@@ -560,9 +580,9 @@ public:
                     }
                 }
                 addTool2BestAlnSz(bestAlntool2.partialMatchSize);
-                for (auto itt = baseLineRange.first; itt != baseLineRange.second; itt++) 
+                for (auto itt = baseLineAlignments.begin(); itt != baseLineAlignments.end(); itt++) 
                 {
-                    Alignment aaln = itt->second;
+                    Alignment aaln = (*itt);
                     bool tool2found = false;
                     for (const auto& element : tool2TPReadIds)
                     {
@@ -580,8 +600,8 @@ public:
                     }
                 }
                 baseLineTP_notool2Matches_allQ += baseLineTP_notool2Matches;
-                cmp << "baseLine TP that " << tool2Name << " did not find: " << baseLineTP_notool2Matches << endl;
-                cmp << "tool2TP: " << tool2TP << "\t" << "tool2FP: " << tool2FP << endl;
+                cmp << "baseLine TP that " + tool2Name + " did not find: " << baseLineTP_notool2Matches << endl;
+                cmp << tool2Name + " TP: " << tool2TP << "\t" << tool2Name + " FP: " << tool2FP << endl;
                 tool2TPPerQuery.insert(tool2TP);
                 totaltool2TP += tool2TP;
                 tool2FPPerQuery.insert(tool2FP);
@@ -593,12 +613,12 @@ public:
                     tool2FN_noCriteriaFittedMatches++;
                     tool2FN_noCriteria_baseLine_alnLen_allQ.insert(baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions);
                     tool2FN_noCriteria_baseLine_ed_allQ.insert(baseLineBestAln.inDels + baseLineBestAln.substitutions);
-                    cmp << "tool2FN_noCriteriaFitted and baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine readID: " << baseLineBestAln.readID << endl;
+                    cmp << tool2Name + "FN_noCriteriaFitted and baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine readID: " << baseLineBestAln.readID << endl;
                 }
                 if(baseLineReadPerQuery == 0 && tool2TP > 0){//baseLine FN
                     baseLineFN_tool2_alnLen_allQ.insert(bestAlntool2.partialMatchSize);
                     baseLineFN_tool2_ed_allQ.insert(bestAlntool2.substitutions + bestAlntool2.inDels);
-                    cmp << "baseLine FN, and " << tool2Name << " alnsize: " << bestAlntool2.partialMatchSize << ", " << tool2Name << " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels << ", " << tool2Name << " readID: " << bestAlntool2.readID << endl;
+                    cmp << "baseLine FN, and " + tool2Name + " alnsize: " << bestAlntool2.partialMatchSize << ", " + tool2Name + " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels << ", " + tool2Name + " readID: " << bestAlntool2.readID << endl;
                     numnberOfBaseLine_FN++;
                 } else if(baseLineReadPerQuery > 0 && tool2TP > 0){//compare the best alignmnets for this queyry
                     if (baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions > bestAlntool2.partialMatchSize){ //baseLine outperformed
@@ -607,7 +627,7 @@ public:
                         tool2Best_baseLineOutperfomed_ed_allQ.insert(bestAlntool2.substitutions + bestAlntool2.inDels);
                         baseLineBest_baseLineOutperfomed_alnLen_allQ.insert(baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions);
                         baseLineBest_baseLineOutperfomed_ed_allQ.insert(baseLineBestAln.substitutions + baseLineBestAln.inDels);
-                        cmp << "Best: baseLine outperformed " << tool2Name << ", baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions <<  ", baseLine readID: " << baseLineBestAln.readID << ", " << tool2Name << " alnsize: " << bestAlntool2.partialMatchSize << ", " << tool2Name << " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels <<  ", " << tool2Name << " readID: " << bestAlntool2.readID << endl;
+                        cmp << "Best: baseLine outperformed " + tool2Name + ", baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions <<  ", baseLine readID: " << baseLineBestAln.readID << ", " + tool2Name + " alnsize: " << bestAlntool2.partialMatchSize << ", " + tool2Name + " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels <<  ", " + tool2Name + " readID: " << bestAlntool2.readID << endl;
                         addBaselineBestOutperform((baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions) - (bestAlntool2.partialMatchSize));
                     } else if (baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions < bestAlntool2.partialMatchSize){//tool2 outperformed
                         tool2Best_tool2Outperfomed++;
@@ -615,7 +635,7 @@ public:
                         tool2Best_tool2Outperfomed_ed_allQ.insert(bestAlntool2.substitutions + bestAlntool2.inDels);
                         baseLineBest_tool2Outperfomed_alnLen_allQ.insert(baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions);
                         baseLineBest_tool2Outperfomed_ed_allQ.insert(baseLineBestAln.substitutions + baseLineBestAln.inDels);
-                        cmp << "Best: " << tool2Name << " outperformed baseLine in terms of alnlen, baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions <<  ", baseLine readID: " << baseLineBestAln.readID << ", " << tool2Name << " alnsize: " << bestAlntool2.partialMatchSize << ", " << tool2Name << " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels << ", " << tool2Name << " readID: " << bestAlntool2.readID << endl;
+                        cmp << "Best: " + tool2Name + " outperformed baseLine in terms of alnlen, baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions <<  ", baseLine readID: " << baseLineBestAln.readID << ", " + tool2Name + " alnsize: " << bestAlntool2.partialMatchSize << ", " + tool2Name + " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels << ", " + tool2Name + " readID: " << bestAlntool2.readID << endl;
                         addTool2BestOutperform((bestAlntool2.partialMatchSize) - (baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions));
                     } else {
                         if (baseLineBestAln.substitutions + baseLineBestAln.inDels < bestAlntool2.substitutions + bestAlntool2.inDels)//baseLine outperformed
@@ -625,7 +645,7 @@ public:
                             tool2Best_baseLineOutperfomed_ed_allQ.insert(bestAlntool2.substitutions + bestAlntool2.inDels);
                             baseLineBest_baseLineOutperfomed_alnLen_allQ.insert(baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions);
                             baseLineBest_baseLineOutperfomed_ed_allQ.insert(baseLineBestAln.substitutions + baseLineBestAln.inDels);
-                            cmp << "Best: baseLine outperformed " << tool2Name << ", baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine readID: " << baseLineBestAln.readID << ", " << tool2Name << " alnsize: " << bestAlntool2.partialMatchSize << ", " << tool2Name << " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels <<  ", " << tool2Name << " readID: " << bestAlntool2.readID << endl;
+                            cmp << "Best: baseLine outperformed " + tool2Name + ", baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine readID: " << baseLineBestAln.readID << ", " + tool2Name + " alnsize: " << bestAlntool2.partialMatchSize << ", " + tool2Name + " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels <<  ", " + tool2Name + " readID: " << bestAlntool2.readID << endl;
                             addBaselineBestOutperform_edit((bestAlntool2.substitutions + bestAlntool2.inDels) - (baseLineBestAln.substitutions + baseLineBestAln.inDels));
                         } else if (baseLineBestAln.substitutions + baseLineBestAln.inDels > bestAlntool2.substitutions + bestAlntool2.inDels)//tool2 outperformed
                         {
@@ -634,7 +654,7 @@ public:
                             tool2Best_tool2Outperfomed_ed_allQ.insert(bestAlntool2.substitutions + bestAlntool2.inDels);
                             baseLineBest_tool2Outperfomed_alnLen_allQ.insert(baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions);
                             baseLineBest_tool2Outperfomed_ed_allQ.insert(baseLineBestAln.substitutions + baseLineBestAln.inDels);
-                            cmp << "Best: " << tool2Name << " outperformed baseLine in terms of ed, baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions <<  ", baseLine readID: " << baseLineBestAln.readID << ", " << tool2Name << " alnsize: " << bestAlntool2.partialMatchSize << ", " << tool2Name << " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels <<  ", " << tool2Name << " readID: " << bestAlntool2.readID << endl;
+                            cmp << "Best: " + tool2Name + " outperformed baseLine in terms of ed, baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions <<  ", baseLine readID: " << baseLineBestAln.readID << ", " + tool2Name + " alnsize: " << bestAlntool2.partialMatchSize << ", " + tool2Name + " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels <<  ", " + tool2Name + " readID: " << bestAlntool2.readID << endl;
                             addTool2BestOutperform_edit((baseLineBestAln.substitutions + baseLineBestAln.inDels) - (bestAlntool2.substitutions + bestAlntool2.inDels));
                         } // tool2 and baseLine performed equally
                         else{
@@ -643,7 +663,7 @@ public:
                             tool2Best_tool2EqualbaseLine_ed_allQ.insert(bestAlntool2.substitutions + bestAlntool2.inDels);
                             baseLineBest_tool2EqualbaseLine_alnLen_allQ.insert(baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions);
                             baseLineBest_tool2EqualbaseLine_ed_allQ.insert(baseLineBestAln.substitutions + baseLineBestAln.inDels);
-                            cmp << "Best: " << tool2Name << " & baseLine perfromed equally, baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine readID: " << baseLineBestAln.readID << ", " << tool2Name << " alnsize: " << bestAlntool2.partialMatchSize << ", " << tool2Name << " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels << ", " << tool2Name << " readID: " << bestAlntool2.readID << endl;
+                            cmp << "Best: " + tool2Name + " & baseLine perfromed equally, baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine readID: " << baseLineBestAln.readID << ", " + tool2Name + " alnsize: " << bestAlntool2.partialMatchSize << ", " + tool2Name + " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels << ", " + tool2Name + " readID: " << bestAlntool2.readID << endl;
                         }
                     }
                 }
@@ -652,157 +672,156 @@ public:
             tool2TP_tool2Outperfomed_allQ += tool2TP_tool2Outperfomed; 
             tool2TP_baseLineOutperfomed_allQ += tool2TP_baseLineOutperfomed;
             tool2TP_tool2EqualbaseLine_allQ += tool2TP_tool2EqualbaseLine;
-            cmp << "tool2TP_nobaseLineMatches: " << tool2TP_nobaseLineMatches << ", tool2TP_tool2Outperfomed: " << tool2TP_tool2Outperfomed << ", tool2TP_baseLineOutperfomed: " << tool2TP_baseLineOutperfomed << ", tool2TP_tool2EqualbaseLine: " << tool2TP_tool2EqualbaseLine << endl;
+            cmp << tool2Name + "TP_nobaseLineMatches: " << tool2TP_nobaseLineMatches << ", " + tool2Name + "TP_tool2Outperfomed: " << tool2TP_tool2Outperfomed << ", " + tool2Name + "TP_baseLineOutperfomed: " << tool2TP_baseLineOutperfomed << ", " + tool2Name + "TP_tool2EqualbaseLine: " << tool2TP_tool2EqualbaseLine << endl;
             tool2FP_lowAlnLen_allQ += tool2FP_lowAlnLen; 
-            tool2FP_lowerExactMatchKmers_allQ += tool2FP_lowerExactMatchKmers;
             tool2FP_lowPercentageIdentity_allQ += tool2FP_lowPercentageIdentity;
-            cmp  << "tool2FP_lowAlnLen: " << tool2FP_lowAlnLen << ", tool2FP_lowerExactMatchKmers: " << tool2FP_lowerExactMatchKmers << endl;
+            cmp  << tool2Name + "FP_lowAlnLen: " << tool2FP_lowAlnLen << ", " + tool2Name << "FP_lowPercentageIdentity: " << tool2FP_lowPercentageIdentity << endl;
             tool2Best_baseLineOutperfomed_allQ += tool2Best_baseLineOutperfomed;
             tool2Best_tool2Outperfomed_allQ += tool2Best_tool2Outperfomed;
             tool2Best_tool2EqualbaseLine_allQ += tool2Best_tool2EqualbaseLine;
-            cmp << "tool2Best_baseLineOutperfomed: " << tool2Best_baseLineOutperfomed << ", tool2Best_tool2Outperfomed: " << tool2Best_tool2Outperfomed << ", tool2Best_tool2EqualbaseLine: " << tool2Best_tool2EqualbaseLine << endl;
+            cmp << tool2Name + "Best_baseLineOutperfomed: " << tool2Best_baseLineOutperfomed << ", " + tool2Name + "Best_tool2Outperfomed: " << tool2Best_tool2Outperfomed << ", " + tool2Name + "Best_tool2EqualbaseLine: " << tool2Best_tool2EqualbaseLine << endl;
             // best_aln_sz.push_back(make_pair(baseLineBestAlnSize, tool2BestAlnSize)); 
             //baseLine and tool2 alignments per query
-            if(REPORT_ALN_PER_Q) alnPerQ << queryInd << " " << baseLineAlignments.container_.count(queryInd) << " " << tool2TP << endl;
+            if(REPORT_ALN_PER_Q) alnPerQ << queryInd << " " << baseLineAlignments.size() << " " << tool2TP << endl;
         }
         Utilities<uint32_t> util;   
         cmp << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Overall Comparison Results>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
-        cmp << left << setw(80) << "# Of queries : " << queryCount << endl;
+        cmp << left << setw(80) << "# Of queries : " + to_string(queryCount) << endl;
         cmp << left << setw(80) << "# Of queries that baseLine found match : " << queriesblfoundMatch << endl;
-        cmp << left << setw(80) << "# Of queries that " << tool2Name << " found match (TP) : " << queriestool2FoundMatch << endl;
+        cmp << left << setw(80) << "# Of queries that " + tool2Name + " found match (TP) : " << queriestool2FoundMatch << endl;
         
         cmp << "------------------------------------------------------------------------------------------" << endl;
         cmp << left << setw(80) << "# Of queries that Baseline didn't find TN : " << totalbaseLineTN << endl;
-        cmp << left << setw(80) << "# Of queries that " << tool2Name << " didn't find TN : " << totalTool2TN << endl;
+        cmp << left << setw(80) << "# Of queries that " + tool2Name + " didn't find TN : " << totalTool2TN << endl;
         
         cmp << "------------------------------------------------------------------------------------------" << endl;
-        cmp << left << setw(80) << "# Of queries that " << tool2Name << " didn't find FN (Total) : " << tool2FN + tool2FN_noCriteriaFittedMatches << endl;
-        cmp << left << setw(80) << "# Of queries that " << tool2Name << " didn't find any match FN : " << tool2FN << endl;
+        cmp << left << setw(80) << "# Of queries that " + tool2Name + " didn't find FN (Total) : " << tool2FN + tool2FN_noCriteriaFittedMatches << endl;
+        cmp << left << setw(80) << "# Of queries that " + tool2Name + " didn't find any match FN : " << tool2FN << endl;
         pair<uint32_t, uint32_t> avgTool2FN_baseLine_alnLen_allQ = util.calculateStatistics2(tool2FN_baseLine_alnLen_allQ);
         pair<uint32_t, uint32_t> avgTool2FN_baseLine_ed_allQ = util.calculateStatistics2(tool2FN_baseLine_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) Baseline's alignment length where " << tool2Name << " FN: " << avgTool2FN_baseLine_alnLen_allQ.first << ", " << avgTool2FN_baseLine_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) Baseline's edit distance where " << tool2Name << " FN: " << avgTool2FN_baseLine_ed_allQ.first << ", " << avgTool2FN_baseLine_ed_allQ.second << endl;
-        cmp << left << setw(80) << "# Of queries that " << tool2Name << " didn't find based on criteria FN : " << tool2FN_noCriteriaFittedMatches << endl;
+        cmp << left << setw(80) << "(avg, median) Baseline's alignment length where " + tool2Name + " FN: " << avgTool2FN_baseLine_alnLen_allQ.first << ", " << avgTool2FN_baseLine_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) Baseline's edit distance where " + tool2Name + " FN: " << avgTool2FN_baseLine_ed_allQ.first << ", " << avgTool2FN_baseLine_ed_allQ.second << endl;
+        cmp << left << setw(80) << "# Of queries that " + tool2Name + " didn't find based on criteria FN : " << tool2FN_noCriteriaFittedMatches << endl;
         pair<uint32_t, uint32_t> avgtool2FN_noCriteria_baseLine_alnLen_allQ = util.calculateStatistics2(tool2FN_noCriteria_baseLine_alnLen_allQ);
         pair<uint32_t, uint32_t> avgtool2FN_noCriteria_baseLine_ed_allQ = util.calculateStatistics2(tool2FN_noCriteria_baseLine_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) baseLine's alignment length where " << tool2Name << " FN based on criteria: " << avgtool2FN_noCriteria_baseLine_alnLen_allQ.first << ", " << avgtool2FN_noCriteria_baseLine_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) baseLine's edit distance where " << tool2Name << " FN based on criteria: " << avgtool2FN_noCriteria_baseLine_ed_allQ.first << ", " << avgtool2FN_noCriteria_baseLine_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) baseLine's alignment length where " + tool2Name + " FN based on criteria: " << avgtool2FN_noCriteria_baseLine_alnLen_allQ.first << ", " << avgtool2FN_noCriteria_baseLine_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) baseLine's edit distance where " + tool2Name + " FN based on criteria: " << avgtool2FN_noCriteria_baseLine_ed_allQ.first << ", " << avgtool2FN_noCriteria_baseLine_ed_allQ.second << endl;
        
         cmp << "------------------------------------------------------------------------------------------" << endl;
         cmp << left << setw(80) << "# Of queries that baseLine didn't find FN : " << numnberOfBaseLine_FN << endl;
         pair<uint32_t, uint32_t> avgBaselineFN_tool2_alnLen_allQ = util.calculateStatistics2(baseLineFN_tool2_alnLen_allQ);
         pair<uint32_t, uint32_t> avgBaselineFN_tool2_ed_allQ = util.calculateStatistics2(baseLineFN_tool2_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s alignment length where baseLine FN: " << avgBaselineFN_tool2_alnLen_allQ.first << ", " << avgBaselineFN_tool2_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s edit distance where baseLine FN: " << avgBaselineFN_tool2_ed_allQ.first << ", " << avgBaselineFN_tool2_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s alignment length where baseLine FN: " << avgBaselineFN_tool2_alnLen_allQ.first << ", " << avgBaselineFN_tool2_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s edit distance where baseLine FN: " << avgBaselineFN_tool2_ed_allQ.first << ", " << avgBaselineFN_tool2_ed_allQ.second << endl;
        
         cmp << "------------------------------------------------------------------------------------------" << endl;
         cmp << left << setw(80) << "# Of readIDs found by Baseline (total): " << baseLineTotalNumberOfReadIDs << endl;
-        cmp << left << setw(80) << "# Of readIDs found by " << tool2Name << " (total): " << tool2TotalNumberOfReadIDs << endl;
-        cmp << left << setw(80) << "# Of readIDs found by " << tool2Name << " containing N (total): " << numberOfTool2ReadsContainingN << endl;
+        cmp << left << setw(80) << "# Of readIDs found by " + tool2Name + " (total): " << tool2TotalNumberOfReadIDs << endl;
+        cmp << left << setw(80) << "# Of readIDs found by " + tool2Name + " containing N (total): " << numberOfTool2ReadsContainingN << endl;
         
         cmp << "------------------------------------------------------------------------------------------" << endl;
-        cmp << left << setw(80) << "# Of total " << tool2Name << " (TP): " << totaltool2TP << endl;
+        cmp << left << setw(80) << "# Of total " + tool2Name + " (TP): " << totaltool2TP << endl;
         pair<uint32_t, uint32_t> avgtool2TPPerQuery = util.calculateStatistics2(tool2TPPerQuery);
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s TP per query: " << avgtool2TPPerQuery.first << ", " << avgtool2TPPerQuery.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s TP per query: " << avgtool2TPPerQuery.first << ", " << avgtool2TPPerQuery.second << endl;
 
-        cmp << left << setw(80) << "# Of " << tool2Name << " (TP) where baseLine didn't find match: " << tool2TP_nobaseLineMatches_allQ << endl;
+        cmp << left << setw(80) << "# Of " + tool2Name + " (TP) where baseLine didn't find match: " << tool2TP_nobaseLineMatches_allQ << endl;
         pair<uint32_t, uint32_t> avgtool2TP_nobaseLineMatches_alnLen_allQ = util.calculateStatistics2(tool2TP_nobaseLineMatches_alnLen_allQ);
         pair<uint32_t, uint32_t> avgtool2TP_nobaseLineMatches_ed_allQ = util.calculateStatistics2(tool2TP_nobaseLineMatches_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s alignment length where baseLine didn't find match: " << avgtool2TP_nobaseLineMatches_alnLen_allQ.first << ", " << avgtool2TP_nobaseLineMatches_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s edit distance where baseLine didn't find match: " << avgtool2TP_nobaseLineMatches_ed_allQ.first << ", " << avgtool2TP_nobaseLineMatches_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s alignment length where baseLine didn't find match: " << avgtool2TP_nobaseLineMatches_alnLen_allQ.first << ", " << avgtool2TP_nobaseLineMatches_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s edit distance where baseLine didn't find match: " << avgtool2TP_nobaseLineMatches_ed_allQ.first << ", " << avgtool2TP_nobaseLineMatches_ed_allQ.second << endl;
         
-        cmp << left << setw(80) << "# Of " << tool2Name << " (TP) where baseLine outperformed: " << tool2TP_baseLineOutperfomed_allQ << endl;
+        cmp << left << setw(80) << "# Of " + tool2Name + " (TP) where baseLine outperformed: " << tool2TP_baseLineOutperfomed_allQ << endl;
         pair<uint32_t, uint32_t> avgtool2TP_baseLineOutperfomed_alnLen_allQ = util.calculateStatistics2(tool2TP_baseLineOutperfomed_alnLen_allQ);
         pair<uint32_t, uint32_t> avgtool2TP_baseLineOutperfomed_ed_allQ = util.calculateStatistics2(tool2TP_baseLineOutperfomed_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s alignment length where baseLine outperformed: " << avgtool2TP_baseLineOutperfomed_alnLen_allQ.first << ", " << avgtool2TP_baseLineOutperfomed_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s edit distance where baseLine outperformed: " << avgtool2TP_baseLineOutperfomed_ed_allQ.first << ", " << avgtool2TP_baseLineOutperfomed_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s alignment length where baseLine outperformed: " << avgtool2TP_baseLineOutperfomed_alnLen_allQ.first << ", " << avgtool2TP_baseLineOutperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s edit distance where baseLine outperformed: " << avgtool2TP_baseLineOutperfomed_ed_allQ.first << ", " << avgtool2TP_baseLineOutperfomed_ed_allQ.second << endl;
         pair<uint32_t, uint32_t> avgbaseLineTP_baseLineOutperfomed_alnLen_allQ = util.calculateStatistics2(baseLineTP_baseLineOutperfomed_alnLen_allQ);
         pair<uint32_t, uint32_t> avgbaseLineTP_baseLineOutperfomed_ed_allQ = util.calculateStatistics2(baseLineTP_baseLineOutperfomed_ed_allQ);
         cmp << left << setw(80) << "(avg, median) baseLine's alignment length where baseLine outperformed: " << avgbaseLineTP_baseLineOutperfomed_alnLen_allQ.first << ", " << avgbaseLineTP_baseLineOutperfomed_alnLen_allQ.second << endl;
         cmp << left << setw(80) << "(avg, median) baseLine's edit distance where baseLine outperformed: " << avgbaseLineTP_baseLineOutperfomed_ed_allQ.first << ", " << avgbaseLineTP_baseLineOutperfomed_ed_allQ.second << endl;
 
-        cmp << left << setw(80) << "# Of " << tool2Name << " (TP) where " << tool2Name << " outperformed: " << tool2TP_tool2Outperfomed_allQ << endl;
+        cmp << left << setw(80) << "# Of " + tool2Name + " (TP) where " + tool2Name + " outperformed: " << tool2TP_tool2Outperfomed_allQ << endl;
         pair<uint32_t, uint32_t> avgtool2TP_tool2Outperfomed_alnLen_allQ = util.calculateStatistics2(tool2TP_tool2Outperfomed_alnLen_allQ);
     
         pair<uint32_t, uint32_t> avgtool2TP_tool2Outperfomed_ed_allQ = util.calculateStatistics2(tool2TP_tool2Outperfomed_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s alignment length where " << tool2Name << " outperformed: " << avgtool2TP_tool2Outperfomed_alnLen_allQ.first << ", " << avgtool2TP_tool2Outperfomed_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s edit distance where " << tool2Name << " outperformed: " << avgtool2TP_tool2Outperfomed_ed_allQ.first << ", " << avgtool2TP_tool2Outperfomed_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s alignment length where " + tool2Name + " outperformed: " << avgtool2TP_tool2Outperfomed_alnLen_allQ.first << ", " << avgtool2TP_tool2Outperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s edit distance where " + tool2Name + " outperformed: " << avgtool2TP_tool2Outperfomed_ed_allQ.first << ", " << avgtool2TP_tool2Outperfomed_ed_allQ.second << endl;
         pair<uint32_t, uint32_t> avgbaseLineTP_tool2Outperfomed_alnLen_allQ = util.calculateStatistics2(baseLineTP_tool2Outperfomed_alnLen_allQ);
  
         pair<uint32_t, uint32_t> avgbaseLineTP_tool2Outperfomed_ed_allQ = util.calculateStatistics2(baseLineTP_tool2Outperfomed_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) baseLine's alignment length where " << tool2Name << " outperformed: " << avgbaseLineTP_tool2Outperfomed_alnLen_allQ.first << ", " << avgbaseLineTP_tool2Outperfomed_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) baseLine's edit distance where " << tool2Name << " outperformed: " << avgbaseLineTP_tool2Outperfomed_ed_allQ.first << ", " << avgbaseLineTP_tool2Outperfomed_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) baseLine's alignment length where " + tool2Name + " outperformed: " << avgbaseLineTP_tool2Outperfomed_alnLen_allQ.first << ", " << avgbaseLineTP_tool2Outperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) baseLine's edit distance where " + tool2Name + " outperformed: " << avgbaseLineTP_tool2Outperfomed_ed_allQ.first << ", " << avgbaseLineTP_tool2Outperfomed_ed_allQ.second << endl;
 
-        cmp << left << setw(80) << "# Of " << tool2Name << " (TP) where they perfromed equaly: " << tool2TP_tool2EqualbaseLine_allQ << endl;
+        cmp << left << setw(80) << "# Of " + tool2Name + " (TP) where they perfromed equaly: " << tool2TP_tool2EqualbaseLine_allQ << endl;
         pair<uint32_t, uint32_t> avgtool2TP_tool2EqualbaseLine_alnLen_allQ = util.calculateStatistics2(tool2TP_tool2EqualbaseLine_alnLen_allQ);
         pair<uint32_t, uint32_t> avgtool2TP_tool2EqualbaseLine_ed_allQ = util.calculateStatistics2(tool2TP_tool2EqualbaseLine_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s alignment length where they perfromed equaly: " << avgtool2TP_tool2EqualbaseLine_alnLen_allQ.first << ", " << avgtool2TP_tool2EqualbaseLine_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s edit distance where they perfromed equaly: " << avgtool2TP_tool2EqualbaseLine_ed_allQ.first << ", " << avgtool2TP_tool2EqualbaseLine_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s alignment length where they perfromed equaly: " << avgtool2TP_tool2EqualbaseLine_alnLen_allQ.first << ", " << avgtool2TP_tool2EqualbaseLine_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s edit distance where they perfromed equaly: " << avgtool2TP_tool2EqualbaseLine_ed_allQ.first << ", " << avgtool2TP_tool2EqualbaseLine_ed_allQ.second << endl;
         pair<uint32_t, uint32_t> avgbaseLineTP_tool2EqualbaseLine_alnLen_allQ = util.calculateStatistics2(baseLineTP_tool2EqualbaseLine_alnLen_allQ);
         pair<uint32_t, uint32_t> avgbaseLineTP_tool2EqualbaseLine_ed_allQ = util.calculateStatistics2(baseLineTP_tool2EqualbaseLine_ed_allQ);
         cmp << left << setw(80) << "(avg, median) baseLine's alignment length where they perfromed equaly: " << avgbaseLineTP_tool2EqualbaseLine_alnLen_allQ.first << ", " << avgbaseLineTP_tool2EqualbaseLine_alnLen_allQ.second << endl;
         cmp << left << setw(80) << "(avg, median) baseLine's edit distance where they perfromed equaly: " << avgbaseLineTP_tool2EqualbaseLine_ed_allQ.first << ", " << avgbaseLineTP_tool2EqualbaseLine_ed_allQ.second << endl;
         
         cmp << "------------------------------------------------------------------------------------------" << endl;
-        cmp << left << setw(80) << "# Of " << tool2Name << " best where baseLine outperformed: " << tool2Best_baseLineOutperfomed_allQ << endl;
+        cmp << left << setw(80) << "# Of " + tool2Name + " best where baseLine outperformed: " << tool2Best_baseLineOutperfomed_allQ << endl;
         pair<uint32_t, uint32_t> avgtool2Best_baseLineOutperfomed_alnLen_allQ = util.calculateStatistics2(tool2Best_baseLineOutperfomed_alnLen_allQ);
         pair<uint32_t, uint32_t> avgtool2Best_baseLineOutperfomed_ed_allQ = util.calculateStatistics2(tool2Best_baseLineOutperfomed_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s best alignment length where baseLine outperformed: " << avgtool2Best_baseLineOutperfomed_alnLen_allQ.first << ", " << avgtool2Best_baseLineOutperfomed_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s best edit distance where baseLine outperformed: " << avgtool2Best_baseLineOutperfomed_ed_allQ.first << ", " << avgtool2Best_baseLineOutperfomed_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s best alignment length where baseLine outperformed: " << avgtool2Best_baseLineOutperfomed_alnLen_allQ.first << ", " << avgtool2Best_baseLineOutperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s best edit distance where baseLine outperformed: " << avgtool2Best_baseLineOutperfomed_ed_allQ.first << ", " << avgtool2Best_baseLineOutperfomed_ed_allQ.second << endl;
         pair<uint32_t, uint32_t> avgbaseLineBest_baseLineOutperfomed_alnLen_allQ = util.calculateStatistics2(baseLineBest_baseLineOutperfomed_alnLen_allQ);
         pair<uint32_t, uint32_t> avgbaseLineBest_baseLineOutperfomed_ed_allQ = util.calculateStatistics2(baseLineBest_baseLineOutperfomed_ed_allQ);
         cmp << left << setw(80) << "(avg, median) baseLine's best alignment length where baseLine outperformed: " << avgbaseLineBest_baseLineOutperfomed_alnLen_allQ.first << ", " << avgbaseLineBest_baseLineOutperfomed_alnLen_allQ.second << endl;
         cmp << left << setw(80) << "(avg, median) baseLine's best edit distance where baseLine outperformed: " << avgbaseLineBest_baseLineOutperfomed_ed_allQ.first << ", " << avgbaseLineBest_baseLineOutperfomed_ed_allQ.second << endl;
 
-        cmp << left << setw(80) << "# Of " << tool2Name << " best where " << tool2Name << " outperformed: " << tool2Best_tool2Outperfomed_allQ  << endl;
+        cmp << left << setw(80) << "# Of " + tool2Name + " best where " + tool2Name + " outperformed: " << tool2Best_tool2Outperfomed_allQ  << endl;
         pair<uint32_t, uint32_t> avgtool2Best_tool2Outperfomed_alnLen_allQ = util.calculateStatistics2(tool2Best_tool2Outperfomed_alnLen_allQ);
         pair<uint32_t, uint32_t> avgtool2Best_tool2Outperfomed_ed_allQ = util.calculateStatistics2(tool2Best_tool2Outperfomed_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s best alignment length where " << tool2Name << " outperformed: " << avgtool2Best_tool2Outperfomed_alnLen_allQ.first << ", " << avgtool2Best_tool2Outperfomed_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s best edit distance where " << tool2Name << " outperformed: " << avgtool2Best_tool2Outperfomed_ed_allQ.first << ", " << avgtool2Best_tool2Outperfomed_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s best alignment length where " + tool2Name + " outperformed: " << avgtool2Best_tool2Outperfomed_alnLen_allQ.first << ", " << avgtool2Best_tool2Outperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s best edit distance where " + tool2Name + " outperformed: " << avgtool2Best_tool2Outperfomed_ed_allQ.first << ", " << avgtool2Best_tool2Outperfomed_ed_allQ.second << endl;
         pair<uint32_t, uint32_t> avgbaseLineBest_tool2Outperfomed_alnLen_allQ = util.calculateStatistics2(baseLineBest_tool2Outperfomed_alnLen_allQ);
         pair<uint32_t, uint32_t> avgbaseLineBest_tool2Outperfomed_ed_allQ = util.calculateStatistics2(baseLineBest_tool2Outperfomed_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) baseLine's best alignment length where " << tool2Name << " outperformed: " << avgbaseLineBest_tool2Outperfomed_alnLen_allQ.first << ", " << avgbaseLineBest_tool2Outperfomed_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) baseLine's best edit distance where " << tool2Name << " outperformed: " << avgbaseLineBest_tool2Outperfomed_ed_allQ.first << ", " << avgbaseLineBest_tool2Outperfomed_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) baseLine's best alignment length where " + tool2Name + " outperformed: " << avgbaseLineBest_tool2Outperfomed_alnLen_allQ.first << ", " << avgbaseLineBest_tool2Outperfomed_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) baseLine's best edit distance where " + tool2Name + " outperformed: " << avgbaseLineBest_tool2Outperfomed_ed_allQ.first << ", " << avgbaseLineBest_tool2Outperfomed_ed_allQ.second << endl;
 
-        cmp << left << setw(80) << "# Of " << tool2Name << " best where they perfromed equaly: " << tool2Best_tool2EqualbaseLine_allQ << endl;
+        cmp << left << setw(80) << "# Of " + tool2Name + " best where they perfromed equaly: " << tool2Best_tool2EqualbaseLine_allQ << endl;
         pair<uint32_t, uint32_t> avgtool2Best_tool2EqualbaseLine_alnLen_allQ = util.calculateStatistics2(tool2Best_tool2EqualbaseLine_alnLen_allQ);
         pair<uint32_t, uint32_t> avgtool2Best_tool2EqualbaseLine_ed_allQ = util.calculateStatistics2(tool2Best_tool2EqualbaseLine_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s best alignment length where they perfromed equaly: " << avgtool2Best_tool2EqualbaseLine_alnLen_allQ.first << ", " << avgtool2Best_tool2EqualbaseLine_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s best edit distance where they perfromed equaly: " << avgtool2Best_tool2EqualbaseLine_ed_allQ.first << ", " << avgtool2Best_tool2EqualbaseLine_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s best alignment length where they perfromed equaly: " << avgtool2Best_tool2EqualbaseLine_alnLen_allQ.first << ", " << avgtool2Best_tool2EqualbaseLine_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s best edit distance where they perfromed equaly: " << avgtool2Best_tool2EqualbaseLine_ed_allQ.first << ", " << avgtool2Best_tool2EqualbaseLine_ed_allQ.second << endl;
         pair<uint32_t, uint32_t> avgbaseLineBest_tool2EqualbaseLine_alnLen_allQ = util.calculateStatistics2(baseLineBest_tool2EqualbaseLine_alnLen_allQ);
         pair<uint32_t, uint32_t> avgbaseLineBest_tool2EqualbaseLine_ed_allQ = util.calculateStatistics2(baseLineBest_tool2EqualbaseLine_ed_allQ);
         cmp << left << setw(80) << "(avg, median) baseLine's best alignment length where they perfromed equaly: " << avgbaseLineBest_tool2EqualbaseLine_alnLen_allQ.first << ", " << avgbaseLineBest_tool2EqualbaseLine_alnLen_allQ.second << endl;
         cmp << left << setw(80) << "(avg, median) baseLine's best edit distance where they perfromed equaly: " << avgbaseLineBest_tool2EqualbaseLine_ed_allQ.first << ", " << avgbaseLineBest_tool2EqualbaseLine_ed_allQ.second << endl;
         
         cmp << "------------------------------------------------------------------------------------------" << endl;
-        cmp << left << setw(80) << "# Of total " << tool2Name << " (FP): " << totaltool2FP << endl;
+        cmp << left << setw(80) << "# Of total " + tool2Name + " (FP): " << totaltool2FP << endl;
         pair<uint32_t, uint32_t> avgtool2FPPerQuery = util.calculateStatistics2(tool2FPPerQuery);
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s FP per query: " << avgtool2FPPerQuery.first << ", " << avgtool2FPPerQuery.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s FP per query: " << avgtool2FPPerQuery.first << ", " << avgtool2FPPerQuery.second << endl;
 
-        cmp << left << setw(80) << "# Of " << tool2Name << " (FP) that alignment length < R: " << tool2FP_lowAlnLen_allQ << endl;
+        cmp << left << setw(80) << "# Of " + tool2Name + " (FP) that alignment length < R: " << tool2FP_lowAlnLen_allQ << endl;
         pair<uint32_t, uint32_t> avgtool2FP_lowAlnLen_alnLen_allQ = util.calculateStatistics2(tool2FP_lowAlnLen_alnLen_allQ);
         pair<uint32_t, uint32_t> avgtool2FP_lowAlnLen_ed_allQ = util.calculateStatistics2(tool2FP_lowAlnLen_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s alignment length where alignment length < R: " << avgtool2FP_lowAlnLen_alnLen_allQ.first << ", " << avgtool2FP_lowAlnLen_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s edit distance where alignment length < R: " << avgtool2FP_lowAlnLen_ed_allQ.first << ", " << avgtool2FP_lowAlnLen_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s alignment length where alignment length < R: " << avgtool2FP_lowAlnLen_alnLen_allQ.first << ", " << avgtool2FP_lowAlnLen_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s edit distance where alignment length < R: " << avgtool2FP_lowAlnLen_ed_allQ.first << ", " << avgtool2FP_lowAlnLen_ed_allQ.second << endl;
 
-        // cmp << left << setw(80) << "# Of " << tool2Name << " (FP) that # of kmers is lower than regionSize" << tool2FP_lowerExactMatchKmers_allQ << endl;
+        // cmp << left << setw(80) << "# Of " + tool2Name + " (FP) that # of kmers is lower than regionSize" << tool2FP_lowerExactMatchKmers_allQ << endl;
         // pair<uint32_t, uint32_t> avgtool2FP_lowerExactMatchKmers_alnLen_allQ = util.calculateStatistics2(tool2FP_lowerExactMatchKmers_alnLen_allQ);
         // pair<uint32_t, uint32_t> avgtool2FP_lowerExactMatchKmers_ed_allQ = util.calculateStatistics2(tool2FP_lowerExactMatchKmers_ed_allQ);
-        // cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s alignment length where # of kmers < MinExactNumberOfKmers" <<  avgtool2FP_lowerExactMatchKmers_alnLen_allQ.first << ", " << avgtool2FP_lowerExactMatchKmers_alnLen_allQ.second << endl;
-        // cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s edit distance where # of kmers < MinExactNumberOfKmers" << avgtool2FP_lowerExactMatchKmers_ed_allQ.first << ", " << avgtool2FP_lowerExactMatchKmers_ed_allQ.second << endl;
+        // cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s alignment length where # of kmers < MinExactNumberOfKmers" <<  avgtool2FP_lowerExactMatchKmers_alnLen_allQ.first << ", " << avgtool2FP_lowerExactMatchKmers_alnLen_allQ.second << endl;
+        // cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s edit distance where # of kmers < MinExactNumberOfKmers" << avgtool2FP_lowerExactMatchKmers_ed_allQ.first << ", " << avgtool2FP_lowerExactMatchKmers_ed_allQ.second << endl;
         
-        cmp << left << setw(80) << "# Of " << tool2Name << " (FP) that percentage identity is lower than PI" << tool2FP_lowPercentageIdentity_allQ << endl;
+        cmp << left << setw(80) << "# Of " + tool2Name + " (FP) that percentage identity is lower than PI" << tool2FP_lowPercentageIdentity_allQ << endl;
         pair<uint32_t, uint32_t> avgtool2FP_lowPercentageIdentity_alnLen_allQ = util.calculateStatistics2(tool2FP_lowPercentageIdentity_alnLen_allQ);
         pair<uint32_t, uint32_t> avgtool2FP_lowPercentageIdentity_ed_allQ = util.calculateStatistics2(tool2FP_lowPercentageIdentity_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s alignment length where percentage identity is lower than PI" <<  avgtool2FP_lowPercentageIdentity_alnLen_allQ.first << ", " << avgtool2FP_lowPercentageIdentity_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s edit distance where percentage identity is lower than PI" << avgtool2FP_lowPercentageIdentity_ed_allQ.first << ", " << avgtool2FP_lowPercentageIdentity_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s alignment length where percentage identity is lower than PI" <<  avgtool2FP_lowPercentageIdentity_alnLen_allQ.first << ", " << avgtool2FP_lowPercentageIdentity_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s edit distance where percentage identity is lower than PI" << avgtool2FP_lowPercentageIdentity_ed_allQ.first << ", " << avgtool2FP_lowPercentageIdentity_ed_allQ.second << endl;
         
         cmp << "------------------------------------------------------------------------------------------" << endl;
-        cmp << left << setw(80) << "# Of baseLine (TP) where " << tool2Name << " didn't find match: " << baseLineTP_notool2Matches_allQ << endl;
+        cmp << left << setw(80) << "# Of baseLine (TP) where " + tool2Name + " didn't find match: " << baseLineTP_notool2Matches_allQ << endl;
         pair<uint32_t, uint32_t> avgbaseLineTP_notool2Matches_alnLen_allQ = util.calculateStatistics2(baseLineTP_notool2Matches_alnLen_allQ);
         pair<uint32_t, uint32_t> avgbaseLineTP_notool2Matches_ed_allQ = util.calculateStatistics2(baseLineTP_notool2Matches_ed_allQ);
-        cmp << left << setw(80) << "(avg, median) baseLine's alignment length where " << tool2Name << " didn't find match: " << avgbaseLineTP_notool2Matches_alnLen_allQ.first << ", " << avgbaseLineTP_notool2Matches_alnLen_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) baseLine's edit distance where " << tool2Name << " didn't find match: " << avgbaseLineTP_notool2Matches_ed_allQ.first << ", " << avgbaseLineTP_notool2Matches_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) baseLine's alignment length where " + tool2Name + " didn't find match: " << avgbaseLineTP_notool2Matches_alnLen_allQ.first << ", " << avgbaseLineTP_notool2Matches_alnLen_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) baseLine's edit distance where " + tool2Name + " didn't find match: " << avgbaseLineTP_notool2Matches_ed_allQ.first << ", " << avgbaseLineTP_notool2Matches_ed_allQ.second << endl;
         
         cmp << "------------------------------------------------------------------------------------------" << endl;
         cmp << left << setw(80) << "# Of queries contains N: " << numberOfQueryContainN << endl;
@@ -811,7 +830,7 @@ public:
         pair<uint32_t, uint32_t> baseLineReadPerQuery_allQ  = util.calculateStatistics2(baseLineReadPerQuerySet);
         pair<uint32_t, uint32_t> tool2ReadPerQuery_allQ  = util.calculateStatistics2(tool2ReadPerQuerySet);
         cmp << left << setw(80) << "(avg, median) baseLineS's Matches per Query: " << baseLineReadPerQuery_allQ.first << ", " << baseLineReadPerQuery_allQ.second << endl;
-        cmp << left << setw(80) << "(avg, median) " << tool2Name << "'s Matches per Query: " << tool2ReadPerQuery_allQ.first << ", " << tool2ReadPerQuery_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s Matches per Query: " << tool2ReadPerQuery_allQ.first << ", " << tool2ReadPerQuery_allQ.second << endl;
         cmp << "------------------------------------------------------------------------------------------" << endl;
 
         for(uint32_t i = 1; i < cfg.contigSize; i++) {
@@ -821,7 +840,7 @@ public:
             bestEdCmp << i << "\t" << baselineBestOutperform_edit_difference[i] << "\t" << tool2BestOutperform_edit_difference[i] << endl;
         }
 
-        for(uint32_t i = 1; i < cfg.contigSize; i++) {
+        for(uint32_t i = 1; i < cfg.contigSize + 20; i++) {
             tpAlnSz << i << "\t" << baselineTP_aln_sz[i] << "\t" << tool2TP_aln_sz[i] << endl;
             bestAlnSz << i << "\t" << baselineBest_aln_sz[i] << "\t" << tool2Best_aln_sz[i] << endl;
         }

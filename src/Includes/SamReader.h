@@ -9,6 +9,7 @@
 #include <regex>
 #include <map>
 #include "Utils.h"
+#include "Alignment.h"
 
 using namespace std;
 
@@ -96,13 +97,12 @@ public:
         return extractEditTypes(cigar).clipCount;
     }
 
-    vector<Sam> parseFile(uint32_t lastQueryID, bool compressedFormat = false) {
-        vector<Sam> alignments;
+    void parseFile(uint32_t lastQueryID, vector<Alignment> &alignments, bool compressedFormat = false) {
         ifstream samFile(filename_);
         Utilities<uint32_t> utl;
         if (!samFile) {
             cerr << "Error opening file: " << filename_ << endl;
-            return alignments;
+            return;
         }
 
         string line;
@@ -138,7 +138,11 @@ public:
                 if (seq.find("*") != string::npos) sam.seq = ""; else sam.seq = seq;
                 if (qual.find("*") != string::npos) sam.qual = ""; else sam.qual = qual;
             }
-
+            if(sam.cigar == "")
+            {
+                cout << "!!Empty cigar!!\n";
+                continue;
+            }
             sam.queryId = utl.extractContigId(queryID);
             sam.readId = utl.extractContigId(readID);
             if(sam.queryId > lastQueryID)
@@ -160,11 +164,57 @@ public:
                     sam.alignmentScore = stoi(token.substr(5));
                 }
             }
-            alignments.push_back(sam);
+            // convert to alignment
+            Alignment aln;
+            aln.readID = sam.readId;
+            aln.queryID = sam.queryId;
+            aln.cigar = sam.cigar;
+            auto counts = countCigarOperations(aln.cigar);
+            aln.substitutions = std::get<3>(counts);
+            aln.matches = std::get<2>(counts);
+            aln.inDels = std::get<0>(counts) + std::get<1>(counts);
+            aln.editDistance  = aln.substitutions + aln.inDels;
+            aln.flag = sam.flag;
+            aln.partialMatchSize = aln.matches + aln.inDels + aln.substitutions;
+            alignments.push_back(aln);
             queryCount++;
         }
 
-        return alignments;
+        return;
+    }
+
+    std::tuple<int, int, int, int> countCigarOperations(const std::string& cigar) {
+        int insertion = 0, deletion = 0, matches = 0, mismatches = 0;
+        int num = 0;
+
+        for (char c : cigar) {
+            if (isdigit(c)) {
+                num = num * 10 + (c - '0');
+            } else {
+                switch (c) {
+                    case 'I':
+                    case 'i':
+                        insertion += num;
+                        break;
+                    case 'D':
+                    case 'd':
+                        deletion += num;
+                        break;
+                    case '=':
+                        matches += num;
+                        break;
+                    case 'X':
+                    case 'x':
+                        mismatches += num;
+                        break;
+                    default:
+                        break;
+                }
+                num = 0;
+            }
+        }
+
+        return std::make_tuple(insertion, deletion, matches, mismatches);
     }
 
     bool isReverseComplemented(const Sam& sam) const {
