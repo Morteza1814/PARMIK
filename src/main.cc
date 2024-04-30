@@ -166,19 +166,6 @@ void convertSamToLev(SamReader::Sam parmikSamAlignment, LevAlign& parmikAlignmen
     parmikAlignment.flag = parmikSamAlignment.flag;                
 }
 
-void convertSamToAln(SamReader::Sam parmikSamAlignment, Alignment& parmikAlignment)
-{
-    SamReader sam("");
-    parmikAlignment.readID = parmikSamAlignment.readId;
-    parmikAlignment.queryID = parmikSamAlignment.queryId;
-    parmikAlignment.cigar = parmikSamAlignment.cigar;
-    parmikAlignment.substitutions = sam.countSubstitutions(parmikSamAlignment.cigar);
-    parmikAlignment.matches = sam.countMatches(parmikSamAlignment.cigar);
-    parmikAlignment.inDels = sam.countInsertions(parmikSamAlignment.cigar) + sam.countDeletions(parmikSamAlignment.cigar);
-    parmikAlignment.editDistance  = parmikAlignment.substitutions + parmikAlignment.inDels;
-    parmikAlignment.flag = parmikSamAlignment.flag;                
-}
-
 vector<Penalty> readPenalties(const string& readPenaltiesFileAddress)
 {
     vector<Penalty> penalties;
@@ -420,10 +407,16 @@ int run(int argc, char *argv[]) {
             //     matches.close();
             // }
         } else if (cfg.parmikMode == PARMIK_MODE_CMP_BASELINE){
-            string comparisonResultsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/cmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
-            string alnReportAddressBase = cfg.outputDir + "/cmp/" + cfg.otherTool + "/cmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties);
+            string queryFileName = getTextAfterLastSlash(cfg.queryFileAddress);
+            if(queryFileName == cfg.queryFileAddress){
+                cerr << "Error: query file name is not valid" << endl;
+                return 1;
+            }
+            string comparisonResultsFileAddress = cfg.outputDir + "/blcmp/" + cfg.otherTool + "/blcmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+            string alnReportAddressBase = cfg.outputDir + "/blcmp/" + cfg.otherTool + "/blcmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties);
+            string baselineBaseAddress = cfg.baselineBaseAddress + "/BL_Aln" + "_RS" + to_string(cfg.kmerLength) + "_PI85" + "_P" + getPenaltiesSubstr(penalties) + "_Q" + queryFileName;
             CompareWithBaseLine blCmp(cfg.identityPercentage);
-            blCmp.compareWithBaseLine(cfg, reads, queries, comparisonResultsFileAddress, queryCount, alnReportAddressBase, cfg.otherTool, cfg.baselineBaseAddress);
+            blCmp.compareWithBaseLine(cfg, reads, queries, comparisonResultsFileAddress, queryCount, alnReportAddressBase, cfg.otherTool, baselineBaseAddress);
         } else {
             if(cfg.noOutputFileDump)
             {
@@ -432,16 +425,15 @@ int run(int argc, char *argv[]) {
             }
             //load the parmik alignments from the sam formatted file
             SamReader parmikSam(parmikAlignmentsAddress);
-            vector<SamReader::Sam> parmikSamAlignments = parmikSam.parseFile(queryCount);
+            vector<Alignment> parmikSamAlignments;
+             parmikSam.parseFile(queryCount, parmikSamAlignments);
             // IndexContainer<uint32_t, LevAlign> parmikMultiAlignments;
             IndexContainer<uint32_t, Alignment> parmikMultiAlignments;
-            for (const SamReader::Sam& aln : parmikSamAlignments) 
+            for (const Alignment& aln : parmikSamAlignments) 
             {
                 // LevAlign l;
                 Alignment l;
-                // convertSamToLev(aln, l);
-                convertSamToAln(aln, l);
-                parmikMultiAlignments.put(aln.queryId, l);
+                parmikMultiAlignments.put(aln.queryID, l);
             }
             // cout<<"finished \n";
             //check the alignment results with another aligner
@@ -465,15 +457,16 @@ int run(int argc, char *argv[]) {
                 cwb.comparePmWithBlast(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, minNumExactMatchKmer, alnPerQueryFileAddress, parmikFnReadsFileAddress, bestAlnCmpFileAddress);
             } else if(cfg.otherTool == "GT" || cfg.otherTool == "gt")
             {
-                SamReader gtSam(cfg.otherToolOutputFileAddress);
-                vector<SamReader::Sam> gtSamAlignments = gtSam.parseFile(queryCount);
-                IndexContainer<uint32_t, LevAlign> gtMultiAlignments;
-                for (const SamReader::Sam& aln : gtSamAlignments) 
-                {
-                    LevAlign l;
-                    convertSamToLev(aln, l);
-                    gtMultiAlignments.put(aln.queryId, l);
-                }
+                // SamReader gtSam(cfg.otherToolOutputFileAddress);
+                // vector<SamReader::Sam> gtSamAlignments;
+                // gtSam.parseFile(queryCount, gtSamAlignments);
+                // IndexContainer<uint32_t, LevAlign> gtMultiAlignments;
+                // for (const SamReader::Sam& aln : gtSamAlignments) 
+                // {
+                //     LevAlign l;
+                //     convertSamToLev(aln, l);
+                //     gtMultiAlignments.put(aln.queryId, l);
+                // }
                 // CompareWithGroundTruth cwgt;
                 // cwgt.comparePmWithGroundTruth(gtMultiAlignments, cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress);
             

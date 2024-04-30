@@ -45,7 +45,7 @@ public:
         return inDelCount;
     }
 
-    void parseFile(uint32_t lastQueryID, IndexContainer<uint32_t, Alignment>& alignments) {
+    void parseFile(uint32_t lastQueryID, vector<Alignment>& alignments) {
         
         ifstream blastFile(filename_);
         Utilities<uint32_t> utl;
@@ -82,7 +82,7 @@ public:
             if(blast.queryID > (int)lastQueryID)
                 break;
 
-            alignments.put(blast.queryID, blast);
+            alignments.push_back(blast);
             queryCount++;
         }
     }

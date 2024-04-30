@@ -9,6 +9,7 @@
 #include "Aligner.h"
 #include "PostFilter.h"
 #include "Alignment.h"
+#include <vector>
 
 #define REPORT_BEST_ALN 0
 #define REPORT_PARMIK_FN 0
@@ -78,7 +79,7 @@ public:
         if(REPORT_BEST_ALN) bestAlnCmp.open(bestAlnCmpFileAddress);
         //read the blast file
         BlastReader blastReader(cfg.otherToolOutputFileAddress);
-        IndexContainer<uint32_t, Alignment> blastAlignments;
+        vector<Alignment> blastAlignments;
         blastReader.parseFile(queryCount, blastAlignments);
         uint32_t numberOfQueryContainN = 0, numberOfBlastReadsContainingN = 0, 
         queriesBLASTFoundMatch = 0, queriesPMFoundMatch = 0,
@@ -133,8 +134,16 @@ public:
             size_t pmReadPerQuery = distance(pmRange.first, pmRange.second);
             pmTotalNumberOfReadIDs += pmReadPerQuery;
             pmReadPerQuerySet.insert(pmReadPerQuery);
-            auto blRrange = blastAlignments.getRange(queryInd);
-            size_t blastReadPerQuery = distance(blRrange.first, blRrange.second);
+
+            vector<Alignment> queryBlastAlignments;
+            for (const Alignment& aln : blastAlignments) 
+            {
+                if ((uint32_t)aln.queryID == queryInd) {
+                    queryBlastAlignments.push_back(aln);
+                }
+            }
+            // auto blRrange = blastAlignments.getRange(queryInd);
+            size_t blastReadPerQuery = queryBlastAlignments.size();
             blastTotalNumberOfReadIDs += blastReadPerQuery;
             blastReadPerQuerySet.insert(blastReadPerQuery);
             cmp << "# of reads found by BLAST : " << blastReadPerQuery << endl;
@@ -174,9 +183,9 @@ public:
                 blastFN_parmik_ed_allQ.insert(bestAlnPm.inDels + bestAlnPm.substitutions);
                 cmp << "FN for BLAST, PARMIK alnlen : " << bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions << ", ed : " << bestAlnPm.inDels + bestAlnPm.substitutions << ", readID: " <<  bestAlnPm.readID << endl;
             } else {
-                for (auto it = blRrange.first; it != blRrange.second; it++) 
+                for (auto it = queryBlastAlignments.begin(); it != queryBlastAlignments.end(); it++) 
                 {
-                    Alignment aln = it->second;
+                    Alignment aln = (*it);
                     string blastR = reads[aln.readID]; 
                     if(blastR.find('N') != string::npos || blastR.find('n') != string::npos)
                     {
