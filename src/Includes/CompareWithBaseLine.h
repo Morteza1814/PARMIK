@@ -22,6 +22,9 @@ class CompareWithBaseLine {
 private:
     double percentageIdentity;
     //Alignment sizes
+    //FN
+    map<uint16_t, uint64_t> tool2FN_aln_sz;
+    map<uint16_t, uint64_t> baselineFN_aln_sz;
     //TP
     map<uint16_t, uint64_t> tool2TP_aln_sz;
     map<uint16_t, uint64_t> baselineTP_aln_sz;
@@ -139,6 +142,22 @@ public:
             baselineBest_aln_sz[aln_sz] = 1;
         } else {
             baselineBest_aln_sz[aln_sz]++;
+        }
+    }
+
+    void addTool2FNAlnSz(uint16_t aln_sz) {
+        if (tool2FN_aln_sz.find(aln_sz) == tool2FN_aln_sz.end()) {
+            tool2FN_aln_sz[aln_sz] = 1;
+        } else {
+            tool2FN_aln_sz[aln_sz]++;
+        }
+    }
+
+    void addBaselineFNAlnSz(uint16_t aln_sz) {
+        if (baselineFN_aln_sz.find(aln_sz) == baselineFN_aln_sz.end()) {
+            baselineFN_aln_sz[aln_sz] = 1;
+        } else {
+            baselineFN_aln_sz[aln_sz]++;
         }
     }
 
@@ -311,6 +330,7 @@ public:
             cout << "cmp file not opened" << endl;
         ofstream alnPerQ;
         ofstream baseLineFn;
+        ofstream fnAlnSz;
         ofstream tpAlnCmp, bestAlnCmp, tpEdCmp, bestEdCmp;
         ofstream tpAlnSz, bestAlnSz;
         // if(REPORT_ALN_PER_Q) alnPerQ.open(alnPerQueryFileAddress);
@@ -322,6 +342,7 @@ public:
         tpEdCmp.open(alnReportAddressBase + "CmpEd_tp.txt");
         tpAlnSz.open(alnReportAddressBase + "AlnSz_tp.txt");
         bestAlnSz.open(alnReportAddressBase + "AlnSz_Best.txt");
+        fnAlnSz.open(alnReportAddressBase + "AlnSz_fn.txt");
         //read the alignment files
         vector<Alignment> tool2Alignments;
         if(tool2Name == "BLAST" || tool2Name == "blast") {
@@ -480,12 +501,14 @@ public:
                         tool2FP_lowAlnLen++;
                         tool2FP_lowAlnLen_alnLen_allQ.insert(aln.partialMatchSize);
                         tool2FP_lowAlnLen_ed_allQ.insert(aln.substitutions + aln.inDels);
+                        cmp << "FP for " + tool2Name + ", due to low aln len, alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << endl;
                     } else if (!checkIdentityPercentange(cigarStr)){
                         isFP = true;
                         aln.criteriaCode = 0x80;
                         tool2FP_lowPercentageIdentity++;
                         tool2FP_lowPercentageIdentity_alnLen_allQ.insert(aln.partialMatchSize);
                         tool2FP_lowPercentageIdentity_ed_allQ.insert(aln.substitutions + aln.inDels);
+                        cmp << "FP for " + tool2Name + ", due to low PercentageIdentity, alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << endl;
                     }
         
                     if (isFP){
@@ -520,6 +543,7 @@ public:
                             tool2TP_nobaseLineMatches_alnLen_allQ.insert(aln.partialMatchSize);
                             tool2TP_nobaseLineMatches_ed_allQ.insert(aln.substitutions + aln.inDels);
                             cmp << "TP for " + tool2Name + ", no baseLine match, alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << endl;
+                            addBaselineFNAlnSz(bestAlntool2.partialMatchSize);
                             if(REPORT_baseLine_FN) baseLineFn << queryInd << "\t" << aln.readID << "\t" << aln.flag << endl;
                         } else {
                             if (baselineAln.matches + baselineAln.inDels + baselineAln.substitutions > aln.partialMatchSize){ //baseLine outperformed
@@ -597,6 +621,7 @@ public:
                         baseLineTP_notool2Matches++;
                         baseLineTP_notool2Matches_alnLen_allQ.insert(aaln.matches + aaln.inDels + aaln.substitutions);
                         baseLineTP_notool2Matches_ed_allQ.insert(aaln.substitutions + aaln.inDels);
+                        addTool2FNAlnSz(aaln.matches + aaln.inDels + aaln.substitutions);
                     }
                 }
                 baseLineTP_notool2Matches_allQ += baseLineTP_notool2Matches;
@@ -620,6 +645,7 @@ public:
                     baseLineFN_tool2_ed_allQ.insert(bestAlntool2.substitutions + bestAlntool2.inDels);
                     cmp << "baseLine FN, and " + tool2Name + " alnsize: " << bestAlntool2.partialMatchSize << ", " + tool2Name + " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels << ", " + tool2Name + " readID: " << bestAlntool2.readID << endl;
                     numnberOfBaseLine_FN++;
+                    addBaselineFNAlnSz(bestAlntool2.partialMatchSize);
                 } else if(baseLineReadPerQuery > 0 && tool2TP > 0){//compare the best alignmnets for this queyry
                     if (baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions > bestAlntool2.partialMatchSize){ //baseLine outperformed
                         tool2Best_baseLineOutperfomed++;
@@ -843,6 +869,7 @@ public:
         for(uint32_t i = 1; i < cfg.contigSize + 20; i++) {
             tpAlnSz << i << "\t" << baselineTP_aln_sz[i] << "\t" << tool2TP_aln_sz[i] << endl;
             bestAlnSz << i << "\t" << baselineBest_aln_sz[i] << "\t" << tool2Best_aln_sz[i] << endl;
+            fnAlnSz << i << "\t" << baselineFN_aln_sz[i] << "\t" << tool2FN_aln_sz[i] << endl;
         }
         cmp.close();
         if(REPORT_ALN_PER_Q) alnPerQ.close();
@@ -852,6 +879,7 @@ public:
         bestEdCmp.close();
         tpAlnSz.close();
         bestAlnSz.close();
+        fnAlnSz.close();
         if (REPORT_baseLine_FN) baseLineFn.close();
     }
 };

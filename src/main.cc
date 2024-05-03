@@ -306,7 +306,7 @@ int run(int argc, char *argv[]) {
             //do it again for the reverse strand
             tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
             aligner.findPartiaMatches(reads, revQueries, queryCount, false, baselineAlignmentsAddress, penalties, queryBaseIndex);
-        } else if (cfg.parmikMode == PARMIK_MODE_INDEX && cfg.parmikMode == PARMIK_MODE_ALIGN) {
+        } else if (cfg.parmikMode == PARMIK_MODE_INDEX || cfg.parmikMode == PARMIK_MODE_ALIGN) {
             if (cfg.kmerLength <= 16)
             {
                 Container<uint32_t, uint32_t> cheapKmers;

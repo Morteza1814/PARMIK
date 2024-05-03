@@ -1,0 +1,83 @@
+no kmerRangesFileAddressArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  4
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads
+readFileName:                 SRR12432009_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/SarsGenome_queries
+queryFileName:                SarsGenome_queries
+otherToolOutputFileAddress:   /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/SarsGenome/aln/pmAln_R48_PI95_L0_M6_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/SarsGenome
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/2484_1111_2444_2288_2848
+kmerRangesFileAddress:        
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   11
+regionSize:                   48
+cheapKmerThreshold:           0
+identityPercentage:           0.95
+minExactMatchLen:             0
+regionKmers: 4, exactMatchSize: 46, editDistance: 2
+minNumExactMatchKmer:         6
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/
+baselineBaseAddress:          /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR12432009/SarsGenome
+max editDistance in min region: 2
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 2, s: 4, go: 8, ge: 4
+m: 1, s: 1, go: 1, ge: 1
+m: 2, s: 4, go: 4, ge: 4
+m: 2, s: 2, go: 8, ge: 8
+m: 2, s: 8, go: 4, ge: 8
+------------------------------------
+numberOfReadsWithN : 0
+queryCount : 29602
+numberOfReadsWithN : 0
+readCount : 16344647
+offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/ck_T0_K11_r17000000
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/SarsGenome/aln/pmAln_R48_PI95_L0_M6_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+Comparing Baseline and parmik
+cmp file address: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_SSW_ID_PRCNTG/SRR12432009/SarsGenome/blcmp/parmik/blcmp_R48_PI95_L0_M6_E2_K11_T0_P_2484_1111_2444_2288_2848.txt
+queries processed: 0 / 29602
+Sam: Read 54215901 alignments.
+queries processed: 1000 / 29602
+Sam: Read 57392672 alignments.
+queries processed: 2000 / 29602
+Sam: Read 58570493 alignments.
+queries processed: 3000 / 29602
+Sam: Read 66596613 alignments.
+queries processed: 4000 / 29602
+Sam: Read 70862210 alignments.
+queries processed: 5000 / 29602
+Sam: Read 54437626 alignments.
+queries processed: 6000 / 29602
+Sam: Read 55411773 alignments.
+queries processed: 7000 / 29602
+Sam: Read 84976650 alignments.
+queries processed: 8000 / 29602
+Sam: Read 56066441 alignments.
+queries processed: 9000 / 29602
+Sam: Read 171010183 alignments.
+queries processed: 10000 / 29602
+Sam: Read 73644534 alignments.
+queries processed: 11000 / 29602
+Sam: Read 59726613 alignments.
+queries processed: 12000 / 29602
+Sam: Read 53018814 alignments.
+queries processed: 13000 / 29602
+Sam: Read 49086608 alignments.
+queries processed: 14000 / 29602
+Sam: Read 59762367 alignments.
+queries processed: 15000 / 29602
+Sam: Read 55531627 alignments.
+queries processed: 16000 / 29602
+Sam: Read 51897053 alignments.
+queries processed: 17000 / 29602
+Sam: Read 75710900 alignments.
+queries processed: 18000 / 29602
+Sam: Read 57045017 alignments.
+queries processed: 19000 / 29602
+Sam: Read 64122383 alignments.
+queries processed: 20000 / 29602
+Sam: Read 56325468 alignments.
+queries processed: 21000 / 29602
