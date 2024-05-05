@@ -6,7 +6,7 @@
 #include "Alignment.h"
 
 #define CHECK_REGION_SIZE 0
-#define TURN_POLISHING_OFF 1
+#define TURN_POLISHING_OFF 0
 
 using namespace std;
 
