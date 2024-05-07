@@ -11,9 +11,7 @@
 #include "Alignment.h"
 #include <vector>
 
-#define REPORT_BEST_ALN 0
-#define REPORT_PARMIK_FN 0
-#define REPORT_ALN_PER_Q 0
+#define CHECK_R_CRITERION 1
 
 using namespace std;
 
@@ -189,7 +187,13 @@ public:
             for (const Alignment& aln : blastAlignments) 
             {
                 if ((uint32_t)aln.queryID == queryInd) {
-                    query_blastAlignments.push_back(aln);
+                    if(CHECK_R_CRITERION) {
+                        string cigarStr = getCigarStr(aln.queryRegionStartPos, aln.alignedQuery, aln.alignedRead, cfg.contigSize);
+                        if(hasConsecutiveMatches(cigarStr, cfg.kmerLength))
+                            query_blastAlignments.push_back(aln);
+                    } else {
+                        query_blastAlignments.push_back(aln);
+                    }
                 }
             }
             size_t blastReadPerQuery = query_blastAlignments.size();
@@ -198,7 +202,13 @@ public:
             for (const Alignment& aln : parmikAlignments) 
             {
                 if ((uint32_t)aln.queryID == queryInd) {
-                    query_parmikAlignments.push_back(aln);
+                    if(CHECK_R_CRITERION) {
+                        string cigarStr = convertCigarToStr(aln.cigar, true);
+                        if(hasConsecutiveMatches(cigarStr, cfg.kmerLength))
+                            query_parmikAlignments.push_back(aln);
+                    } else {
+                        query_parmikAlignments.push_back(aln);
+                    }
                 }
             }
             size_t parmikReadPerQuery = query_parmikAlignments.size();
