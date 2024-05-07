@@ -2,7 +2,7 @@
 #SBATCH --job-name="blcmp_parmik_K11S48M0T0I95"
 #SBATCH --error="blcmp_parmik_K11S48M0T0I95.err"
 #SBATCH --output="blcmp_parmik_K11S48M0T0I95.out"
-#SBATCH --mem=500G
+#SBATCH --mem=320G
 #SBATCH --time=4-00:00:00
 #SBATCH --nodelist=cortado07 
 #SBATCH --partition=main
