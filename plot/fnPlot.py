@@ -47,7 +47,7 @@ ax2.bar([i + 0.4 for i in x[zoom_start:zoom_end]], y2[zoom_start:zoom_end], labe
 # ax2.set_title('FN rates for Alignment sizes between [21-35]')
 ax2.legend(fontsize=18)
 ax2.tick_params(axis='both', which='major', labelsize=18)
-ax2.set_ylabel('No. of FN', fontsize=20)
+ax2.set_ylabel('No. of FN (Millions)', fontsize=20)
 
 plt.xlabel('Alignment Size', fontsize=20)
 

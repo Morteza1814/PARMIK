@@ -54,11 +54,14 @@ public:
         return out.str();
     }
 
-    void cheapSeedFilter(Container<kmerT, readIndT>& cheapKmers, tsl::robin_map <uint32_t, string>& queries, 
-    Container<queryIndT, readIndT>& minThCheapSeeds)
+    void cheapSeedFilter(Container<kmerT, readIndT>& cheapKmers, Container<kmerT, readIndT>& expensiveKmers, tsl::robin_map <uint32_t, string>& queries, 
+    Container<queryIndT, readIndT>& minThCheapSeeds, const string& parmikExpensiveKmerFNsAddress)
     {
         Utilities<uint32_t> utilint;
         Utilities<double> utildouble;
+        ofstream expensiveKmersFN;
+        if(EXPENSIVE_KMERS_EVALUATION)
+            expensiveKmersFN.open(parmikExpensiveKmerFNsAddress);
         // uint64_t currentContigId;
         // uint64_t numberOfQueriesWithMinCheapAtLeast = 0, numberOfCheapSeedsInQ = 0;
         string currentContigSequence;
@@ -92,12 +95,29 @@ public:
             //only collect the cheap kmers from the kmers in the regions of query
             // tsl::robin_map <readIndT, uint32_t> cheapSeedReads;
             start = chrono::high_resolution_clock::now();
-            pair<uint64_t, uint64_t> cheapSeeds = cheapKmers.collectCheapSeeds(queryRegionKmers, minThCheapSeeds, minNumberOfCheapSeeds, currentContigId);
+            tsl::robin_map <uint32_t, uint64_t> inexpensiveReadCounts;
+            pair<uint64_t, uint64_t> cheapSeeds = cheapKmers.collectCheapSeeds(queryRegionKmers, minThCheapSeeds, minNumberOfCheapSeeds, currentContigId, inexpensiveReadCounts);
             queriesNumCheapKmers.insert(cheapSeeds.first);
             end = chrono::high_resolution_clock::now();
             duration = chrono::duration_cast<chrono::nanoseconds>(end - start);
             collectCheapSeeds_totalExeTime += duration.count();
             cout << "query [" << currentContigId << "] contains " << cheapSeeds.first << " cheap seed k-mers and " << cheapSeeds.second << " cheap seeds (reads candidates) and it took: " << static_cast<double>(duration.count()) / 1'000'000.0 << "ms" << endl;
+
+            if(EXPENSIVE_KMERS_EVALUATION)
+            {
+                tsl::robin_map <uint32_t, uint64_t> expensiveReadCounts;
+                expensiveKmers.collectExpensiveSeeds(queryRegionKmers, expensiveReadCounts);
+                for (const auto& entry : expensiveReadCounts) {
+                    uint64_t readId = entry.first;
+                    auto ittt = inexpensiveReadCounts.find(readId);
+                    if (ittt != inexpensiveReadCounts.end()) {
+                        if (ittt->second < minNumberOfCheapSeeds && entry.second + ittt->second >= minNumberOfCheapSeeds) {
+                            //a false negative because of cheap k-mers
+                            expensiveKmersFN << currentContigId << readId << ittt->second << entry.second << endl;
+                        }
+                    }
+                }
+            }
             // if (isVeboseLog_) printf("# of reads with at least 1 cheap seed => [%ld]\n", cheapSeedReads.size());
             //collect Reads With Min Threshold number of Cheap Seeds
             // IndexContainer<queryIndT, readIndT> minThCheapSeedsOfQuery;
@@ -164,6 +184,7 @@ public:
         cout << left << setw(40) << "findMatchedReadWithHihestSeeds_totalExeTime = " << findMatchedReadWithHihestSeeds_totalExeTime << " nanoseconds, " << findMatchedReadWithHihestSeeds_totalExeTime_second << " seconds, " << findMatchedReadWithHihestSeeds_totalExeTime_millisecond << " milliseconds" << endl;
         cout << "--------------------------------------------------------" << endl;
         cout <<  "<<<<<<<<<<<<<<<<< Partial Matcher based on Cheap Kmers  Ended!! >>>>>>>>>>>>>>>>>>" << endl;
+        expensiveKmersFN.close();
     }
     
     vector<kmerT> extractKmers(const string& sequence) {

@@ -290,8 +290,10 @@ int run(int argc, char *argv[]) {
         cout << "readCount : " << readCount << endl;
         // unordered_map<uint32_t, unordered_set<LevAlign>> alignments;
         string offlineCheapIndexAddress = cfg.offlineIndexAddress + "ck_T" + to_string(cfg.cheapKmerThreshold) + "_K"+ to_string(cfg.kmerLength) + "_r" + to_string(cfg.readsCount);
+        string offlineExpensiveIndexAddress = cfg.offlineIndexAddress + "ek_T" + to_string(cfg.cheapKmerThreshold) + "_K"+ to_string(cfg.kmerLength) + "_r" + to_string(cfg.readsCount);
         cout << "offlineCheapIndexAddress: " << offlineCheapIndexAddress << endl;
         string parmikAlignmentsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+        string parmikExpensiveKmerFNsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + "EXP.txt";
         cout << "pmrkAlignmentsAddress: " << parmikAlignmentsAddress << endl;
         //baseline
         if (cfg.parmikMode == PARMIK_MODE_BASELINE) {
@@ -309,7 +311,7 @@ int run(int argc, char *argv[]) {
         } else if (cfg.parmikMode == PARMIK_MODE_INDEX || cfg.parmikMode == PARMIK_MODE_ALIGN) {
             if (cfg.kmerLength <= 16)
             {
-                Container<uint32_t, uint32_t> cheapKmers;
+                Container<uint32_t, uint32_t> cheapKmers, expensiveKmers;
                 if(!cfg.isIndexOffline)
                 {
                     //create the partial matching inverted read index
@@ -321,7 +323,7 @@ int run(int argc, char *argv[]) {
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
                     //collect cheap kmers
                     KmersFrequencyCounter<uint32_t, uint32_t> kfc(cfg.cheapKmerThreshold);
-                    kfc.collectCheapKmers(cheapKmers, invertedIndex, cfg.kmerRangesFileAddress);
+                    kfc.collectCheapKmers(cheapKmers, expensiveKmers, invertedIndex, cfg.kmerRangesFileAddress);
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
                     // cheapKmers.getSize();
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
@@ -329,20 +331,22 @@ int run(int argc, char *argv[]) {
                     clock_t ser_start_time = clock();
                     cheapKmers.serialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Serialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
+                    if(EXPENSIVE_KMERS_EVALUATION) expensiveKmers.serialize(offlineExpensiveIndexAddress);
                 } else 
                 {
                     clock_t ser_start_time = clock();
                     cheapKmers.deserialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
+                    if(EXPENSIVE_KMERS_EVALUATION) expensiveKmers.deserialize(offlineExpensiveIndexAddress);
                 }
                 if (cfg.parmikMode == PARMIK_MODE_ALIGN)
                 {
                     //do partial matching based on cheap k-mers
                     CheapKmerPartialMatcher<uint32_t, uint32_t, uint32_t> ckpm(cfg.kmerLength, cfg.contigSize, minNumExactMatchKmer, cfg.isVerboseLog);
-                    ckpm.cheapSeedFilter(cheapKmers, queries, minThCheapSeedReads);
+                    ckpm.cheapSeedFilter(cheapKmers, expensiveKmers, queries, minThCheapSeedReads, parmikExpensiveKmerFNsAddress);
                     //get the reverse complement of queries
                     tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
-                    ckpm.cheapSeedFilter(cheapKmers, revQueries, revMinThCheapSeedReads);
+                    ckpm.cheapSeedFilter(cheapKmers, expensiveKmers, revQueries, revMinThCheapSeedReads, parmikExpensiveKmerFNsAddress);
                     // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
                     Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage);
@@ -352,7 +356,7 @@ int run(int argc, char *argv[]) {
                 }
             } else
             {
-                Container<uint64_t, uint32_t> cheapKmers;
+                Container<uint64_t, uint32_t> cheapKmers, expensiveKmers;
                 if(!cfg.isIndexOffline)
                 {
                     //create the partial matching inverted read index
@@ -364,7 +368,7 @@ int run(int argc, char *argv[]) {
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Inverted Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
                     //collect cheap kmers
                     KmersFrequencyCounter<uint64_t, uint32_t> kfc(cfg.cheapKmerThreshold);
-                    kfc.collectCheapKmers(cheapKmers, invertedIndex, cfg.kmerRangesFileAddress);
+                    kfc.collectCheapKmers(cheapKmers, expensiveKmers, invertedIndex, cfg.kmerRangesFileAddress);
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
                     // cheapKmers.getSize();
                     // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Cheap K-mer Index Size>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
@@ -372,20 +376,22 @@ int run(int argc, char *argv[]) {
                     clock_t ser_start_time = clock();
                     cheapKmers.serialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Serialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
+                    if(EXPENSIVE_KMERS_EVALUATION) expensiveKmers.serialize(offlineExpensiveIndexAddress);
                 } else 
                 {
                     clock_t ser_start_time = clock();
                     cheapKmers.deserialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
+                    if(EXPENSIVE_KMERS_EVALUATION) expensiveKmers.deserialize(offlineExpensiveIndexAddress);
                 }
                 if (cfg.parmikMode == PARMIK_MODE_ALIGN)
                 {
                     // do partial matching based on cheap k-mers
                     CheapKmerPartialMatcher<uint32_t, uint64_t, uint32_t> ckpm(cfg.kmerLength, cfg.contigSize, minNumExactMatchKmer, cfg.isVerboseLog);
-                    ckpm.cheapSeedFilter(cheapKmers, queries, minThCheapSeedReads);
+                    ckpm.cheapSeedFilter(cheapKmers, expensiveKmers, queries, minThCheapSeedReads, parmikExpensiveKmerFNsAddress);
                     //get the reverse complement of queries
                     tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
-                    ckpm.cheapSeedFilter(cheapKmers, revQueries, revMinThCheapSeedReads);
+                    ckpm.cheapSeedFilter(cheapKmers, expensiveKmers, revQueries, revMinThCheapSeedReads, parmikExpensiveKmerFNsAddress);
                     // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
                     Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage);
