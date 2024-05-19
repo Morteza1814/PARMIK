@@ -10,6 +10,8 @@
 #include "tsl/robin_map.h"
 #include "tsl/robin_set.h"
 
+#define EXPENSIVE_KMERS_EVALUATION 1
+
 using namespace std;
 
 template<typename Key, typename Value>
@@ -89,10 +91,9 @@ public:
     }
 
     // Count the occurrences of distinct values for a key
-    pair<uint64_t, uint64_t> collectCheapSeeds(vector<Key> kmers, Container<Value, Value>& minThCheapSeeds, uint32_t minNumberOfCheapSeeds, Value queryInd) {
+    pair<uint64_t, uint64_t> collectCheapSeeds(vector<Key> kmers, Container<Value, Value>& minThCheapSeeds, uint32_t minNumberOfCheapSeeds, Value queryInd, tsl::robin_map <Value, uint64_t>& readCounts) {
         uint64_t cheapSeeds = 0;
         uint64_t cheapSeedReads = 0;
-        tsl::robin_map <Value, uint64_t> readCounts;
         for (auto it = kmers.begin(); it != kmers.end(); it++) 
         {
             auto itt = container.find(*it);
@@ -115,6 +116,37 @@ public:
             }
         }
         return make_pair(cheapSeeds, cheapSeedReads);
+    }
+
+     void collectExpensiveSeeds(vector<Key> kmers, tsl::robin_map <Value, uint64_t>& readCounts) {
+        for (auto it = kmers.begin(); it != kmers.end(); it++) 
+        {
+            auto itt = container.find(*it);
+            if (itt != container.end()) 
+            {
+                const auto& innerContainer = itt->second;
+                for (const auto& value : innerContainer) {
+                    auto ittt = readCounts.find(value);
+                    if (ittt == readCounts.end()) {
+                        readCounts[value] = 1;
+                    } else {
+                        readCounts[value]++;
+                    }
+                }
+            }
+        }
+    }
+
+    uint64_t findLongestInnerContainer() {
+        uint32_t longestInnerContainerSize = 0;
+        for (const auto& entry : container) {
+            auto innerContainer = entry.second;
+            auto innerSize = innerContainer.size();
+            if (innerSize > longestInnerContainerSize) {
+                longestInnerContainerSize = innerSize;
+            }
+        }
+        return longestInnerContainerSize;
     }
 
     void serializeSet(ofstream& ofs, const InnerContainerType& data) {

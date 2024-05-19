@@ -44,11 +44,10 @@ public:
         return {-1, -1};
     }
 
-    void collectCheapKmers(Container<keyT, valT>& cheapKmers, IndexContainer<keyT, valT>& invertedIndex, const string& rangesFilename) {
+    void collectCheapKmers(Container<keyT, valT>& cheapKmers, Container<keyT, valT> &expensiveKmers, IndexContainer<keyT, valT>& invertedIndex, const string& rangesFilename) {
         // Count the number of items with values less than 500 and more than 500
         size_t cheapKmersCount = 0;
         size_t expensiveKmersCount = 0; 
-        IndexContainer<keyT, valT> expensiveKmers;
         map<pair<int, int>, int> kmerRanges;
         readRanges(rangesFilename, kmerRanges);
         cout << "<<<<<<<<<<<<<<<<<<<<<<<<Cheap Kmers Collection Started!!>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
@@ -58,8 +57,6 @@ public:
         for (auto it = invertedIndex.begin(); it != invertedIndex.end(); ) {
             // Get the range of items with the current key          
             auto range = invertedIndex.getRange(it->first);
-            auto rangeBegin = range.first;
-            auto rangeEnd = range.second;
             // Get the number of items for the current key
             size_t itemCount = distance(range.first, range.second);
             auto kmerRange = findRange(kmerRanges, itemCount);
@@ -90,23 +87,25 @@ public:
             } else
             {
                 expensiveKmersCount++;
-                expensiveKmers.insertRange(rangeBegin, rangeEnd);
+                for (auto itt=range.first; itt != range.second; itt++)
+                {
+                    expensiveKmers.insertValue(itt->first, itt->second);
+                }
+                // expensiveKmers.insertRange(rangeBegin, rangeEnd);
             }
             
             // Move the iterator to the next unique key
             it = range.second;
         }
         //get the most expensive k-mer
-        uint32_t mostExpensiveKmer = 0;
-        for (auto it = expensiveKmers.begin(); it != expensiveKmers.end(); ) {
-            auto range = expensiveKmers.getRange(it->first);
-            size_t itemCount = distance(range.first, range.second);
-            if (mostExpensiveKmer < itemCount)
-            {
-                mostExpensiveKmer = itemCount;
-            }
-            it = range.second;
-        }
+        uint32_t mostExpensiveKmer = expensiveKmers.findLongestInnerContainer();
+        // for (auto it = expensiveKmers.begin(); it != expensiveKmers.end(); it++) {
+        //     size_t itemCount =  expensiveKmers.getSizeOfInnerContainer(it->first);
+        //     if (mostExpensiveKmer < itemCount)
+        //     {
+        //         mostExpensiveKmer = itemCount;
+        //     }
+        // }
         cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Collection Time: " << (double)(clock() - start_time)/CLOCKS_PER_SEC << " seconds" << endl;
         cout << left << setw(30) << "Total k-mers: " << totalkmers << endl;
         cout << left << setw(30) << "Distinct k-mers: " << distinctKmers << " [" << (distinctKmers*100) / totalkmers << "\% of totalkmers]" << endl;
