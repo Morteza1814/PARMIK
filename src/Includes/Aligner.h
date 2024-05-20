@@ -316,6 +316,7 @@ public:
             //check the alignment based on the criteria
             bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln);
             if (criteriaCheck){
+                gAlignmentFoundWithPolish++;
                  if (aln.partialMatchSize > bestAlignment.partialMatchSize || (aln.partialMatchSize == bestAlignment.partialMatchSize && aln.editDistance < bestAlignment.editDistance))
                     bestAlignment = aln;
             }

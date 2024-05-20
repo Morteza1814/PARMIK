@@ -400,6 +400,12 @@ int run(int argc, char *argv[]) {
                     aligner.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
                 }
             }
+            if(cfg.parmikMode == PARMIK_MODE_ALIGN){
+                //print global variables
+                cout << "----------global variables----------" << endl;
+                cout << "gAlignmentFoundWithNoPolish: " << gAlignmentFoundWithNoPolish << endl;
+                cout << "gAlignmentFoundWithPolish: " << gAlignmentFoundWithPolish << endl;
+            }
         
             //report the histogram of the alignments
             // if(cfg.parmikMode == PARMIK_MODE_ALIGN && !cfg.noOutputFileDump)

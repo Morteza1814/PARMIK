@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include "IndexContainer.h"
 #include "Container.h"
+#include "Alignment.h"
 #include <iomanip>
 
 template <typename keyT, typename valT>
@@ -50,6 +51,7 @@ public:
         size_t expensiveKmersCount = 0; 
         map<pair<int, int>, int> kmerRanges;
         readRanges(rangesFilename, kmerRanges);
+        uint64_t mostExpensiveKmer = 0;
         cout << "<<<<<<<<<<<<<<<<<<<<<<<<Cheap Kmers Collection Started!!>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         cout << left << setw(30) << "cheap k-mer threshold: " << cheapKmersThreshold_ << endl;
         clock_t start_time = clock();
@@ -91,21 +93,13 @@ public:
                 {
                     expensiveKmers.insertValue(itt->first, itt->second);
                 }
-                // expensiveKmers.insertRange(rangeBegin, rangeEnd);
             }
-            
+            //get the most expensive k-mer
+            if (mostExpensiveKmer < itemCount)
+                mostExpensiveKmer = itemCount;
             // Move the iterator to the next unique key
             it = range.second;
         }
-        //get the most expensive k-mer
-        uint32_t mostExpensiveKmer = expensiveKmers.findLongestInnerContainer();
-        // for (auto it = expensiveKmers.begin(); it != expensiveKmers.end(); it++) {
-        //     size_t itemCount =  expensiveKmers.getSizeOfInnerContainer(it->first);
-        //     if (mostExpensiveKmer < itemCount)
-        //     {
-        //         mostExpensiveKmer = itemCount;
-        //     }
-        // }
         cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Collection Time: " << (double)(clock() - start_time)/CLOCKS_PER_SEC << " seconds" << endl;
         cout << left << setw(30) << "Total k-mers: " << totalkmers << endl;
         cout << left << setw(30) << "Distinct k-mers: " << distinctKmers << " [" << (distinctKmers*100) / totalkmers << "\% of totalkmers]" << endl;
