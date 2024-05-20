@@ -4,6 +4,9 @@
 #define DEBUG_MODE  0
 #define EXE_MODE    1
 
+uint64_t gAlignmentFoundWithNoPolish = 0;
+uint64_t gAlignmentFoundWithPolish = 0;
+
 typedef struct Penalty
 {
     int matchPenalty = 1;

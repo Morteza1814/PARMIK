@@ -185,8 +185,10 @@ public:
             aln.criteriaCode = 0x10;
             return false;
         }
+        bool piCheck = checkIdentityPercentange(cigarStr);
+        if (piCheck) gAlignmentFoundWithNoPolish++;
         if(TURN_POLISHING_OFF){
-            if(checkIdentityPercentange(cigarStr))
+            if(piCheck)
                 return true;
         } else {
             while (true){
