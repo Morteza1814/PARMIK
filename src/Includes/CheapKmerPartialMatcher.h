@@ -113,7 +113,7 @@ public:
                     if (ittt != inexpensiveReadCounts.end()) {
                         if (ittt->second < minNumberOfCheapSeeds && entry.second + ittt->second >= minNumberOfCheapSeeds) {
                             //a false negative because of cheap k-mers
-                            expensiveKmersFN << currentContigId << readId << ittt->second << entry.second << endl;
+                            expensiveKmersFN << currentContigId << "\t" << readId << "\t" << ittt->second << "\t" << entry.second << endl;
                         }
                     }
                 }

@@ -10,7 +10,7 @@
 #include "tsl/robin_map.h"
 #include "tsl/robin_set.h"
 
-#define EXPENSIVE_KMERS_EVALUATION 1
+#define EXPENSIVE_KMERS_EVALUATION 0
 
 using namespace std;
 

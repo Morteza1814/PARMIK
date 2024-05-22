@@ -292,6 +292,7 @@ int run(int argc, char *argv[]) {
         string offlineCheapIndexAddress = cfg.offlineIndexAddress + "ck_T" + to_string(cfg.cheapKmerThreshold) + "_K"+ to_string(cfg.kmerLength) + "_r" + to_string(cfg.readsCount);
         string offlineExpensiveIndexAddress = cfg.offlineIndexAddress + "ek_T" + to_string(cfg.cheapKmerThreshold) + "_K"+ to_string(cfg.kmerLength) + "_r" + to_string(cfg.readsCount);
         cout << "offlineCheapIndexAddress: " << offlineCheapIndexAddress << endl;
+        cout << "offlineExpensiveIndexAddress: " << offlineExpensiveIndexAddress << endl;
         string parmikAlignmentsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
         string parmikExpensiveKmerFNsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + "EXP.txt";
         cout << "pmrkAlignmentsAddress: " << parmikAlignmentsAddress << endl;
@@ -331,14 +332,15 @@ int run(int argc, char *argv[]) {
                     clock_t ser_start_time = clock();
                     cheapKmers.serialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Serialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
-                    if(EXPENSIVE_KMERS_EVALUATION) expensiveKmers.serialize(offlineExpensiveIndexAddress);
+                    if(EXPENSIVE_KMERS_EVALUATION && cfg.cheapKmerThreshold > 0) expensiveKmers.serialize(offlineExpensiveIndexAddress);
                 } else 
                 {
                     clock_t ser_start_time = clock();
                     cheapKmers.deserialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
-                    if(EXPENSIVE_KMERS_EVALUATION) expensiveKmers.deserialize(offlineExpensiveIndexAddress);
+                    if(EXPENSIVE_KMERS_EVALUATION && cfg.cheapKmerThreshold > 0) expensiveKmers.deserialize(offlineExpensiveIndexAddress);
                 }
+                cout << "-------End of loading k-mer indices-------" << endl;
                 if (cfg.parmikMode == PARMIK_MODE_ALIGN)
                 {
                     //do partial matching based on cheap k-mers
@@ -376,14 +378,15 @@ int run(int argc, char *argv[]) {
                     clock_t ser_start_time = clock();
                     cheapKmers.serialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Serialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
-                    if(EXPENSIVE_KMERS_EVALUATION) expensiveKmers.serialize(offlineExpensiveIndexAddress);
+                    if(EXPENSIVE_KMERS_EVALUATION && cfg.cheapKmerThreshold > 0) expensiveKmers.serialize(offlineExpensiveIndexAddress);
                 } else 
                 {
                     clock_t ser_start_time = clock();
                     cheapKmers.deserialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
-                    if(EXPENSIVE_KMERS_EVALUATION) expensiveKmers.deserialize(offlineExpensiveIndexAddress);
+                    if(EXPENSIVE_KMERS_EVALUATION && cfg.cheapKmerThreshold > 0) expensiveKmers.deserialize(offlineExpensiveIndexAddress);
                 }
+                cout << "-------End of loading k-mer indices-------" << endl;
                 if (cfg.parmikMode == PARMIK_MODE_ALIGN)
                 {
                     // do partial matching based on cheap k-mers
@@ -402,9 +405,12 @@ int run(int argc, char *argv[]) {
             }
             if(cfg.parmikMode == PARMIK_MODE_ALIGN){
                 //print global variables
-                cout << "----------global variables----------" << endl;
-                cout << "gAlignmentFoundWithNoPolish: " << gAlignmentFoundWithNoPolish << endl;
-                cout << "gAlignmentFoundWithPolish: " << gAlignmentFoundWithPolish << endl;
+                // cout << "----------global variables----------" << endl;
+                // cout << "gAlignmentFoundWithNoPolish: " << gAlignmentFoundWithNoPolish << endl;
+                // cout << "gAlignmentFoundWithPolish: " << gAlignmentFoundWithPolish << endl;
+                // cout << "gAlignmentDumped: " << gAlignmentDumped << endl;
+                // cout << "gQueriesHaveAtLeastOneAlignment: " << gQueriesHaveAtLeastOneAlignment << endl;
+                // cout << "gAlignmentFoundWithPolishLargerThanBest: " << gAlignmentFoundWithPolishLargerThanBest << endl;
             }
         
             //report the histogram of the alignments

@@ -317,8 +317,11 @@ public:
             bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln);
             if (criteriaCheck){
                 gAlignmentFoundWithPolish++;
-                 if (aln.partialMatchSize > bestAlignment.partialMatchSize || (aln.partialMatchSize == bestAlignment.partialMatchSize && aln.editDistance < bestAlignment.editDistance))
+                if (aln.partialMatchSize > bestAlignment.partialMatchSize || (aln.partialMatchSize == bestAlignment.partialMatchSize && aln.editDistance < bestAlignment.editDistance))
+                {
+                    gAlignmentFoundWithPolishLargerThanBest++;
                     bestAlignment = aln;
+                }
             }
         }
         return bestAlignment;
@@ -424,14 +427,18 @@ public:
             auto readSet = minThCheapSeedReads.get(i);
             map<contigIndT, string> candidateReads = readContigsFromMap(reads, readSet);
             tsl::robin_map <uint32_t, Alignment> alignments;
+            bool haveAlign = false;
             auto start = chrono::high_resolution_clock::now();
             for (auto it = candidateReads.begin(); it != candidateReads.end(); it++)
             {
                 Alignment aln = alignDifferentPenaltyScores(query, it->second, i, it->first, isForwardStrand, penalties);
                 if (aln.partialMatchSize > 0){
+                    gAlignmentDumped++;
+                    haveAlign = true;
                     alignments.insert(make_pair(it->first, aln));
                 }
             }
+            if(haveAlign) gQueriesHaveAtLeastOneAlignment++;
             auto end = chrono::high_resolution_clock::now();
             auto duration = chrono::duration_cast<chrono::nanoseconds>(end - start);
             cout << "query [" << i << "]: # of matches found " << alignments.size() << " and it took: " << static_cast<double>(duration.count()) / 1'000'000.0 << "ms" << endl;
