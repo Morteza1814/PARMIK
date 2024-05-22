@@ -6,6 +6,9 @@
 
 uint64_t gAlignmentFoundWithNoPolish = 0;
 uint64_t gAlignmentFoundWithPolish = 0;
+uint64_t gAlignmentDumped = 0;
+uint64_t gQueriesHaveAtLeastOneAlignment = 0;
+uint64_t gAlignmentFoundWithPolishLargerThanBest = 0;
 
 typedef struct Penalty
 {

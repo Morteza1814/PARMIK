@@ -11,7 +11,7 @@
 #include "Alignment.h"
 #include <vector>
 
-#define CHECK_R_CRITERION 1
+#define CHECK_EXACT_MATCH_CRITERION 1
 
 using namespace std;
 
@@ -187,7 +187,7 @@ public:
             for (const Alignment& aln : blastAlignments) 
             {
                 if ((uint32_t)aln.queryID == queryInd) {
-                    if(CHECK_R_CRITERION) {
+                    if(CHECK_EXACT_MATCH_CRITERION) {
                         string cigarStr = getCigarStr(aln.queryRegionStartPos, aln.alignedQuery, aln.alignedRead, cfg.contigSize);
                         if(hasConsecutiveMatches(cigarStr, cfg.kmerLength))
                             query_blastAlignments.push_back(aln);
@@ -202,7 +202,7 @@ public:
             for (const Alignment& aln : parmikAlignments) 
             {
                 if ((uint32_t)aln.queryID == queryInd) {
-                    if(CHECK_R_CRITERION) {
+                    if(CHECK_EXACT_MATCH_CRITERION) {
                         string cigarStr = convertCigarToStr(aln.cigar, true);
                         if(hasConsecutiveMatches(cigarStr, cfg.kmerLength))
                             query_parmikAlignments.push_back(aln);

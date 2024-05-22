@@ -204,6 +204,7 @@ public:
                         secondChanceFirstOrLastEdit = firstOrLastEdit;
                     } else {
                         aln.criteriaCode = 0x10;
+                        if(piCheck) cout << "(< k_) query[" << aln.queryID << "] and read[" << aln.readID << "] and cigar " << cigarStr << "did not got a good second chance!!!" << endl;
                         return false;
                     }
                 }
@@ -211,6 +212,7 @@ public:
                     if(bCheckminNumExactMatchKmer){
                         if(!checkminNumExactMatchKmer(cigarStr)){
                             aln.criteriaCode = 0x40;
+                            if(piCheck) cout << "(minMatchKmer) query[" << aln.queryID << "] and read[" << aln.readID << "] and cigar " << cigarStr << "did not got a good second chance!!!" << endl;
                             return false;
                         }
                     }
@@ -246,6 +248,7 @@ public:
                     if (secondChance && ((secondChanceFirstOrLastEdit && rightCigarSegments.size() == 0) || (!secondChanceFirstOrLastEdit && leftCigarSegments.size() == 0))){
                         if((cigarStr.length() < regionSize && CHECK_REGION_SIZE) || cigarStr.length() < k_) {
                             aln.criteriaCode = 0x80;
+                            if(piCheck) cout << "(< k_) query[" << aln.queryID << "] and read[" << aln.readID << "] and cigar " << cigarStr << "did not got a good second chance!!!" << endl;
                             return false;
                         } //else give it the last chances
                     }
@@ -334,6 +337,7 @@ public:
                     if((cigarStr.size() > regionSize && CHECK_REGION_SIZE) || cigarStr.size() > k_) {
                         return true;
                     }
+                    if(piCheck) cout << "(EditLocation) query[" << aln.queryID << "] and read[" << aln.readID << "] and cigar " << cigarStr << "did not got a good second chance!!!" << endl;
                     return false;
                 }
                 string rightCigarSegment = cigarStr.substr(lastEditLocation);
@@ -401,6 +405,7 @@ public:
                 if(DEBUG_MODE) cout << "trim : after: queryRegionStartPos: " << tmpAln.queryRegionStartPos << ", queryRegionEndPos: " << tmpAln.queryRegionEndPos << ", readRegionStartPos: " << tmpAln.readRegionStartPos << ", readRegionEndPos: " << tmpAln.readRegionEndPos << endl;
             }
         }
+        if(piCheck) cout << "(end) query[" << aln.queryID << "] and read[" << aln.readID << "] and cigar " << cigarStr << "did not got a good second chance!!!" << endl;
         return false;
     }
 

@@ -15,6 +15,7 @@
 #define REPORT_BEST_ALN 0
 #define REPORT_baseLine_FN 0
 #define REPORT_ALN_PER_Q 0
+#define CHECK_EXACT_MATCH_CRITERION 1
 
 using namespace std;
 
@@ -495,8 +496,8 @@ public:
                     }
                     bool isFP = false;
                     string cigarStr = getCigarStr(aln, cfg, tool2Name);
-                    if(!hasConsecutiveMatches(cigarStr, cfg.kmerLength)) {
-                        isFP = true;
+                    if(CHECK_EXACT_MATCH_CRITERION && !hasConsecutiveMatches(cigarStr, cfg.kmerLength)) {
+                        // isFP = true; // this is FP in terms of not finding exact match, but in total it is TP
                         aln.criteriaCode = 0x10;
                         tool2FP_lowAlnLen++;
                         tool2FP_lowAlnLen_alnLen_allQ.insert(aln.partialMatchSize);
