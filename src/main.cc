@@ -48,7 +48,9 @@ int argParse(int argc, char** argv, Config &cfg){
 	args::ValueFlag<string> readDatabaseAddressArg(parser, "", "Read Data Base Address",        {'r', "read"});
 	args::ValueFlag<int> regionSizeArg(parser, "", "Region Size",                               {'s', "regionSize"});
     args::ValueFlag<int> cheapKmerThresholdArg(parser, "", "Cheap Kmer Threshold",              {'t', "cheapKmerThreshold"});
+    args::Flag isSecondChanceOff(parser, "", "Turn Second Chance Off",                          {'u', "isSecondChanceOff"});
 	args::Flag isVerboseLogArg(parser, "", "Verbose Logging",                                   {'v', "verboseLog"});
+    args::ValueFlag<int> numThreadsArg(parser, "", "Number of Threads",                         {'w', "numThreads"});
 	args::Flag isIndexOfflineArg(parser, "", "Is the read index offline",                       {'x', "isIndexOffline"});
     args::ValueFlag<string> baselineBaseAddressArg(parser, "", "BaseLine file base address",    {'z', "baselineBaseAddress"});
     try
@@ -83,8 +85,10 @@ int argParse(int argc, char** argv, Config &cfg){
 	if (regionSizeArg) {cfg.regionSize = args::get(regionSizeArg); } else {cfg.regionSize = REGION_SZ;}
 	if (contigSizeArg) {cfg.contigSize = args::get(contigSizeArg); } else {cfg.contigSize = CONTIG_SZ;}
     if (cheapKmerThresholdArg) {cfg.cheapKmerThreshold = args::get(cheapKmerThresholdArg); } else {cout << "no cheapKmerThreshold!"<< endl; return 0;}
+    if (numThreadsArg) {cfg.numThreads = args::get(numThreadsArg); } else {cfg.numThreads = 1;};
     if (isIndexOfflineArg) {cfg.isIndexOffline = true; } else {cfg.isIndexOffline = false;}
     if (isVerboseLogArg) {cfg.isVerboseLog = true; } else {cfg.isVerboseLog = false;}
+    if (isSecondChanceOff) {cfg.isSecondChanceOff = true; } else {cfg.isSecondChanceOff = false;}
     if (offlineIndexAddressArg) {cfg.offlineIndexAddress = args::get(offlineIndexAddressArg); } else {cout << "no offlineIndexAddress!"<< endl; return 0;}
     if (otherToolAddressArg) {cfg.otherToolOutputFileAddress = args::get(otherToolAddressArg); } else {cout << "no otherToolOutputFileAddress!"<< endl; return 0;}
     if (parmikModeArg) {cfg.parmikMode = args::get(parmikModeArg); } else {cout << "no parmik mode is determined!"<< endl; return 0;}
@@ -245,6 +249,8 @@ int run(int argc, char *argv[]) {
     cout << left << setw(30) << "cheapKmerThreshold: " << cfg.cheapKmerThreshold << endl;
     cout << left << setw(30) << "identityPercentage: " << cfg.identityPercentage << endl;
     cout << left << setw(30) << "minExactMatchLen: " << cfg.minExactMatchLen << endl;
+    cout << left << setw(30) << "numThreads: " << cfg.numThreads << endl;
+    cout << left << setw(30) << "isSecondChanceOff: " << ((cfg.isSecondChanceOff == 1) ? "T":"F") << endl;
     uint32_t minNumExactMatchKmer = 0;
     if (cfg.parmikMode != PARMIK_MODE_INDEX && cfg.parmikMode != PARMIK_MODE_BASELINE && cfg.parmikMode != PARMIK_MODE_COMPARE) {
         if(cfg.minExactMatchLen > 0) {
@@ -264,6 +270,7 @@ int run(int argc, char *argv[]) {
     cout << left << setw(30) << "offlineIndexAddress: " << cfg.offlineIndexAddress << endl;
     cout << left << setw(30) << "baselineBaseAddress: " << cfg.baselineBaseAddress << endl;
     cout << left << setw(30) << "max editDistance in min region: " << cfg.editDistance << endl;
+    cout << left << setw(30) << "otherTool: " << cfg.otherTool << endl;
 	cout << "**********************CONFIGURATIONS*****************************" << endl;
 
     try { 
@@ -351,7 +358,7 @@ int run(int argc, char *argv[]) {
                     ckpm.cheapSeedFilter(cheapKmers, expensiveKmers, revQueries, revMinThCheapSeedReads, parmikExpensiveKmerFNsAddress);
                     // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
-                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage);
+                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage, cfg.isSecondChanceOff);
                     aligner.findPartiaMatches(reads, queries, minThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
                     aligner.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
@@ -397,7 +404,7 @@ int run(int argc, char *argv[]) {
                     ckpm.cheapSeedFilter(cheapKmers, expensiveKmers, revQueries, revMinThCheapSeedReads, parmikExpensiveKmerFNsAddress);
                     // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
-                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage);
+                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage, cfg.isSecondChanceOff);
                     aligner.findPartiaMatches(reads, queries, minThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
                     aligner.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
@@ -501,7 +508,7 @@ void testAligner(int argc, char *argv[]){
     aln.query = argv[1];
     aln.read = argv[2];
     // PostFilter pf(50, 2, 150, 30, 0.9);
-    Aligner <uint32_t> aligner(stod(argv[3]), 2, 150, stod(argv[4]), stod(argv[5]), stod(argv[6]));
+    Aligner <uint32_t> aligner(stod(argv[3]), 2, 150, stod(argv[4]), stod(argv[5]), stod(argv[6]), false);
     // aligner.align(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
     // // bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
     // bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln);

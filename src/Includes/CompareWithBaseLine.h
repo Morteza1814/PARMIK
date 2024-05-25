@@ -7,7 +7,6 @@
 #include <iostream>
 #include "BlastReader.h"
 #include "Aligner.h"
-#include "PostFilter.h"
 #include "Alignment.h"
 #include "SamReader.h"
 #include "Container.h"

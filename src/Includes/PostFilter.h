@@ -6,7 +6,6 @@
 #include "Alignment.h"
 
 #define CHECK_REGION_SIZE 0
-#define TURN_POLISHING_OFF 0
 
 using namespace std;
 
@@ -17,8 +16,9 @@ private:
     uint16_t contigSize;
     uint16_t minNumExactMatchKmer;
     double identityPercentage;
+    bool isSecondChanceOff = false;
 public: 
-    PostFilter(uint16_t R, uint16_t k, uint16_t c, uint16_t m, double i) : regionSize(R), k_(k), contigSize(c), minNumExactMatchKmer(m), identityPercentage(i) {}
+    PostFilter(uint16_t R, uint16_t k, uint16_t c, uint16_t m, double i, bool sc = false) : regionSize(R), k_(k), contigSize(c), minNumExactMatchKmer(m), identityPercentage(i), isSecondChanceOff(sc) {}
 
     uint32_t getMatchesCount(string cigarStr) {
         uint32_t cnt = 0;
@@ -187,7 +187,7 @@ public:
         }
         bool piCheck = checkIdentityPercentange(cigarStr);
         if (piCheck) gAlignmentFoundWithNoPolish++;
-        if(TURN_POLISHING_OFF){
+        if(isSecondChanceOff){
             if(piCheck)
                 return true;
         } else {
