@@ -42,6 +42,7 @@ typedef struct config
     unsigned int regionSize;
     unsigned int contigSize;
     unsigned int parmikMode;
+    unsigned int numThreads;
     double identityPercentage = 0.9;
     double inDelPenalty = 2;
     double subPenalty = 1;
@@ -51,9 +52,7 @@ typedef struct config
     bool isVerboseLog = false;
     bool noOutputFileDump = false;
     string otherTool;
-    // bool isFreqAndMemReport = false;
-    // bool isReverseStrand = false;
-    // bool isBestAlignment = false;
+    bool isSecondChanceOff = false;
 } Config;
 
 #endif
