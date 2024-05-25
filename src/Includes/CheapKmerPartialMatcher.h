@@ -60,7 +60,10 @@ public:
         Utilities<uint32_t> utilint;
         Utilities<double> utildouble;
         ofstream expensiveKmersFN;
-        if(EXPENSIVE_KMERS_EVALUATION)
+        bool expensiveKmerEvaluation = false;
+        if(expensiveKmers.size() > 0)
+            expensiveKmerEvaluation = true;
+        if(expensiveKmerEvaluation)
             expensiveKmersFN.open(parmikExpensiveKmerFNsAddress);
         // uint64_t currentContigId;
         // uint64_t numberOfQueriesWithMinCheapAtLeast = 0, numberOfCheapSeedsInQ = 0;
@@ -103,7 +106,7 @@ public:
             collectCheapSeeds_totalExeTime += duration.count();
             cout << "query [" << currentContigId << "] contains " << cheapSeeds.first << " cheap seed k-mers and " << cheapSeeds.second << " cheap seeds (reads candidates) and it took: " << static_cast<double>(duration.count()) / 1'000'000.0 << "ms" << endl;
 
-            if(EXPENSIVE_KMERS_EVALUATION)
+            if(expensiveKmerEvaluation)
             {
                 tsl::robin_map <uint32_t, uint64_t> expensiveReadCounts;
                 expensiveKmers.collectExpensiveSeeds(queryRegionKmers, expensiveReadCounts);

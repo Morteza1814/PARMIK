@@ -19,6 +19,7 @@
 #include "Includes/Alignment.h"
 #include "Includes/SSW_BaseLine.h"
 #include "Includes/CompareWithBaseLine.h"
+#include <filesystem>
 #include <cmath>
 
 #define PARMIK_MODE_INDEX           0
@@ -26,6 +27,8 @@
 #define PARMIK_MODE_COMPARE         2
 #define PARMIK_MODE_BASELINE        3
 #define PARMIK_MODE_CMP_BASELINE    4
+
+namespace fs = std::filesystem;
 
 int argParse(int argc, char** argv, Config &cfg){
 	args::ArgumentParser parser("=========================Arguments===========================", "======================================================");
@@ -226,6 +229,20 @@ string getTextAfterLastSlash(const string& filePath) {
     return filePath; // If no '/' found, return the original string
 }
 
+void createDir(string path){
+    try {
+        if (fs::create_directory(path)) {
+            std::cout << "Directory created successfully: " << path << std::endl;
+        } else {
+            std::cout << "Directory already exists or could not be created: " << path << std::endl;
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Filesystem error: " << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "General error: " << e.what() << std::endl;
+    }
+}
+
 int run(int argc, char *argv[]) {
     Config cfg;
 	ofstream out;
@@ -285,9 +302,14 @@ int run(int argc, char *argv[]) {
         tsl::robin_map <uint32_t, string> reads, queries;
         uint32_t queryCount = 0;
         vector<Penalty> penalties = readPenalties(cfg.penaltyFileAddress);
+        // experiment dir name
+        string expDirName = "IKT" + to_string(cfg.cheapKmerThreshold) + "_K" + to_string(cfg.kmerLength) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_M" + to_string(minNumExactMatchKmer) + "_T" + to_string(cfg.numThreads) + "_SC" + ((cfg.isSecondChanceOff == 1) ? "0":"1") + "_P" + getPenaltiesSubstr(penalties);
+        string expDir = cfg.outputDir + "/" + expDirName;
+        cout << "experiment dir: " << expDir << endl;
         uint32_t queryBaseIndex = 0;
         if (cfg.parmikMode != PARMIK_MODE_INDEX)
         {
+            createDir(expDir);
             queryCount = util.readContigsFromFile(cfg.queryFileAddress, cfg.queryCount, queries, queryBaseIndex);
             cout << "queryCount : " << queryCount << endl;
             // read the penalties
@@ -300,8 +322,9 @@ int run(int argc, char *argv[]) {
         string offlineExpensiveIndexAddress = cfg.offlineIndexAddress + "ek_T" + to_string(cfg.cheapKmerThreshold) + "_K"+ to_string(cfg.kmerLength) + "_r" + to_string(cfg.readsCount);
         cout << "offlineCheapIndexAddress: " << offlineCheapIndexAddress << endl;
         cout << "offlineExpensiveIndexAddress: " << offlineExpensiveIndexAddress << endl;
-        string parmikAlignmentsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
-        string parmikExpensiveKmerFNsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + "EXP.txt";
+        // string parmikAlignmentsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+        string parmikAlignmentsAddress = expDir + "/" + "parmikAln.txt";
+        string parmikExpensiveKmerFNsAddress = expDir + "/" + "parmikExpensiveKmerFNs.txt";
         cout << "pmrkAlignmentsAddress: " << parmikAlignmentsAddress << endl;
         //baseline
         if (cfg.parmikMode == PARMIK_MODE_BASELINE) {
@@ -339,13 +362,13 @@ int run(int argc, char *argv[]) {
                     clock_t ser_start_time = clock();
                     cheapKmers.serialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Serialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
-                    if(EXPENSIVE_KMERS_EVALUATION && cfg.cheapKmerThreshold > 0) expensiveKmers.serialize(offlineExpensiveIndexAddress);
+                    if(cfg.cheapKmerThreshold > 0) expensiveKmers.serialize(offlineExpensiveIndexAddress);
                 } else 
                 {
                     clock_t ser_start_time = clock();
                     cheapKmers.deserialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
-                    if(EXPENSIVE_KMERS_EVALUATION && cfg.cheapKmerThreshold > 0) expensiveKmers.deserialize(offlineExpensiveIndexAddress);
+                    if(cfg.cheapKmerThreshold > 0) expensiveKmers.deserialize(offlineExpensiveIndexAddress);
                 }
                 cout << "-------End of loading k-mer indices-------" << endl;
                 if (cfg.parmikMode == PARMIK_MODE_ALIGN)
@@ -385,13 +408,13 @@ int run(int argc, char *argv[]) {
                     clock_t ser_start_time = clock();
                     cheapKmers.serialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Serialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
-                    if(EXPENSIVE_KMERS_EVALUATION && cfg.cheapKmerThreshold > 0) expensiveKmers.serialize(offlineExpensiveIndexAddress);
+                    if(cfg.cheapKmerThreshold > 0) expensiveKmers.serialize(offlineExpensiveIndexAddress);
                 } else 
                 {
                     clock_t ser_start_time = clock();
                     cheapKmers.deserialize(offlineCheapIndexAddress);
                     cout << left << setw(30) << fixed << setprecision(2) << "Cheap Kmers Deserialization Time: " << (double)(clock() - ser_start_time)/CLOCKS_PER_SEC << " seconds" << endl;
-                    if(EXPENSIVE_KMERS_EVALUATION && cfg.cheapKmerThreshold > 0) expensiveKmers.deserialize(offlineExpensiveIndexAddress);
+                    if(cfg.cheapKmerThreshold > 0) expensiveKmers.deserialize(offlineExpensiveIndexAddress);
                 }
                 cout << "-------End of loading k-mer indices-------" << endl;
                 if (cfg.parmikMode == PARMIK_MODE_ALIGN)
@@ -437,8 +460,8 @@ int run(int argc, char *argv[]) {
                 cerr << "Error: query file name is not valid" << endl;
                 return 1;
             }
-            string comparisonResultsFileAddress = cfg.outputDir + "/blcmp/" + cfg.otherTool + "/blcmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
-            string alnReportAddressBase = cfg.outputDir + "/blcmp/" + cfg.otherTool + "/blcmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties);
+            string comparisonResultsFileAddress = expDir + "/" + "cmp_" + cfg.otherTool + ".txt";
+            string alnReportAddressBase = expDir + "/" + "cmp_" + cfg.otherTool + "_";
             string baselineBaseAddress = cfg.baselineBaseAddress + "/BL_Aln" + "_RS" + to_string(cfg.kmerLength) + "_PI85" + "_P" + getPenaltiesSubstr(penalties) + "_Q" + queryFileName;
             CompareWithBaseLine blCmp(cfg.identityPercentage);
             blCmp.compareWithBaseLine(cfg, reads, queries, comparisonResultsFileAddress, queryCount, alnReportAddressBase, cfg.otherTool, baselineBaseAddress);

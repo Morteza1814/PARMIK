@@ -10,8 +10,6 @@
 #include "tsl/robin_map.h"
 #include "tsl/robin_set.h"
 
-#define EXPENSIVE_KMERS_EVALUATION 0
-
 using namespace std;
 
 template<typename Key, typename Value>
@@ -36,6 +34,10 @@ public:
     // Insert a value into the inner container associated with the given key
     void insertValue(const Key& key, const Value& value) {
         container[key].insert(value);
+    }
+
+    int size() {
+        return container.size();
     }
 
     // Select keys from the outer container
