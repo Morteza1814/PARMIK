@@ -76,10 +76,11 @@ int argParse(int argc, char** argv, Config &cfg){
         cerr << parser;
         return 0;
     }
+    if (parmikModeArg) {cfg.parmikMode = args::get(parmikModeArg); } else {cout << "no parmik mode is determined!"<< endl; return 0;}
 	if (readDatabaseAddressArg) {cfg.readDatabaseAddress = args::get(readDatabaseAddressArg); } else {cout << "no readDatabaseAddress!"<< endl; return 0;}
 	if (queryFileAddressArg) {cfg.queryFileAddress = args::get(queryFileAddressArg);} else {cout << "no queryFileAddress!"<< endl; return 0;}
     if (penaltyFileAddressArg) {cfg.penaltyFileAddress = args::get(penaltyFileAddressArg);} else {cfg.penaltyFileAddress = ""; cout << "no penaltyFileAddress!"<< endl;}
-	if (outputDirArg) {cfg.outputDir = args::get(outputDirArg);} else {cout << "no outputDirArg!"<< endl; cfg.noOutputFileDump = true;}
+	if (outputDirArg) {cfg.outputDir = args::get(outputDirArg);} else {cout << "no outputDirArg!"<< endl; if(cfg.parmikMode != PARMIK_MODE_INDEX) return 0;}
     if (kmerRangesFileAddressArg) {cfg.kmerRangesFileAddress = args::get(kmerRangesFileAddressArg);} else {cout << "no kmerRangesFileAddressArg!"<< endl; cfg.kmerRangesFileAddress = "";}
     if (identityPercentageArg) {cfg.identityPercentage = args::get(identityPercentageArg);cfg.identityPercentage = (double)(cfg.identityPercentage/100);} else {cout << "no identityPercentage (default = 0.9)!"<< endl;}
 	if (readsCountArg) {cfg.readsCount = args::get(readsCountArg); } else {cfg.readsCount = NUMBER_OF_READS;}
@@ -93,8 +94,7 @@ int argParse(int argc, char** argv, Config &cfg){
     if (isVerboseLogArg) {cfg.isVerboseLog = true; } else {cfg.isVerboseLog = false;}
     if (isSecondChanceOff) {cfg.isSecondChanceOff = true; } else {cfg.isSecondChanceOff = false;}
     if (offlineIndexAddressArg) {cfg.offlineIndexAddress = args::get(offlineIndexAddressArg); } else {cout << "no offlineIndexAddress!"<< endl; return 0;}
-    if (otherToolAddressArg) {cfg.otherToolOutputFileAddress = args::get(otherToolAddressArg); } else {cout << "no otherToolOutputFileAddress!"<< endl; return 0;}
-    if (parmikModeArg) {cfg.parmikMode = args::get(parmikModeArg); } else {cout << "no parmik mode is determined!"<< endl; return 0;}
+    if (otherToolAddressArg) {cfg.otherToolOutputFileAddress = args::get(otherToolAddressArg); } else {cout << "no otherToolOutputFileAddress!"<< endl; if(cfg.parmikMode == PARMIK_MODE_CMP_BASELINE || cfg.parmikMode == PARMIK_MODE_COMPARE) return 0;}
     if (baselineBaseAddressArg) {cfg.baselineBaseAddress = args::get(baselineBaseAddressArg); } else {cout << "no baselineBaseAddress!"<< endl; if(cfg.parmikMode == PARMIK_MODE_CMP_BASELINE){return 0;}}
     if (otherToolArg) {cfg.otherTool = args::get(otherToolArg);} else {cout << "no otherToolArg!"<< endl;if(cfg.parmikMode == PARMIK_MODE_COMPARE) return 0;}
 	if (editDistanceArg) {cfg.editDistance = args::get(editDistanceArg); } else {cfg.editDistance = NUMBER_OF_ALLOWED_EDIT_DISTANCES;}
@@ -460,17 +460,16 @@ int run(int argc, char *argv[]) {
                 cerr << "Error: query file name is not valid" << endl;
                 return 1;
             }
-            string comparisonResultsFileAddress = expDir + "/" + "cmp_" + cfg.otherTool + ".txt";
-            string alnReportAddressBase = expDir + "/" + "cmp_" + cfg.otherTool + "_";
+            string comparisonResultsFileAddress = expDir + "/" + "cmp_Baseline_" + cfg.otherTool + ".txt";
+            string alnReportAddressBase = expDir + "/" + "cmp_Baseline_" + cfg.otherTool + "_";
             string baselineBaseAddress = cfg.baselineBaseAddress + "/BL_Aln" + "_RS" + to_string(cfg.kmerLength) + "_PI85" + "_P" + getPenaltiesSubstr(penalties) + "_Q" + queryFileName;
             CompareWithBaseLine blCmp(cfg.identityPercentage);
-            blCmp.compareWithBaseLine(cfg, reads, queries, comparisonResultsFileAddress, queryCount, alnReportAddressBase, cfg.otherTool, baselineBaseAddress);
-        } else if (cfg.parmikMode == PARMIK_MODE_COMPARE){
-            if(cfg.noOutputFileDump)
-            {
-                cout << "no noOutputFileDump!!" << endl;
-                return 0;
+            if(cfg.otherTool == "parmik" || cfg.otherTool == "PARMIK") {
+                cfg.otherToolOutputFileAddress = parmikAlignmentsAddress;
+                cout << "updated otherToolOutputFileAddress alignments file: " << parmikAlignmentsAddress << endl;
             }
+            blCmp.compareWithBaseLine(cfg, reads, queries, comparisonResultsFileAddress, queryCount, alnReportAddressBase, baselineBaseAddress);
+        } else if (cfg.parmikMode == PARMIK_MODE_COMPARE){
             // //load the parmik alignments from the sam formatted file
             // SamReader parmikSam(parmikAlignmentsAddress);
             // vector<Alignment> parmikSamAlignments;

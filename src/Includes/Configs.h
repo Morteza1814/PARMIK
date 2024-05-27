@@ -50,7 +50,6 @@ typedef struct config
     unsigned int editDistance;
     bool isIndexOffline = false;
     bool isVerboseLog = false;
-    bool noOutputFileDump = false;
     string otherTool;
     bool isSecondChanceOff = false;
 } Config;
