@@ -321,8 +321,9 @@ public:
     //baseLine is always baseline
 
     void compareWithBaseLine(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, 
-    const uint32_t queryCount, const string alnReportAddressBase, const string tool2Name, string baseLineFilePrefixAddress)
+    const uint32_t queryCount, const string alnReportAddressBase, string baseLineFilePrefixAddress)
     {
+        const string tool2Name = cfg.otherTool;
         cout << "Comparing Baseline and " + tool2Name << endl;
         ofstream cmp(comparisonResultsFileAddress);
         cout << "cmp file address: " << comparisonResultsFileAddress << endl;
