@@ -45,54 +45,8 @@ updated otherToolOutputFileAddress alignments file: /p/lava/parmik/partialMatche
 Comparing Baseline and parmik
 cmp file address: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K10_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848/cmp_Baseline_parmik.txt
 queries processed: 0 / 29754
-Sam: Read 0 alignments.
+Sam: Read 64554405 alignments.
 queries processed: 1000 / 29754
-Sam: Read 0 alignments.
+Sam: Read 71013068 alignments.
 queries processed: 2000 / 29754
-Sam: Read 0 alignments.
-queries processed: 3000 / 29754
-Sam: Read 0 alignments.
-queries processed: 4000 / 29754
-Sam: Read 0 alignments.
-queries processed: 5000 / 29754
-Sam: Read 0 alignments.
-queries processed: 6000 / 29754
-Sam: Read 0 alignments.
-queries processed: 7000 / 29754
-Sam: Read 0 alignments.
-queries processed: 8000 / 29754
-Sam: Read 0 alignments.
-queries processed: 9000 / 29754
-Sam: Read 0 alignments.
-queries processed: 10000 / 29754
-Sam: Read 0 alignments.
-queries processed: 11000 / 29754
-Sam: Read 0 alignments.
-queries processed: 12000 / 29754
-Sam: Read 0 alignments.
-queries processed: 13000 / 29754
-Sam: Read 0 alignments.
-queries processed: 14000 / 29754
-Sam: Read 0 alignments.
-queries processed: 15000 / 29754
-Sam: Read 0 alignments.
-queries processed: 16000 / 29754
-Sam: Read 0 alignments.
-queries processed: 17000 / 29754
-Sam: Read 0 alignments.
-queries processed: 18000 / 29754
-Sam: Read 0 alignments.
-queries processed: 19000 / 29754
-Sam: Read 0 alignments.
-queries processed: 20000 / 29754
-Sam: Read 0 alignments.
-queries processed: 21000 / 29754
-Sam: Read 0 alignments.
-queries processed: 22000 / 29754
-Sam: Read 0 alignments.
-queries processed: 23000 / 29754
-Sam: Read 0 alignments.
-queries processed: 24000 / 29754
-Sam: Read 0 alignments.
-queries processed: 25000 / 29754
-Sam: Read 0 alignments.
+Sam: Read 64041457 alignments.
