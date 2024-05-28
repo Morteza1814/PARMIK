@@ -462,7 +462,7 @@ int run(int argc, char *argv[]) {
             }
             string comparisonResultsFileAddress = expDir + "/" + "cmp_Baseline_" + cfg.otherTool + ".txt";
             string alnReportAddressBase = expDir + "/" + "cmp_Baseline_" + cfg.otherTool + "_";
-            string baselineBaseAddress = cfg.baselineBaseAddress + "/BL_Aln" + "_RS" + to_string(cfg.kmerLength) + "_PI85" + "_P" + getPenaltiesSubstr(penalties) + "_Q" + queryFileName;
+            string baselineBaseAddress = cfg.baselineBaseAddress + "/BL_Aln" + "_RS" + "11" + "_PI85" + "_P" + getPenaltiesSubstr(penalties) + "_Q" + queryFileName;
             CompareWithBaseLine blCmp(cfg.identityPercentage);
             if(cfg.otherTool == "parmik" || cfg.otherTool == "PARMIK") {
                 cfg.otherToolOutputFileAddress = parmikAlignmentsAddress;
