@@ -381,7 +381,7 @@ int run(int argc, char *argv[]) {
                     ckpm.cheapSeedFilter(cheapKmers, expensiveKmers, revQueries, revMinThCheapSeedReads, parmikExpensiveKmerFNsAddress);
                     // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
-                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage, cfg.isSecondChanceOff);
+                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage, cfg.isSecondChanceOff, cfg.numThreads);
                     aligner.findPartiaMatches(reads, queries, minThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
                     aligner.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
@@ -427,7 +427,7 @@ int run(int argc, char *argv[]) {
                     ckpm.cheapSeedFilter(cheapKmers, expensiveKmers, revQueries, revMinThCheapSeedReads, parmikExpensiveKmerFNsAddress);
                     // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
-                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage, cfg.isSecondChanceOff);
+                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage, cfg.isSecondChanceOff, cfg.numThreads);
                     aligner.findPartiaMatches(reads, queries, minThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
                     aligner.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
@@ -530,7 +530,7 @@ void testAligner(int argc, char *argv[]){
     aln.query = argv[1];
     aln.read = argv[2];
     // PostFilter pf(50, 2, 150, 30, 0.9);
-    Aligner <uint32_t> aligner(stod(argv[3]), 2, 150, stod(argv[4]), stod(argv[5]), stod(argv[6]), false);
+    Aligner <uint32_t> aligner(stod(argv[3]), 2, 150, stod(argv[4]), stod(argv[5]), stod(argv[6]), false, 1);
     // aligner.align(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
     // // bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
     // bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln);

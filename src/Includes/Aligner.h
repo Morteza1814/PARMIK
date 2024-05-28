@@ -13,6 +13,7 @@
 #include "sw/ssw_cpp.h"
 #include "PostFilter.h"
 #include "Alignment.h"
+#include <omp.h>
 
 using namespace std;
 
@@ -26,8 +27,9 @@ private:
     uint16_t minNumExactMatchKmer;
     double identityPercentage;
     bool isSecondChanceOff;
+    int num_threads = 1;
 public:
-    Aligner(uint16_t R, uint16_t a, uint16_t c, uint16_t k, uint16_t m, double i, bool sc) : regionSize(R), allowedEditDistance(a), contigSize(c), k_(k), minNumExactMatchKmer(m), identityPercentage(i), isSecondChanceOff(sc) {}
+    Aligner(uint16_t R, uint16_t a, uint16_t c, uint16_t k, uint16_t m, double i, bool sc, int th) : regionSize(R), allowedEditDistance(a), contigSize(c), k_(k), minNumExactMatchKmer(m), identityPercentage(i), isSecondChanceOff(sc), num_threads(th) {}
 
     string convertCigarToStr(const string& cigar) {
         stringstream simplifiedCigar;
@@ -414,6 +416,8 @@ public:
         }
         multiset<uint32_t> matchesPerQuery;
         cout << "Starting alignment for all queries [" << (isForwardStrand ? ("fwd"):("rev")) << "]..." << endl;
+        omp_set_num_threads(num_threads);
+        #pragma omp parallel for
         for (size_t i = 0; i < queryCount; i++)
         {
             if(i % 1000 == 0)
@@ -434,23 +438,27 @@ public:
             {
                 Alignment aln = alignDifferentPenaltyScores(query, it->second, i, it->first, isForwardStrand, penalties);
                 if (aln.partialMatchSize > 0){
-                    gAlignmentDumped++;
+                    if (num_threads == 1) gAlignmentDumped++;
                     haveAlign = true;
                     alignments.insert(make_pair(it->first, aln));
                 }
             }
-            if(haveAlign) gQueriesHaveAtLeastOneAlignment++;
+            if(num_threads == 1 && haveAlign) gQueriesHaveAtLeastOneAlignment++;
             auto end = chrono::high_resolution_clock::now();
             auto duration = chrono::duration_cast<chrono::nanoseconds>(end - start);
-            cout << "query [" << i << "]: # of matches found " << alignments.size() << " and it took: " << static_cast<double>(duration.count()) / 1'000'000.0 << "ms" << endl;
+            if (num_threads == 1) 
+                cout << "query [" << i << "]: # of matches found " << alignments.size() << " and it took: " << static_cast<double>(duration.count()) / 1'000'000.0 << "ms" << endl;
             //dump the alignments
             uint32_t matchesAccepted = 0;
-            for (auto it = alignments.begin(); it!= alignments.end(); it++)
+            #pragma omp critical
             {
-                dumpSam(pAln, it->second);
-                matchesAccepted++;
+                for (auto it = alignments.begin(); it!= alignments.end(); it++)
+                {
+                    dumpSam(pAln, it->second);
+                    matchesAccepted++;
+                }
+                matchesPerQuery.insert(alignments.size());
             }
-            matchesPerQuery.insert(alignments.size());
             // cout << "queryID: " << i << ", " << (isForwardStrand ? ("fwd"):("rev")) <<", total matches: " << alignments.size() << i << ", matches accepted: " << matchesAccepted << ", matches passed with starting pos over ED: " << matchesPassedWithStartingPosOverED << endl;
         }
         Utilities<uint32_t> util; 
