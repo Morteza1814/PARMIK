@@ -120,7 +120,7 @@ public:
                     
                     if (expKmerSet.size() > 0){
                         NucleotideEncoder<uint32_t> decoder_(k);
-                        outputFile << decoder_.decode(kmer) << ", ";
+                        outputFile << decoder_.decode(kmer) << " (" << expKmerSet.size() << "), ";
                     }
                 }
                 outputFile << "\n------------------------------------" << endl;
