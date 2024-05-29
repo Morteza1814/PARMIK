@@ -19,6 +19,7 @@
 #include "Includes/Alignment.h"
 #include "Includes/SSW_BaseLine.h"
 #include "Includes/CompareWithBaseLine.h"
+#include "Includes/ExpensiveKmersFNEvaluator.h"
 #include <filesystem>
 #include <cmath>
 
@@ -550,11 +551,33 @@ void testAligner(int argc, char *argv[]){
     cout << "aln.inDels: " << aln.inDels << endl;
 }
 
+// Wrapper function
+void expensiveKmerFNEval(int argc, char* argv[]) {
+    if (argc != 9) {
+        cerr << "Usage: " << argv[0] << " parmikAlnFileAddress queryCount readsCount expKmersFNFileAddress offlineExpensiveIndexAddress readDatabaseAddress k outputDir" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    string parmikAlnFileAddress = argv[1];
+    uint32_t queryCount = static_cast<uint32_t>(stoul(argv[2])); // Convert string to unsigned long and then to uint32_t
+    uint32_t readsCount = static_cast<uint32_t>(stoul(argv[3])); // Convert string to unsigned long and then to uint32_t
+    string expKmersFNFileAddress = argv[4];
+    string offlineExpensiveIndexAddress = argv[5];
+    string readDatabaseAddress = argv[6];
+    uint16_t k = static_cast<uint16_t>(stoul(argv[7])); // Convert string to unsigned long and then to uint16_t
+    string outputDir = argv[8];
+
+    ExpensiveKmerFNEvalutor eke;
+    // Call the original function with the converted arguments
+    eke.expensiveKmerFNEvalutor(parmikAlnFileAddress, queryCount, readsCount, expKmersFNFileAddress, offlineExpensiveIndexAddress, readDatabaseAddress, k, outputDir);
+}
+
 int main(int argc, char *argv[])
 {
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // checkParmikFNalignments(argc, argv);
-    if(DEBUG_MODE) testAligner(argc, argv);
-    if(EXE_MODE) run(argc, argv);
+    expensiveKmerFNEval(argc, argv);
+    // if(DEBUG_MODE) testAligner(argc, argv);
+    // if(EXE_MODE) run(argc, argv);
     return 0;
 }
