@@ -218,6 +218,9 @@ public:
                 }
                 if (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
                 {
+                    cout << "Bwa ouperformed: larger aln_length for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << 
+                    "]: Bwa aln_len: " <<   bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions << 
+                    " - parmik aln_len: " <<  bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions << endl;
                     bwaOutperform++;
                 } else if (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions < bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
                 {
@@ -226,6 +229,9 @@ public:
                 {
                     if (bestAlnBwa.inDels + bestAlnBwa.substitutions < bestAlnPm.inDels + bestAlnPm.substitutions) // InDel has the same wight as substitution
                     {
+                        cout << "bwa ouperformed: smaller edits for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << 
+                        "]: Bwa edit_len: " <<   bestAlnBwa.inDels + bestAlnBwa.substitutions << 
+                        " - parmik edit_len: " <<  bestAlnPm.inDels + bestAlnPm.substitutions << endl;
                         bwaOutperform++;
                     } else if (bestAlnBwa.inDels + bestAlnBwa.substitutions > bestAlnPm.inDels + bestAlnPm.substitutions)
                     {
