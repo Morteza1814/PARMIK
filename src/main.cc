@@ -310,7 +310,7 @@ int run(int argc, char *argv[]) {
         uint32_t queryBaseIndex = 0;
         if (cfg.parmikMode != PARMIK_MODE_INDEX)
         {
-            createDir(expDir);
+            if (cfg.parmikMode != PARMIK_MODE_COMPARE) createDir(expDir);
             queryCount = util.readContigsFromFile(cfg.queryFileAddress, cfg.queryCount, queries, queryBaseIndex);
             cout << "queryCount : " << queryCount << endl;
             // read the penalties
@@ -443,18 +443,6 @@ int run(int argc, char *argv[]) {
                 // cout << "gQueriesHaveAtLeastOneAlignment: " << gQueriesHaveAtLeastOneAlignment << endl;
                 // cout << "gAlignmentFoundWithPolishLargerThanBest: " << gAlignmentFoundWithPolishLargerThanBest << endl;
             }
-        
-            //report the histogram of the alignments
-            // if(cfg.parmikMode == PARMIK_MODE_ALIGN && !cfg.noOutputFileDump)
-            // {
-            //     ofstream matches(cfg.outputDir + "/aln/PM_best_matches.txt");
-            //     //report PM final best match results
-            //     matches << "Q , R" << endl;
-            //     for (const auto& pair : pmr) {
-            //         matches << pair.first << " , " << pair.second.readID << endl;
-            //     }
-            //     matches.close();
-            // }
         } else if (cfg.parmikMode == PARMIK_MODE_CMP_BASELINE){
             string queryFileName = getTextAfterLastSlash(cfg.queryFileAddress);
             if(queryFileName == cfg.queryFileAddress){
@@ -471,28 +459,6 @@ int run(int argc, char *argv[]) {
             }
             blCmp.compareWithBaseLine(cfg, reads, queries, comparisonResultsFileAddress, queryCount, alnReportAddressBase, baselineBaseAddress);
         } else if (cfg.parmikMode == PARMIK_MODE_COMPARE){
-            // //load the parmik alignments from the sam formatted file
-            // SamReader parmikSam(parmikAlignmentsAddress);
-            // vector<Alignment> parmikSamAlignments;
-            //  parmikSam.parseFile(queryCount, parmikSamAlignments);
-            // // IndexContainer<uint32_t, LevAlign> parmikMultiAlignments;
-            // IndexContainer<uint32_t, Alignment> parmikMultiAlignments;
-            // for (const Alignment& aln : parmikSamAlignments) 
-            // {
-            //     // LevAlign l;
-            //     Alignment l;
-            //     parmikMultiAlignments.put(aln.queryID, l);
-            // }
-            // cout<<"finished \n";
-            //check the alignment results with another aligner
-            // string comparisonResultsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/cmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
-            // cout << "Comparison Results File Address: " << comparisonResultsFileAddress << endl;
-            // string alnPerQueryFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/AlnPerQ_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
-            // cout << "Aln Per Query File Address: " << alnPerQueryFileAddress << endl;
-            // string parmikFnReadsFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/ParmikFnReads_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
-            // cout << "Parmik Fn Reads File Address: " << parmikFnReadsFileAddress << endl;
-            // string bestAlnCmpFileAddress = cfg.outputDir + "/cmp/" + cfg.otherTool + "/BestAlnCmp_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
-            // cout << "Best Aln Cmp File Address: " << bestAlnCmpFileAddress << endl;
             vector<pair<uint32_t, uint32_t>> alnPmVsOtherAlnSizesMap;
             // (BWA)
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
@@ -514,12 +480,6 @@ int run(int argc, char *argv[]) {
     return 0;
 }
 
-// void testCheckBlastEditPositionsWrapper(int argc, char *argv[]){
-//     CompareWithBlast cwb;
-//     // testCheckBlastEditPositions(uint32_t contigSize, uint32_t regionSize, uint32_t editDistance, uint32_t minExactMatchLen, uint32_t queryS, string qAln, sting readAln, uint32_t blastMismatches, uint32_t blastInDel);
-//     cwb.testCheckBlastEditPositions(stod(argv[1]), stod(argv[2]), stod(argv[3]), stod(argv[4]), stod(argv[5]), argv[6], argv[7], stod(argv[8]), stod(argv[9]), stod(argv[10]));
-// }
-
 void checkParmikFNalignments(int argc, char *argv[]){
     // checkKmerFreq(string missedMatchesFileAddress, string kmerFrequLocFileAddress, string queryFileAddress, string readFileAddress, uint32_t queryCount, uint32_t readCount);
     CheckKmerFrequency<uint64_t> ckf(15, 50, 30);
@@ -532,11 +492,6 @@ void testAligner(int argc, char *argv[]){
     aln.read = argv[2];
     // PostFilter pf(50, 2, 150, 30, 0.9);
     Aligner <uint32_t> aligner(stod(argv[3]), 2, 150, stod(argv[4]), stod(argv[5]), stod(argv[6]), false, 1);
-    // aligner.align(aln, stod(argv[3]), stod(argv[4]), stod(argv[5]), stod(argv[6]));
-    // // bool criteriaCheck = aligner.checkAlingmentCriteria(aln);
-    // bool criteriaCheck = pf.checkAndUpdateBasedOnAlingmentCriteria(aln);
-    // cout << ((criteriaCheck == true) ? "aln meets criteria" : "aln not meet criteria") << endl;
-    // vector<Penalty> penalties = readPenalties("/u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_FLTR/PenaltySets/2284_1111_2444_2288_2848");
     vector<Penalty> penalties = readPenalties(argv[7]);
     aln = aligner.alignDifferentPenaltyScores(argv[1], argv[2], 1, 1, 1, penalties);
     cout << "aln.partialMatchSize: " << aln.partialMatchSize << endl;
