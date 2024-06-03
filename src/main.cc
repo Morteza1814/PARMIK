@@ -497,8 +497,8 @@ int run(int argc, char *argv[]) {
             // (BWA)
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
             {
-                // ComparatorWithBWA cwb;
-                // cwb.comparePmWithBWA(cfg, reads, queries, comparisonResultsFileAddress, parmikMultiAlignments, alnPmVsOtherAlnSizesMap, queryCount, alnPerQueryFileAddress);
+                ComparatorWithBWA cwb(cfg.identityPercentage);
+                cwb.comparePmWithBwa(cfg, reads, queries, queryCount);
             } else if(cfg.otherTool == "BLAST" || cfg.otherTool == "blast")
             {
                 CompareWithBlast cwb(cfg.identityPercentage);
@@ -576,8 +576,8 @@ int main(int argc, char *argv[])
 {
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // checkParmikFNalignments(argc, argv);
-    expensiveKmerFNEval(argc, argv);
-    // if(DEBUG_MODE) testAligner(argc, argv);
-    // if(EXE_MODE) run(argc, argv);
+    // expensiveKmerFNEval(argc, argv);
+    if(DEBUG_MODE) testAligner(argc, argv);
+    if(EXE_MODE) run(argc, argv);
     return 0;
 }
