@@ -3,9 +3,9 @@
 #SBATCH --error="aln_IKT50000_K9_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848.err"
 #SBATCH --output="aln_IKT50000_K9_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848.out"
 #SBATCH --mem=400G
-#SBATCH --time=15:00:00
-#SBATCH --nodelist=cortado09 
-#SBATCH --partition=main
+#SBATCH --time=4-00:00:00
+#SBATCH --nodelist=cortado05 
+#SBATCH --partition=cpu
 /u/rgq5aw/GIT/PARMIK/src/parmik -a 1 -s 48 -c 150 -m 12 -t 50000 -k 9 -d 90 -i 17000000 -j 30000 -x \
 -r /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads \
 -q /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries \

@@ -97,7 +97,7 @@ public:
         return extractEditTypes(cigar).clipCount;
     }
 
-    void parseFile(uint32_t lastQueryID, vector<Alignment> &alignments, bool compressedFormat = false) {
+    void parseFile(uint32_t lastQueryID, vector<Alignment> &alignments, bool compressedFormat = false, bool isBWA = false) {
         ifstream samFile(filename_);
         Utilities<uint32_t> utl;
         if (!samFile) {
@@ -170,8 +170,12 @@ public:
             aln.queryID = sam.queryId;
             aln.cigar = sam.cigar;
             auto counts = countCigarOperations(aln.cigar);
-            aln.substitutions = std::get<3>(counts);
+            if(isBWA)
+                aln.substitutions = sam.editDistance;
+            else
+                aln.substitutions = std::get<3>(counts);
             aln.matches = std::get<2>(counts);
+            if(isBWA) aln.matches = aln.matches - aln.substitutions;
             aln.inDels = std::get<0>(counts) + std::get<1>(counts);
             aln.editDistance  = aln.substitutions + aln.inDels;
             aln.flag = sam.flag;
@@ -201,6 +205,7 @@ public:
                         deletion += num;
                         break;
                     case '=':
+                    case 'M':
                         matches += num;
                         break;
                     case 'X':

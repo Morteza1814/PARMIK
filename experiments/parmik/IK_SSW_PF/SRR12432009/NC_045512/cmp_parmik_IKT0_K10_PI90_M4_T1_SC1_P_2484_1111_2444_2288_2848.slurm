@@ -5,7 +5,7 @@
 #SBATCH --mem=500G
 #SBATCH --time=4-00:00:00
 #SBATCH --nodelist=cortado01 
-#SBATCH --partition=main
+#SBATCH --partition=cpu
 /u/rgq5aw/GIT/PARMIK/src/parmik -a 4 -l parmik -s 48 -c 150 -m 13 -t 0 -k 10 -d 90 -i 17000000 -j 30000 -x \
 -r /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads \
 -q /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries \
