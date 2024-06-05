@@ -270,7 +270,7 @@ int run(int argc, char *argv[]) {
     cout << left << setw(30) << "numThreads: " << cfg.numThreads << endl;
     cout << left << setw(30) << "isSecondChanceOff: " << ((cfg.isSecondChanceOff == 1) ? "T":"F") << endl;
     uint32_t minNumExactMatchKmer = 0;
-    if (cfg.parmikMode != PARMIK_MODE_INDEX && cfg.parmikMode != PARMIK_MODE_BASELINE && cfg.parmikMode != PARMIK_MODE_COMPARE) {
+    if (cfg.parmikMode != PARMIK_MODE_INDEX && cfg.parmikMode != PARMIK_MODE_BASELINE) {
         if(cfg.minExactMatchLen > 0) {
             minNumExactMatchKmer = cfg.minExactMatchLen - (cfg.kmerLength - 1);
         } else {
@@ -463,8 +463,9 @@ int run(int argc, char *argv[]) {
             // (BWA)
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
             {
+                string comparisonResultsFileAddress = expDir + "/" + "cmp_parmik_" + cfg.otherTool + ".txt";
                 ComparatorWithBWA cwb(cfg.identityPercentage);
-                cwb.comparePmWithBwa(cfg, reads, queries, queryCount);
+                cwb.comparePmWithBwa(cfg, reads, queries, queryCount, comparisonResultsFileAddress);
             } else if(cfg.otherTool == "BLAST" || cfg.otherTool == "blast")
             {
                 CompareWithBlast cwb(cfg.identityPercentage);

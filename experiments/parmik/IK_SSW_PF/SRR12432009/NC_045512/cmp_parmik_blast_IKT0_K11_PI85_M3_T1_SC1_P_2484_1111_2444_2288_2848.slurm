@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name="cmp_parmik_blast_IKT0_K11_PI85_M4_T1_SC1_P_2484_1111_2444_2288_2848"
-#SBATCH --error="cmp_parmik_blast_IKT0_K11_PI85_M4_T1_SC1_P_2484_1111_2444_2288_2848.err"
-#SBATCH --output="cmp_parmik_blast_IKT0_K11_PI85_M4_T1_SC1_P_2484_1111_2444_2288_2848.out"
+#SBATCH --job-name="cmp_parmik_blast_IKT0_K11_PI85_M3_T1_SC1_P_2484_1111_2444_2288_2848"
+#SBATCH --error="cmp_parmik_blast_IKT0_K11_PI85_M3_T1_SC1_P_2484_1111_2444_2288_2848.err"
+#SBATCH --output="cmp_parmik_blast_IKT0_K11_PI85_M3_T1_SC1_P_2484_1111_2444_2288_2848.out"
 #SBATCH --mem=400G
 #SBATCH --time=4-00:00:00
 #SBATCH --nodelist=adriatic03 

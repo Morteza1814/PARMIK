@@ -18,7 +18,7 @@ identityPercentage:           0.9
 minExactMatchLen:             14
 numThreads:                   1
 isSecondChanceOff:            F
-minNumExactMatchKmer:         0
+minNumExactMatchKmer:         4
 isIndexOffline:               1
 offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/
 baselineBaseAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848/parmikAln.txt
@@ -32,40 +32,28 @@ m: 2, s: 4, go: 4, ge: 4
 m: 2, s: 2, go: 8, ge: 8
 m: 2, s: 8, go: 4, ge: 8
 ------------------------------------
-experiment dir: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI90_M0_T1_SC1_P_2484_1111_2444_2288_2848
+experiment dir: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848
 numberOfReadsWithN : 0
 queryCount : 29754
 numberOfReadsWithN : 0
 readCount : 16344647
 offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/ck_T0_K11_r17000000
 offlineExpensiveIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/ek_T0_K11_r17000000
-pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI90_M0_T1_SC1_P_2484_1111_2444_2288_2848/parmikAln.txt
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848/parmikAln.txt
 queries processed: 0 / 29754
-Bwa ouperformed: larger aln_length for [31, 3921450]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [188, 377830]: Bwa aln_len: 150 - parmik aln_len: 148
-Bwa ouperformed: larger aln_length for [272, 2882126]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [362, 2383590]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [394, 935161]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [395, 15706371]: Bwa aln_len: 150 - parmik aln_len: 148
-Bwa ouperformed: larger aln_length for [419, 962849]: Bwa aln_len: 150 - parmik aln_len: 148
-Bwa ouperformed: larger aln_length for [434, 862516]: Bwa aln_len: 150 - parmik aln_len: 148
-Bwa ouperformed: larger aln_length for [516, 2785560]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [543, 658347]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [556, 3557701]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [612, 14378725]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [625, 11362563]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [704, 1204869]: Bwa aln_len: 150 - parmik aln_len: 148
-Bwa ouperformed: larger aln_length for [733, 8084567]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [770, 10312399]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [798, 403607]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [817, 2331189]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [881, 4980066]: Bwa aln_len: 150 - parmik aln_len: 148
-Bwa ouperformed: larger aln_length for [897, 11404157]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [922, 13617291]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [944, 5707195]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [955, 3279209]: Bwa aln_len: 150 - parmik aln_len: 148
-Bwa ouperformed: larger aln_length for [977, 5048123]: Bwa aln_len: 150 - parmik aln_len: 148
 queries processed: 1000 / 29754
-Bwa ouperformed: larger aln_length for [1092, 685235]: Bwa aln_len: 150 - parmik aln_len: 148
-Bwa ouperformed: larger aln_length for [1093, 8753073]: Bwa aln_len: 150 - parmik aln_len: 149
-Bwa ouperformed: larger aln_length for [1124, 3491442]: Bwa aln_len: 150 - parmik aln_len: 148
+queries processed: 2000 / 29754
+queries processed: 3000 / 29754
+queries processed: 4000 / 29754
+queries processed: 5000 / 29754
+queries processed: 6000 / 29754
+queries processed: 7000 / 29754
+queries processed: 8000 / 29754
+queries processed: 9000 / 29754
+queries processed: 10000 / 29754
+queries processed: 11000 / 29754
+queries processed: 12000 / 29754
+queries processed: 13000 / 29754
+queries processed: 14000 / 29754
+queries processed: 15000 / 29754
+queries processed: 16000 / 29754
