@@ -114,7 +114,7 @@ public:
         return true;
     }
 
-    void comparePmWithBwa(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, const uint32_t queryCount)
+    void comparePmWithBwa(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, const uint32_t queryCount, const string& outputAddress)
     {
         vector<Alignment> bwaAlignments, parmikAlignments;
         //read the bwa file
@@ -123,11 +123,19 @@ public:
         //read the parmik file
         SamReader parmikSam(cfg.baselineBaseAddress);
         parmikSam.parseFile(queryCount, parmikAlignments, false, false);
+        ofstream outputFile(outputAddress);
+        if(!outputFile.is_open()){
+            cout << "error openin file: " << outputAddress << endl;
+            return;
+        }
 
         uint32_t bwaFN = 0, parmikFN = 0, totalTN = 0, numberOfQueryContainN = 0;
         uint64_t bwaOutperform = 0, parmikOutperform = 0, equalPerformance = 0;
+        uint64_t sameReadBwaOutperform = 0, differentReadBwaOutperform = 0, sameReadPmOutperform = 0, differentReadPmOutperform = 0, sameReadEqual = 0, differentReadEqual = 0;
+        uint64_t bwaLowPI_FN = 0, bwaLowPIOutperformBestPm = 0;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
+            vector<Alignment> bwaLowPI_Alignments;
             if(queryInd % 1000 == 0) {
                 cout << "queries processed: " << queryInd << " / " << queryCount << endl;
             }
@@ -151,6 +159,9 @@ public:
                         } else {
                             query_bwaAlignments.push_back(aln);
                         }
+                    } else {
+                        bwaLowPI_Alignments.push_back(aln);
+                        bwaLowPI_FN++;
                     }
                 }
             }
@@ -173,6 +184,7 @@ public:
 
             // cout << "# of reads found by BWA : " << bwaReadPerQuery << endl;
             // cout << "# of reads found by PARMIK : " << parmikReadPerQuery << endl;
+            bool bothHasTP = false, bwaHasLowPIFN = false;
             vector<uint32_t> bwaTPReadIds;
             if(bwaReadPerQuery == 0 && parmikReadPerQuery == 0){
                 //TN
@@ -181,10 +193,16 @@ public:
             } else if(bwaReadPerQuery == 0 && parmikReadPerQuery > 0) {
                 //FN
                 bwaFN++;
+                if(bwaLowPI_Alignments.size() > 0) {
+                    bwaHasLowPIFN = true;
+                }
             } else if(bwaReadPerQuery > 0 && parmikReadPerQuery == 0) {
                 //FN
                 parmikFN++;
             } else { // both > 0
+                bothHasTP = true;
+            }
+            if(bothHasTP || bwaHasLowPIFN) {
                 //get the best PARMIK alignment
                 Alignment bestAlnBwa;
                 Alignment bestAlnPm;
@@ -202,52 +220,120 @@ public:
                         }
                     }
                 }
-                for (auto it = query_bwaAlignments.begin(); it != query_bwaAlignments.end(); it++) {
-                    Alignment bwaAlnn = (*it);
-                    if (bwaAlnn.matches + bwaAlnn.inDels + bwaAlnn.substitutions > bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions) // only exact matches
-                    {
-                        bestAlnBwa = bwaAlnn;
-                    }
-                    else if (bwaAlnn.matches + bwaAlnn.inDels + bwaAlnn.substitutions == bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions)
-                    {
-                        if (bwaAlnn.inDels + bwaAlnn.substitutions < bestAlnBwa.inDels + bestAlnBwa.substitutions) // InDel has the same wight as substitution
+                if(!bwaHasLowPIFN) {
+                    for (auto it = query_bwaAlignments.begin(); it != query_bwaAlignments.end(); it++) {
+                        Alignment bwaAlnn = (*it);
+                        if (bwaAlnn.matches + bwaAlnn.inDels + bwaAlnn.substitutions > bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions) // only exact matches
                         {
                             bestAlnBwa = bwaAlnn;
                         }
+                        else if (bwaAlnn.matches + bwaAlnn.inDels + bwaAlnn.substitutions == bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions)
+                        {
+                            if (bwaAlnn.inDels + bwaAlnn.substitutions < bestAlnBwa.inDels + bestAlnBwa.substitutions) // InDel has the same wight as substitution
+                            {
+                                bestAlnBwa = bwaAlnn;
+                            }
+                        }
+                    }
+                    //check if the best alignment id is the same
+                    bool foundSameRead = false;
+                    if(bestAlnBwa.readID == bestAlnPm.readID) {
+                        foundSameRead = true;
+                    }
+                    if (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
+                    {
+                        outputFile << "Bwa ouperformed: larger aln_length for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << 
+                        "]: Bwa aln_len: " <<   bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions << 
+                        " - parmik aln_len: " <<  bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions << endl;
+                        bwaOutperform++;
+                        if (foundSameRead){
+                            outputFile << "sameReadBwaOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                            sameReadBwaOutperform++;
+                        } else {
+                            outputFile << "differentReadBwaOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                            differentReadBwaOutperform++;
+                        }
+                    } else if (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions < bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
+                    {
+                        if (foundSameRead){
+                            outputFile << "sameReadPmOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                            sameReadPmOutperform++;
+                        } else {
+                            outputFile << "differentReadPmOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                            differentReadPmOutperform++;
+                        }
+                        parmikOutperform++;
+                    } else if (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
+                    {
+                        if (bestAlnBwa.inDels + bestAlnBwa.substitutions < bestAlnPm.inDels + bestAlnPm.substitutions) // InDel has the same wight as substitution
+                        {
+                            outputFile << "bwa ouperformed: smaller edits for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << 
+                            "]: Bwa edit_len: " <<   bestAlnBwa.inDels + bestAlnBwa.substitutions << 
+                            " - parmik edit_len: " <<  bestAlnPm.inDels + bestAlnPm.substitutions << endl;
+                            bwaOutperform++;
+                            if (foundSameRead){
+                                sameReadBwaOutperform++;
+                                outputFile << "sameReadBwaOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                            } else {
+                                differentReadBwaOutperform++;
+                                outputFile << "differentReadBwaOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                            }
+                        } else if (bestAlnBwa.inDels + bestAlnBwa.substitutions > bestAlnPm.inDels + bestAlnPm.substitutions)
+                        {
+                            if (foundSameRead){
+                            outputFile << "sameReadPmOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                            sameReadPmOutperform++;
+                            } else {
+                                outputFile << "differentReadPmOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                                differentReadPmOutperform++;
+                            }
+                            parmikOutperform++;
+                        } else{
+                            if (foundSameRead){
+                                sameReadEqual++;
+                                outputFile << "sameReadEqual, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                            } else {
+                                differentReadEqual++;
+                                outputFile << "differentReadEqual, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                            }
+                            equalPerformance++;
+                        }
                     }
                 }
-                if (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
-                {
-                    cout << "Bwa ouperformed: larger aln_length for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << 
-                    "]: Bwa aln_len: " <<   bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions << 
-                    " - parmik aln_len: " <<  bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions << endl;
-                    bwaOutperform++;
-                } else if (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions < bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
-                {
-                    parmikOutperform++;
-                } else if (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
-                {
-                    if (bestAlnBwa.inDels + bestAlnBwa.substitutions < bestAlnPm.inDels + bestAlnPm.substitutions) // InDel has the same wight as substitution
+                // check whether the bwa Low PI FN are larger than its best alignment
+                for (auto it = bwaLowPI_Alignments.begin(); it!= bwaLowPI_Alignments.end(); it++) {
+                    Alignment bwaLowPIAln = (*it);
+                    if (bwaLowPIAln.matches + bwaLowPIAln.inDels + bwaLowPIAln.substitutions >= bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
                     {
-                        cout << "bwa ouperformed: smaller edits for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << 
-                        "]: Bwa edit_len: " <<   bestAlnBwa.inDels + bestAlnBwa.substitutions << 
-                        " - parmik edit_len: " <<  bestAlnPm.inDels + bestAlnPm.substitutions << endl;
-                        bwaOutperform++;
-                    } else if (bestAlnBwa.inDels + bestAlnBwa.substitutions > bestAlnPm.inDels + bestAlnPm.substitutions)
+                        outputFile << "bwaLowPIAln is longer than bestAlnPm [" << bwaLowPIAln.cigar << ", " << bestAlnPm.cigar << endl;
+                        bwaLowPIOutperformBestPm++;
+                    }
+                    else if (bwaLowPIAln.matches + bwaLowPIAln.inDels + bwaLowPIAln.substitutions == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
                     {
-                        parmikOutperform++;
-                    } else{
-                        equalPerformance++;
+                        if (bwaLowPIAln.inDels + bwaLowPIAln.substitutions < bestAlnPm.inDels + bestAlnPm.substitutions) // InDel has the same wight as substitution
+                        {
+                            outputFile << "bwaLowPIAln is longer than bestAlnPm [" << bwaLowPIAln.cigar << ", " << bestAlnPm.cigar << endl;
+                            bwaLowPIOutperformBestPm++;
+                        }
                     }
                 }
             }
         }
-        cout << "Total Bwa TN : " << totalTN << endl;
-        cout << "Total Bwa FN : " << bwaFN << endl;
-        cout << "Total Parmik FNN : " << parmikFN << endl;
-        cout << "Total Bwa Outperform : " << bwaOutperform << endl;
-        cout << "Total Parmik Outperform : " << parmikOutperform << endl;
-        cout << "Total Bwa Equal : " << equalPerformance << endl;
+        outputFile << "Total Bwa TN : " << totalTN << endl;
+        outputFile << "Total Bwa FN : " << bwaFN << endl;
+        outputFile << "Total Parmik FNN : " << parmikFN << endl;
+        outputFile << "Total Bwa Outperform : " << bwaOutperform << endl;
+        outputFile << "Total Parmik Outperform : " << parmikOutperform << endl;
+        outputFile << "Total Bwa Equal : " << equalPerformance << endl;
+        outputFile << "Same Read Bwa Outperform : " << sameReadBwaOutperform << endl;
+        outputFile << "Different Read Bwa Outperform : " << differentReadBwaOutperform << endl;
+        outputFile << "Same Read Parmik Outperform : " << sameReadPmOutperform << endl;
+        outputFile << "Different Read Parmik Outperform : " << differentReadPmOutperform << endl;
+        outputFile << "Same Read Equal : " << sameReadEqual << endl;
+        outputFile << "Different Read Equal : " << differentReadEqual << endl;
+        outputFile << "bwaLowPI_FN : " << bwaLowPI_FN << endl;
+        outputFile << "bwaLowPI_OutperformBestPm : " << bwaLowPIOutperformBestPm << endl;
+        outputFile.close();
     }
     
 };
