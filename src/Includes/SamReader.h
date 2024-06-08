@@ -180,6 +180,7 @@ public:
             aln.editDistance  = aln.substitutions + aln.inDels;
             aln.flag = sam.flag;
             aln.partialMatchSize = aln.matches + aln.inDels + aln.substitutions;
+            aln.mismatchPositions = sam.mismatchPositions;
             alignments.push_back(aln);
             queryCount++;
         }

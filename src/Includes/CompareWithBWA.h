@@ -133,6 +133,7 @@ public:
         uint64_t bwaOutperform = 0, parmikOutperform = 0, equalPerformance = 0;
         uint64_t sameReadBwaOutperform = 0, differentReadBwaOutperform = 0, sameReadPmOutperform = 0, differentReadPmOutperform = 0, sameReadEqual = 0, differentReadEqual = 0;
         uint64_t bwaLowPI_FN = 0, bwaLowPIOutperformBestPm = 0;
+        set<uint16_t> sameReadBwaOutperformBps, differentReadBwaOutperformBps, sameReadPmOutperformBps, differentReadPmOutperformBps, sameReadbwaLowPIOutperformBps, differentReadbwaLowPIOutperformBps;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
             vector<Alignment> bwaLowPI_Alignments;
@@ -206,20 +207,6 @@ public:
                 //get the best PARMIK alignment
                 Alignment bestAlnBwa;
                 Alignment bestAlnPm;
-                for (auto it = query_parmikAlignments.begin(); it != query_parmikAlignments.end(); it++) {
-                    Alignment pmAlnn = (*it);
-                    if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
-                    {
-                        bestAlnPm = pmAlnn;
-                    }
-                    else if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
-                    {
-                        if (pmAlnn.inDels + pmAlnn.substitutions < bestAlnPm.inDels + bestAlnPm.substitutions) // InDel has the same wight as substitution
-                        {
-                            bestAlnPm = pmAlnn;
-                        }
-                    }
-                }
                 if(!bwaHasLowPIFN) {
                     for (auto it = query_bwaAlignments.begin(); it != query_bwaAlignments.end(); it++) {
                         Alignment bwaAlnn = (*it);
@@ -235,6 +222,24 @@ public:
                             }
                         }
                     }
+                    Alignment parmikAlnForBwaSameReadID;
+                    for (auto it = query_parmikAlignments.begin(); it != query_parmikAlignments.end(); it++) {
+                        Alignment pmAlnn = (*it);
+                        if(bestAlnBwa.matches > 0 && bestAlnBwa.readID == pmAlnn.readID) {
+                            parmikAlnForBwaSameReadID = pmAlnn;
+                        }
+                        if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
+                        {
+                            bestAlnPm = pmAlnn;
+                        }
+                        else if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
+                        {
+                            if (pmAlnn.inDels + pmAlnn.substitutions < bestAlnPm.inDels + bestAlnPm.substitutions) // InDel has the same wight as substitution
+                            {
+                                bestAlnPm = pmAlnn;
+                            }
+                        }
+                    }
                     //check if the best alignment id is the same
                     bool foundSameRead = false;
                     if(bestAlnBwa.readID == bestAlnPm.readID) {
@@ -242,78 +247,117 @@ public:
                     }
                     if (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
                     {
-                        outputFile << "Bwa ouperformed: larger aln_length for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << 
-                        "]: Bwa aln_len: " <<   bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions << 
-                        " - parmik aln_len: " <<  bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions << endl;
                         bwaOutperform++;
                         if (foundSameRead){
-                            outputFile << "sameReadBwaOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
                             sameReadBwaOutperform++;
+                            sameReadBwaOutperformBps.insert(bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions - (bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions));
+                            outputFile << "sameReadBwaOutperform";
                         } else {
-                            outputFile << "differentReadBwaOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
                             differentReadBwaOutperform++;
+                            differentReadBwaOutperformBps.insert(bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions - (bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions));
+                            outputFile << "parmikAlnForBwaSameReadID: " << parmikAlnForBwaSameReadID.cigar << ", M: " << parmikAlnForBwaSameReadID.matches << ", S: " << parmikAlnForBwaSameReadID.substitutions << ", InDels: " << parmikAlnForBwaSameReadID.inDels << endl;
+                            outputFile << "differentReadBwaOutperform";
                         }
+                        outputFile << " (larger aln_length) for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << "]:, bwa cigar: " 
+                        << bestAlnBwa.cigar << ", MD: " << bestAlnBwa.mismatchPositions << ", M: " << bestAlnBwa.matches << ", S: " << bestAlnBwa.substitutions << ", InDels: " << bestAlnBwa.inDels
+                        << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                     } else if (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions < bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
                     {
+                        parmikOutperform++;
                         if (foundSameRead){
-                            outputFile << "sameReadPmOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                            outputFile << "sameReadPmOutperform";
+                            sameReadPmOutperformBps.insert(bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions - (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions));
                             sameReadPmOutperform++;
                         } else {
-                            outputFile << "differentReadPmOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                            outputFile << "parmikAlnForBwaSameReadID: " << parmikAlnForBwaSameReadID.cigar << ", M: " << parmikAlnForBwaSameReadID.matches << ", S: " << parmikAlnForBwaSameReadID.substitutions << ", InDels: " << parmikAlnForBwaSameReadID.inDels << endl;
+                            outputFile << "differentReadPmOutperform";
+                            differentReadPmOutperformBps.insert(bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions - (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions));
                             differentReadPmOutperform++;
                         }
-                        parmikOutperform++;
+                        outputFile << " (larger aln_length) for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << "]:, bwa cigar: " 
+                        << bestAlnBwa.cigar << ", MD: " << bestAlnBwa.mismatchPositions << ", M: " << bestAlnBwa.matches << ", S: " << bestAlnBwa.substitutions << ", InDels: " << bestAlnBwa.inDels
+                        << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                     } else if (bestAlnBwa.matches + bestAlnBwa.inDels + bestAlnBwa.substitutions == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
                     {
                         if (bestAlnBwa.inDels + bestAlnBwa.substitutions < bestAlnPm.inDels + bestAlnPm.substitutions) // InDel has the same wight as substitution
                         {
-                            outputFile << "bwa ouperformed: smaller edits for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << 
-                            "]: Bwa edit_len: " <<   bestAlnBwa.inDels + bestAlnBwa.substitutions << 
-                            " - parmik edit_len: " <<  bestAlnPm.inDels + bestAlnPm.substitutions << endl;
                             bwaOutperform++;
                             if (foundSameRead){
                                 sameReadBwaOutperform++;
-                                outputFile << "sameReadBwaOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                                sameReadBwaOutperformBps.insert(bestAlnPm.inDels + bestAlnPm.substitutions - (bestAlnBwa.inDels + bestAlnBwa.substitutions));
+                                outputFile << "sameReadBwaOutperform";
                             } else {
                                 differentReadBwaOutperform++;
-                                outputFile << "differentReadBwaOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                                differentReadBwaOutperformBps.insert(bestAlnPm.inDels + bestAlnPm.substitutions - (bestAlnBwa.inDels + bestAlnBwa.substitutions));
+                                outputFile << "parmikAlnForBwaSameReadID: " << parmikAlnForBwaSameReadID.cigar << ", M: " << parmikAlnForBwaSameReadID.matches << ", S: " << parmikAlnForBwaSameReadID.substitutions << ", InDels: " << parmikAlnForBwaSameReadID.inDels << endl;
+                                outputFile << "differentReadBwaOutperform";
                             }
+                            outputFile << " (smaller edits) for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << "]:, bwa cigar: " 
+                            << bestAlnBwa.cigar << ", MD: " << bestAlnBwa.mismatchPositions << ", M: " << bestAlnBwa.matches << ", S: " << bestAlnBwa.substitutions << ", InDels: " << bestAlnBwa.inDels
+                            << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                         } else if (bestAlnBwa.inDels + bestAlnBwa.substitutions > bestAlnPm.inDels + bestAlnPm.substitutions)
                         {
+                            parmikOutperform++;
                             if (foundSameRead){
-                            outputFile << "sameReadPmOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
-                            sameReadPmOutperform++;
+                                outputFile << "sameReadPmOutperform";
+                                sameReadPmOutperformBps.insert(bestAlnBwa.inDels + bestAlnBwa.substitutions - (bestAlnPm.inDels + bestAlnPm.substitutions));
+                                sameReadPmOutperform++;
                             } else {
-                                outputFile << "differentReadPmOutperform, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                                outputFile << "parmikAlnForBwaSameReadID: " << parmikAlnForBwaSameReadID.cigar << ", M: " << parmikAlnForBwaSameReadID.matches << ", S: " << parmikAlnForBwaSameReadID.substitutions << ", InDels: " << parmikAlnForBwaSameReadID.inDels << endl;
+                                outputFile << "differentReadPmOutperform";
+                                differentReadPmOutperformBps.insert(bestAlnBwa.inDels + bestAlnBwa.substitutions - (bestAlnPm.inDels + bestAlnPm.substitutions));
                                 differentReadPmOutperform++;
                             }
-                            parmikOutperform++;
+                            outputFile << " (smaller edits) for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << "]:, bwa cigar: " 
+                            << bestAlnBwa.cigar << ", MD: " << bestAlnBwa.mismatchPositions << ", M: " << bestAlnBwa.matches << ", S: " << bestAlnBwa.substitutions << ", InDels: " << bestAlnBwa.inDels
+                            << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                         } else{
+                            equalPerformance++;
                             if (foundSameRead){
                                 sameReadEqual++;
-                                outputFile << "sameReadEqual, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                                outputFile << "sameReadEqual";
                             } else {
                                 differentReadEqual++;
-                                outputFile << "differentReadEqual, bwa cigar: " << bestAlnBwa.cigar << " - parmik cigar: " << bestAlnPm.cigar << endl;
+                                outputFile << "differentReadEqual";
                             }
-                            equalPerformance++;
+                             outputFile << " for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << "]:, bwa cigar: " 
+                            << bestAlnBwa.cigar << ", MD: " << bestAlnBwa.mismatchPositions << ", M: " << bestAlnBwa.matches << ", S: " << bestAlnBwa.substitutions << ", InDels: " << bestAlnBwa.inDels
+                            << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                         }
                     }
                 }
                 // check whether the bwa Low PI FN are larger than its best alignment
                 for (auto it = bwaLowPI_Alignments.begin(); it!= bwaLowPI_Alignments.end(); it++) {
                     Alignment bwaLowPIAln = (*it);
-                    if (bwaLowPIAln.matches + bwaLowPIAln.inDels + bwaLowPIAln.substitutions >= bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
+                    if (bwaLowPIAln.matches + bwaLowPIAln.inDels + bwaLowPIAln.substitutions > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
                     {
-                        outputFile << "bwaLowPIAln is longer than bestAlnPm [" << bwaLowPIAln.cigar << ", " << bestAlnPm.cigar << endl;
                         bwaLowPIOutperformBestPm++;
+                        if(bwaLowPIAln.readID == bestAlnPm.readID) {
+                            outputFile << "sameReadbwaLowPIAlnOutperform";
+                            sameReadbwaLowPIOutperformBps.insert(bwaLowPIAln.matches + bwaLowPIAln.inDels + bwaLowPIAln.substitutions - (bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions));
+                        } else {
+                            outputFile << "differentReadbwaLowPIAlnOutperform";
+                            differentReadbwaLowPIOutperformBps.insert(bwaLowPIAln.matches + bwaLowPIAln.inDels + bwaLowPIAln.substitutions - (bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions));
+                        }
+                        outputFile << " (larger aln_length) for [" << bwaLowPIAln.queryID << ", " << bwaLowPIAln.readID << "]:, bwa cigar: " 
+                        << bwaLowPIAln.cigar << ", MD: " << bwaLowPIAln.mismatchPositions << ", M: " << bwaLowPIAln.matches << ", S: " << bwaLowPIAln.substitutions << ", InDels: " << bwaLowPIAln.inDels
+                        << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                     }
                     else if (bwaLowPIAln.matches + bwaLowPIAln.inDels + bwaLowPIAln.substitutions == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
                     {
                         if (bwaLowPIAln.inDels + bwaLowPIAln.substitutions < bestAlnPm.inDels + bestAlnPm.substitutions) // InDel has the same wight as substitution
                         {
-                            outputFile << "bwaLowPIAln is longer than bestAlnPm [" << bwaLowPIAln.cigar << ", " << bestAlnPm.cigar << endl;
                             bwaLowPIOutperformBestPm++;
+                            if(bwaLowPIAln.readID == bestAlnPm.readID) {
+                                outputFile << "sameReadbwaLowPIAlnOutperform";
+                                sameReadbwaLowPIOutperformBps.insert(bestAlnPm.inDels + bestAlnPm.substitutions - (bwaLowPIAln.inDels + bwaLowPIAln.substitutions));
+                            } else {
+                                outputFile << "differentReadbwaLowPIAlnOutperform";
+                                differentReadbwaLowPIOutperformBps.insert(bestAlnPm.inDels + bestAlnPm.substitutions - (bwaLowPIAln.inDels + bwaLowPIAln.substitutions));
+                            }
+                            outputFile << " (smallerEdits) for [" << bwaLowPIAln.queryID << ", " << bwaLowPIAln.readID << "]:, bwa cigar: " 
+                            << bwaLowPIAln.cigar << ", MD: " << bwaLowPIAln.mismatchPositions << ", M: " << bwaLowPIAln.matches << ", S: " << bwaLowPIAln.substitutions << ", InDels: " << bwaLowPIAln.inDels
+                            << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                         }
                     }
                 }
