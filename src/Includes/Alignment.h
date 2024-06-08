@@ -27,6 +27,7 @@ typedef struct Alignment
     string alignedRead;         //the region in read aligned for the partial match
     string alignedQuery;        //the region in query aligned for the partial match
     string editDistanceTypes;   //edit distance types of the region of the partial match
+    string mismatchPositions;   // positions of mismatches in BWA
     uint32_t editDistance = 0;           //number of edit distances detected in the region
     uint32_t partialMatchSize = 0;       //partial match region size
     vector<uint16_t> editLocations;  //the positions of the edit distances in the partial match region

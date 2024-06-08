@@ -43,8 +43,8 @@ ax1.set_ylabel('No. of TP (log)', fontsize=20)
 
 
 # Specify the range for the zoomed-in plot
-zoom_start = int(26 - x[0])
-zoom_end = int(50 - x[0])
+zoom_start = int(21 - x[0])
+zoom_end = int(35 - x[0])
 
 print("Zoom Start:", zoom_start, " Zoom End:", zoom_end)
 # Plot the zoomed-in portion as a bar chart in the bottom subplot
@@ -54,7 +54,7 @@ ax2.bar([i + 2 * bar_width for i in x[zoom_start:zoom_end]], y3[zoom_start:zoom_
 # ax2.set_title('FN rates for Alignment sizes between [21-35]')
 ax2.legend(fontsize=18)
 ax2.tick_params(axis='both', which='major', labelsize=18)
-ax2.set_ylabel('No. of TP', fontsize=20)
+ax2.set_ylabel('No. of TP (Millions)', fontsize=20)
 
 plt.xlabel('Alignment Size', fontsize=20)
 
