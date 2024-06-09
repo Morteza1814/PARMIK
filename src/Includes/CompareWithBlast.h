@@ -10,6 +10,7 @@
 #include "Alignment.h"
 #include <vector>
 #include "Utils.h"
+#include <sstream>
 
 #define CHECK_EXACT_MATCH_CRITERION_ 0
 
@@ -112,7 +113,7 @@ public:
         return simplifiedCigar.str();
     }
 
-    bool hasConsecutiveMatches(const std::string& s, int k) {
+    bool hasConsecutiveMatches(const string& s, int k) {
         int count = 0;
         for (char c : s) {
             if (c == '=') {
@@ -158,6 +159,28 @@ public:
         return true;
     }
 
+    string convertToCIGAR(const string& sequence) {
+        if (sequence.empty()) return "";
+
+        ostringstream cigar;
+        char currentChar = sequence[0];
+        int count = 1;
+
+        for (size_t i = 1; i < sequence.size(); ++i) {
+            if (sequence[i] == currentChar) {
+                ++count;
+            } else {
+                cigar << count << currentChar;
+                currentChar = sequence[i];
+                count = 1;
+            }
+        }
+
+        cigar << count << currentChar;
+
+        return cigar.str();
+    }
+
     void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, const uint32_t queryCount, const string& outputAddress)
     {
         Utilities<uint16_t> utils;
@@ -180,6 +203,7 @@ public:
         multiset<uint16_t> sameReadBlastOutperformBps, differentReadBlastOutperformBps, sameReadPmOutperformBps, differentReadPmOutperformBps;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
+            outputFile << "------------------------------------------------------" << endl;
             if(queryInd % 1000 == 0) {
                 cout << "queries processed: " << queryInd << " / " << queryCount << endl;
             }
@@ -288,7 +312,7 @@ public:
                         outputFile << "differentReadBlastOutperform";
                     }
                     outputFile << " (larger aln_length) for [" << bestAlnBlast.queryID << ", " << bestAlnBlast.readID << "]:, blast cigar: " 
-                    << getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
+                    << convertToCIGAR(getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize)) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
                     << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                 } else if (bestAlnBlast.partialMatchSize < bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
                 {
@@ -304,7 +328,7 @@ public:
                         outputFile << "differentReadPmOutperform";
                     }
                     outputFile << " (larger aln_length) for [" << bestAlnBlast.queryID << ", " << bestAlnBlast.readID << "]:, blast cigar: " 
-                    << getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
+                    << convertToCIGAR(getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize)) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
                     << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                 } else if (bestAlnBlast.partialMatchSize == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
                 {
@@ -322,7 +346,7 @@ public:
                             outputFile << "differentReadBlastOutperform";
                         }
                         outputFile << " (fewer edits) for [" << bestAlnBlast.queryID << ", " << bestAlnBlast.readID << "]:, blast cigar: " 
-                        << getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
+                        << convertToCIGAR(getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize)) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
                         << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                     } else if (bestAlnBlast.inDels + bestAlnBlast.substitutions > bestAlnPm.inDels + bestAlnPm.substitutions)
                     {
@@ -338,7 +362,7 @@ public:
                             outputFile << "differentReadPmOutperform";
                         }
                         outputFile << " (fewer edits) for [" << bestAlnBlast.queryID << ", " << bestAlnBlast.readID << "]:, blast cigar: " 
-                        << getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
+                        << convertToCIGAR(getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize)) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
                         << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                     } else{
                         equalPerformance++;
@@ -350,7 +374,7 @@ public:
                             outputFile << "differentReadEqual";
                         }
                         outputFile << " for [" << bestAlnBlast.queryID << ", " << bestAlnBlast.readID << "]:, blast cigar: " 
-                        << getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
+                        << convertToCIGAR(getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize)) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
                         << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                     }
                 }
