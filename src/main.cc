@@ -460,16 +460,15 @@ int run(int argc, char *argv[]) {
             blCmp.compareWithBaseLine(cfg, reads, queries, comparisonResultsFileAddress, queryCount, alnReportAddressBase, baselineBaseAddress);
         } else if (cfg.parmikMode == PARMIK_MODE_COMPARE){
             vector<pair<uint32_t, uint32_t>> alnPmVsOtherAlnSizesMap;
-            // (BWA)
+            string comparisonResultsFileAddress = expDir + "/" + "cmp_parmik_" + cfg.otherTool + ".txt";
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
             {
-                string comparisonResultsFileAddress = expDir + "/" + "cmp_parmik_" + cfg.otherTool + ".txt";
                 ComparatorWithBWA cwb(cfg.identityPercentage);
                 cwb.comparePmWithBwa(cfg, reads, queries, queryCount, comparisonResultsFileAddress);
             } else if(cfg.otherTool == "BLAST" || cfg.otherTool == "blast")
             {
                 CompareWithBlast cwb(cfg.identityPercentage);
-                cwb.comparePmWithBlast(cfg, reads, queries, queryCount);
+                cwb.comparePmWithBlast(cfg, reads, queries, queryCount, comparisonResultsFileAddress);
             }
         }
 
