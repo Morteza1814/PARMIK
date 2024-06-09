@@ -20,6 +20,7 @@
 #include "Includes/SSW_BaseLine.h"
 #include "Includes/CompareWithBaseLine.h"
 #include "Includes/ExpensiveKmersFNEvaluator.h"
+#include "Includes/EvaluateSecondChance.h"
 #include <filesystem>
 #include <cmath>
 
@@ -527,11 +528,26 @@ void expensiveKmerFNEval(int argc, char* argv[]) {
     eke.expensiveKmerFNEvalutor(parmikAlnFileAddress, queryCount, readsCount, expKmersFNFileAddress, offlineExpensiveIndexAddress, readDatabaseAddress, k, outputDir);
 }
 
+void evaluateSecondChance(int argc, char *argv[]){
+    if (argc != 6) {
+        cerr << "Usage: " << argv[0] << "parmikAlnFileAddressWithSC parmikAlnFileAddressWithoutSC queryCount outputDir queryFileAddress" << endl;
+        exit(EXIT_FAILURE);
+    }
+    string parmikAlnFileAddressWithSC = argv[1];
+    string parmikAlnFileAddressWithoutSC = argv[2];
+    uint32_t queryCount = static_cast<uint32_t>(stoul(argv[3]));
+    string outputDir = argv[4];
+    string queryFileAddress = argv[5];
+    EvaluateSecondChance esc;
+    esc.evaluateSecondChance(parmikAlnFileAddressWithSC, parmikAlnFileAddressWithoutSC, queryCount, outputDir, queryFileAddress);
+}
+
 int main(int argc, char *argv[])
 {
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // checkParmikFNalignments(argc, argv);
     // expensiveKmerFNEval(argc, argv);
+    // evaluateSecondChance(argc, argv);
     if(DEBUG_MODE) testAligner(argc, argv);
     if(EXE_MODE) run(argc, argv);
     return 0;

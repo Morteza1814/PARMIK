@@ -5,7 +5,7 @@ readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/meta
 readFileName:                 SRR12432009_reads
 queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries
 queryFileName:                NC_045512_queries
-otherToolOutputFileAddress:   /p/lava/parmik/partialMatcherProject/tools/blast/SRR12432009/NC_045512/mts_50M/blastn_ws11_pi90_mts50M_results.out
+otherToolOutputFileAddress:   /p/lava/parmik/partialMatcherProject/tools/blast/SRR12432009/NC_045512/mts_50M/blastn_ws11_pi85_mts50M_results.out
 outputDir:                    /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512
 penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/2484_1111_2444_2288_2848
 kmerRangesFileAddress:        
@@ -14,14 +14,14 @@ queryCount:                   30000
 kmerLength:                   11
 regionSize:                   48
 cheapKmerThreshold:           0
-identityPercentage:           0.9
-minExactMatchLen:             14
+identityPercentage:           0.85
+minExactMatchLen:             13
 numThreads:                   1
 isSecondChanceOff:            F
-minNumExactMatchKmer:         4
+minNumExactMatchKmer:         3
 isIndexOffline:               1
 offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/
-baselineBaseAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848/parmikAln.txt
+baselineBaseAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI85_M3_T1_SC1_P_2484_1111_2444_2288_2848/parmikAln.txt
 max editDistance in min region: 2
 otherTool:                    blast
 **********************CONFIGURATIONS*****************************
@@ -32,14 +32,14 @@ m: 2, s: 4, go: 4, ge: 4
 m: 2, s: 2, go: 8, ge: 8
 m: 2, s: 8, go: 4, ge: 8
 ------------------------------------
-experiment dir: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848
+experiment dir: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI85_M3_T1_SC1_P_2484_1111_2444_2288_2848
 numberOfReadsWithN : 0
 queryCount : 29754
 numberOfReadsWithN : 0
 readCount : 16344647
 offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/ck_T0_K11_r17000000
 offlineExpensiveIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/ek_T0_K11_r17000000
-pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848/parmikAln.txt
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI85_M3_T1_SC1_P_2484_1111_2444_2288_2848/parmikAln.txt
 queries processed: 0 / 29754
 queries processed: 1000 / 29754
 queries processed: 2000 / 29754
@@ -48,16 +48,3 @@ queries processed: 4000 / 29754
 queries processed: 5000 / 29754
 queries processed: 6000 / 29754
 queries processed: 7000 / 29754
-queries processed: 8000 / 29754
-queries processed: 9000 / 29754
-queries processed: 10000 / 29754
-queries processed: 11000 / 29754
-queries processed: 12000 / 29754
-queries processed: 13000 / 29754
-queries processed: 14000 / 29754
-queries processed: 15000 / 29754
-queries processed: 16000 / 29754
-queries processed: 17000 / 29754
-queries processed: 18000 / 29754
-queries processed: 19000 / 29754
-queries processed: 20000 / 29754
