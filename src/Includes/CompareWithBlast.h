@@ -9,6 +9,7 @@
 #include "Aligner.h"
 #include "Alignment.h"
 #include <vector>
+#include "Utils.h"
 
 #define CHECK_EXACT_MATCH_CRITERION_ 0
 
@@ -157,8 +158,9 @@ public:
         return true;
     }
 
-    void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, const uint32_t queryCount)
+    void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, const uint32_t queryCount, const string& outputAddress)
     {
+        Utilities<uint16_t> utils;
         //read the blast file
         BlastReader blastReader(cfg.otherToolOutputFileAddress);
         vector<Alignment> blastAlignments, parmikAlignments;
@@ -166,9 +168,16 @@ public:
         //read the parmik file
         SamReader parmikSam(cfg.baselineBaseAddress);
         parmikSam.parseFile(queryCount, parmikAlignments, false);
+        ofstream outputFile(outputAddress);
+        if(!outputFile.is_open()){
+            cout << "error openin file: " << outputAddress << endl;
+            return;
+        }
 
         uint32_t blastFN = 0, parmikFN = 0, totalTN = 0, numberOfQueryContainN = 0;
         uint64_t blastOutperform = 0, parmikOutperform = 0, equalPerformance = 0;
+        uint64_t sameReadBlastOutperform = 0, differentReadBlastOutperform = 0, sameReadPmOutperform = 0, differentReadPmOutperform = 0, sameReadEqual = 0, differentReadEqual = 0;
+        multiset<uint16_t> sameReadBlastOutperformBps, differentReadBlastOutperformBps, sameReadPmOutperformBps, differentReadPmOutperformBps;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
             if(queryInd % 1000 == 0) {
@@ -229,8 +238,26 @@ public:
                 //get the best PARMIK alignment
                 Alignment bestAlnBlast;
                 Alignment bestAlnPm;
+                for (auto it = query_blastAlignments.begin(); it != query_blastAlignments.end(); it++) {
+                    Alignment blastAlnn = (*it);
+                    if (blastAlnn.partialMatchSize > bestAlnBlast.partialMatchSize) // only exact matches
+                    {
+                        bestAlnBlast = blastAlnn;
+                    }
+                    else if (blastAlnn.partialMatchSize == bestAlnBlast.partialMatchSize)
+                    {
+                        if (blastAlnn.inDels + blastAlnn.substitutions < bestAlnBlast.inDels + bestAlnBlast.substitutions) // InDel has the same wight as substitution
+                        {
+                            bestAlnBlast = blastAlnn;
+                        }
+                    }
+                }
+                Alignment parmikAlnForBlastSameReadID;
                 for (auto it = query_parmikAlignments.begin(); it != query_parmikAlignments.end(); it++) {
                     Alignment pmAlnn = (*it);
+                    if(bestAlnBlast.partialMatchSize > 0 && bestAlnBlast.readID == pmAlnn.readID) {
+                        parmikAlnForBlastSameReadID = pmAlnn;
+                    }
                     if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
                     {
                         bestAlnPm = pmAlnn;
@@ -243,52 +270,113 @@ public:
                         }
                     }
                 }
-                for (auto it = query_blastAlignments.begin(); it != query_blastAlignments.end(); it++) {
-                    Alignment blastAlnn = (*it);
-                    if (blastAlnn.matches + blastAlnn.inDels + blastAlnn.substitutions > bestAlnBlast.matches + bestAlnBlast.inDels + bestAlnBlast.substitutions) // only exact matches
-                    {
-                        bestAlnBlast = blastAlnn;
-                    }
-                    else if (blastAlnn.matches + blastAlnn.inDels + blastAlnn.substitutions == bestAlnBlast.matches + bestAlnBlast.inDels + bestAlnBlast.substitutions)
-                    {
-                        if (blastAlnn.inDels + blastAlnn.substitutions < bestAlnBlast.inDels + bestAlnBlast.substitutions) // InDel has the same wight as substitution
-                        {
-                            bestAlnBlast = blastAlnn;
-                        }
-                    }
+                bool foundSameRead = false;
+                if(bestAlnBlast.readID == bestAlnPm.readID) {
+                    foundSameRead = true;
                 }
-                if (bestAlnBlast.matches + bestAlnBlast.inDels + bestAlnBlast.substitutions > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
+                if (bestAlnBlast.partialMatchSize > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
                 {
-                    cout << "blast ouperformed: larger aln_length for [" << bestAlnBlast.queryID << ", " << bestAlnBlast.readID << 
-                    "]: blast aln_len: " <<   bestAlnBlast.matches + bestAlnBlast.inDels + bestAlnBlast.substitutions << 
-                    " - parmik aln_len: " <<  bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions << endl;
                     blastOutperform++;
-                } else if (bestAlnBlast.matches + bestAlnBlast.inDels + bestAlnBlast.substitutions < bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
+                    if (foundSameRead){
+                        sameReadBlastOutperform++;
+                        sameReadBlastOutperformBps.insert(bestAlnBlast.partialMatchSize - (bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions));
+                        outputFile << "sameReadBlastOutperform";
+                    } else {
+                        differentReadBlastOutperform++;
+                        differentReadBlastOutperformBps.insert(bestAlnBlast.partialMatchSize - (bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions));
+                        outputFile << "parmikAlnForBlastSameReadID: " << parmikAlnForBlastSameReadID.cigar << ", M: " << parmikAlnForBlastSameReadID.matches << ", S: " << parmikAlnForBlastSameReadID.substitutions << ", InDels: " << parmikAlnForBlastSameReadID.inDels << endl;
+                        outputFile << "differentReadBlastOutperform";
+                    }
+                    outputFile << " (larger aln_length) for [" << bestAlnBlast.queryID << ", " << bestAlnBlast.readID << "]:, blast cigar: " 
+                    << getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
+                    << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
+                } else if (bestAlnBlast.partialMatchSize < bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
                 {
                     parmikOutperform++;
-                } else if (bestAlnBlast.matches + bestAlnBlast.inDels + bestAlnBlast.substitutions == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
+                    if (foundSameRead){
+                        sameReadPmOutperform++;
+                        sameReadPmOutperformBps.insert((bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) - bestAlnBlast.partialMatchSize);
+                        outputFile << "sameReadPmOutperform";
+                    } else {
+                        differentReadPmOutperform++;
+                        differentReadPmOutperformBps.insert((bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) - bestAlnBlast.partialMatchSize);
+                        outputFile << "parmikAlnForBlastSameReadID: " << parmikAlnForBlastSameReadID.cigar << ", M: " << parmikAlnForBlastSameReadID.matches << ", S: " << parmikAlnForBlastSameReadID.substitutions << ", InDels: " << parmikAlnForBlastSameReadID.inDels << endl;
+                        outputFile << "differentReadPmOutperform";
+                    }
+                    outputFile << " (larger aln_length) for [" << bestAlnBlast.queryID << ", " << bestAlnBlast.readID << "]:, blast cigar: " 
+                    << getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
+                    << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
+                } else if (bestAlnBlast.partialMatchSize == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
                 {
                     if (bestAlnBlast.inDels + bestAlnBlast.substitutions < bestAlnPm.inDels + bestAlnPm.substitutions) // InDel has the same wight as substitution
                     {
-                        cout << "blast ouperformed: smaller edits for [" << bestAlnBlast.queryID << ", " << bestAlnBlast.readID << 
-                        "]: blast edit_len: " <<   bestAlnBlast.inDels + bestAlnBlast.substitutions << 
-                        " - parmik edit_len: " <<  bestAlnPm.inDels + bestAlnPm.substitutions << endl;
                         blastOutperform++;
+                        if (foundSameRead){
+                            sameReadBlastOutperform++;
+                            sameReadBlastOutperformBps.insert(bestAlnBlast.partialMatchSize - (bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions));
+                            outputFile << "sameReadBlastOutperform";
+                        } else {
+                            differentReadBlastOutperform++;
+                            differentReadBlastOutperformBps.insert(bestAlnBlast.partialMatchSize - (bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions));
+                            outputFile << "parmikAlnForBlastSameReadID: " << parmikAlnForBlastSameReadID.cigar << ", M: " << parmikAlnForBlastSameReadID.matches << ", S: " << parmikAlnForBlastSameReadID.substitutions << ", InDels: " << parmikAlnForBlastSameReadID.inDels << endl;
+                            outputFile << "differentReadBlastOutperform";
+                        }
+                        outputFile << " (fewer edits) for [" << bestAlnBlast.queryID << ", " << bestAlnBlast.readID << "]:, blast cigar: " 
+                        << getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
+                        << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                     } else if (bestAlnBlast.inDels + bestAlnBlast.substitutions > bestAlnPm.inDels + bestAlnPm.substitutions)
                     {
                         parmikOutperform++;
+                        if (foundSameRead){
+                            sameReadPmOutperform++;
+                            sameReadPmOutperformBps.insert((bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) - bestAlnBlast.partialMatchSize);
+                         outputFile << "sameReadPmOutperform";
+                        } else {
+                            differentReadPmOutperform++;
+                            differentReadPmOutperformBps.insert((bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) - bestAlnBlast.partialMatchSize);
+                            outputFile << "parmikAlnForBlastSameReadID: " << parmikAlnForBlastSameReadID.cigar << ", M: " << parmikAlnForBlastSameReadID.matches << ", S: " << parmikAlnForBlastSameReadID.substitutions << ", InDels: " << parmikAlnForBlastSameReadID.inDels << endl;
+                            outputFile << "differentReadPmOutperform";
+                        }
+                        outputFile << " (fewer edits) for [" << bestAlnBlast.queryID << ", " << bestAlnBlast.readID << "]:, blast cigar: " 
+                        << getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
+                        << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                     } else{
                         equalPerformance++;
+                        if (foundSameRead){
+                            sameReadEqual++;
+                            outputFile << "sameReadEqual";
+                        } else {
+                            differentReadEqual++;
+                            outputFile << "differentReadEqual";
+                        }
+                        outputFile << " for [" << bestAlnBlast.queryID << ", " << bestAlnBlast.readID << "]:, blast cigar: " 
+                        << getCigarStr(bestAlnBlast.queryRegionStartPos, bestAlnBlast.alignedQuery, bestAlnBlast.alignedRead, cfg.contigSize) << ", M: " << bestAlnBlast.partialMatchSize - bestAlnBlast.inDels - bestAlnBlast.substitutions << ", S: " << bestAlnBlast.substitutions << ", InDels: " << bestAlnBlast.inDels
+                        << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                     }
                 }
             }
         }
-        cout << "Total Blast TN : " << totalTN << endl;
-        cout << "Total Blast FN : " << blastFN << endl;
-        cout << "Total Parmik FNN : " << parmikFN << endl;
-        cout << "Total Blast Outperform : " << blastOutperform << endl;
-        cout << "Total Parmik Outperform : " << parmikOutperform << endl;
-        cout << "Total Blast Equal : " << equalPerformance << endl;
+        outputFile << "<<<<<<<<<<<<<<<<<<<<<<<<Final Results>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+        outputFile << "Total Blast TN : " << totalTN << endl;
+        outputFile << "Total Blast FN : " << blastFN << endl;
+        outputFile << "Total Parmik FNN : " << parmikFN << endl;
+        outputFile << "Total Blast Outperform : " << blastOutperform << endl;
+        outputFile << "Total Parmik Outperform : " << parmikOutperform << endl;
+        outputFile << "Total Blast Equal : " << equalPerformance << endl;
+        outputFile << "Same Read Blast Outperform : " << sameReadBlastOutperform << endl;
+        outputFile << "Different Read Blast Outperform : " << differentReadBlastOutperform << endl;
+        outputFile << "Same Read Parmik Outperform : " << sameReadPmOutperform << endl;
+        outputFile << "Different Read Parmik Outperform : " << differentReadPmOutperform << endl;
+        outputFile << "Same Read Equal : " << sameReadEqual << endl;
+        outputFile << "Different Read Equal : " << differentReadEqual << endl;
+        pair<uint16_t, uint16_t> sameReadBlastOutperformBpsTuple = utils.calculateStatistics2(sameReadBlastOutperformBps);
+        printf("No. of Bp (same read) BWA outperforms => [average: %d, median: %d]\n", get<0>(sameReadBlastOutperformBpsTuple), get<1>(sameReadBlastOutperformBpsTuple));
+        pair<uint16_t, uint16_t> differentReadBlastOutperformBpsTuple = utils.calculateStatistics2(differentReadBlastOutperformBps);
+        printf("No. of Bp (different read) BWA outperforms => [average: %d, median: %d]\n", get<0>(differentReadBlastOutperformBpsTuple), get<1>(differentReadBlastOutperformBpsTuple));
+        pair<uint16_t, uint16_t> sameReadPmOutperformBpsTuple = utils.calculateStatistics2(sameReadPmOutperformBps);
+        printf("No. of Bp (same read) PARMIK outperforms => [average: %d, median: %d]\n", get<0>(sameReadPmOutperformBpsTuple), get<1>(sameReadPmOutperformBpsTuple));
+        pair<uint16_t, uint16_t> differentReadPmOutperformBpsTuple = utils.calculateStatistics2(differentReadPmOutperformBps);
+        printf("No. of Bp (different read) PARMIK outperforms => [average: %d, median: %d]\n", get<0>(differentReadPmOutperformBpsTuple), get<1>(differentReadPmOutperformBpsTuple));
     }
 };
 

@@ -7,6 +7,7 @@
 #include <iostream>
 #include "Aligner.h"
 #include "Alignment.h"
+#include "Utils.h"
 
 #define CHECK_EXACT_MATCH_CRITERION__ 0
 
@@ -116,6 +117,7 @@ public:
 
     void comparePmWithBwa(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, const uint32_t queryCount, const string& outputAddress)
     {
+        Utilities<uint16_t> utils;
         vector<Alignment> bwaAlignments, parmikAlignments;
         //read the bwa file
         SamReader bwaSam(cfg.otherToolOutputFileAddress);
@@ -133,9 +135,10 @@ public:
         uint64_t bwaOutperform = 0, parmikOutperform = 0, equalPerformance = 0;
         uint64_t sameReadBwaOutperform = 0, differentReadBwaOutperform = 0, sameReadPmOutperform = 0, differentReadPmOutperform = 0, sameReadEqual = 0, differentReadEqual = 0;
         uint64_t bwaLowPI_FN = 0, bwaLowPIOutperformBestPm = 0;
-        set<uint16_t> sameReadBwaOutperformBps, differentReadBwaOutperformBps, sameReadPmOutperformBps, differentReadPmOutperformBps, sameReadbwaLowPIOutperformBps, differentReadbwaLowPIOutperformBps;
+        multiset<uint16_t> sameReadBwaOutperformBps, differentReadBwaOutperformBps, sameReadPmOutperformBps, differentReadPmOutperformBps, sameReadbwaLowPIOutperformBps, differentReadbwaLowPIOutperformBps;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
+            outputFile << "------------------------------------------------------" << endl;
             vector<Alignment> bwaLowPI_Alignments;
             if(queryInd % 1000 == 0) {
                 cout << "queries processed: " << queryInd << " / " << queryCount << endl;
@@ -292,7 +295,7 @@ public:
                                 outputFile << "parmikAlnForBwaSameReadID: " << parmikAlnForBwaSameReadID.cigar << ", M: " << parmikAlnForBwaSameReadID.matches << ", S: " << parmikAlnForBwaSameReadID.substitutions << ", InDels: " << parmikAlnForBwaSameReadID.inDels << endl;
                                 outputFile << "differentReadBwaOutperform";
                             }
-                            outputFile << " (smaller edits) for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << "]:, bwa cigar: " 
+                            outputFile << " (fewer edits) for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << "]:, bwa cigar: " 
                             << bestAlnBwa.cigar << ", MD: " << bestAlnBwa.mismatchPositions << ", M: " << bestAlnBwa.matches << ", S: " << bestAlnBwa.substitutions << ", InDels: " << bestAlnBwa.inDels
                             << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                         } else if (bestAlnBwa.inDels + bestAlnBwa.substitutions > bestAlnPm.inDels + bestAlnPm.substitutions)
@@ -308,7 +311,7 @@ public:
                                 differentReadPmOutperformBps.insert(bestAlnBwa.inDels + bestAlnBwa.substitutions - (bestAlnPm.inDels + bestAlnPm.substitutions));
                                 differentReadPmOutperform++;
                             }
-                            outputFile << " (smaller edits) for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << "]:, bwa cigar: " 
+                            outputFile << " (fewer edits) for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << "]:, bwa cigar: " 
                             << bestAlnBwa.cigar << ", MD: " << bestAlnBwa.mismatchPositions << ", M: " << bestAlnBwa.matches << ", S: " << bestAlnBwa.substitutions << ", InDels: " << bestAlnBwa.inDels
                             << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                         } else{
@@ -355,7 +358,7 @@ public:
                                 outputFile << "differentReadbwaLowPIAlnOutperform";
                                 differentReadbwaLowPIOutperformBps.insert(bestAlnPm.inDels + bestAlnPm.substitutions - (bwaLowPIAln.inDels + bwaLowPIAln.substitutions));
                             }
-                            outputFile << " (smallerEdits) for [" << bwaLowPIAln.queryID << ", " << bwaLowPIAln.readID << "]:, bwa cigar: " 
+                            outputFile << " (fewer Edits) for [" << bwaLowPIAln.queryID << ", " << bwaLowPIAln.readID << "]:, bwa cigar: " 
                             << bwaLowPIAln.cigar << ", MD: " << bwaLowPIAln.mismatchPositions << ", M: " << bwaLowPIAln.matches << ", S: " << bwaLowPIAln.substitutions << ", InDels: " << bwaLowPIAln.inDels
                             << " - parmik cigar: " << bestAlnPm.cigar << ", M: " << bestAlnPm.matches << ", S: " << bestAlnPm.substitutions << ", InDels: " << bestAlnPm.inDels << endl;
                         }
@@ -363,6 +366,7 @@ public:
                 }
             }
         }
+        outputFile << "<<<<<<<<<<<<<<<<<<<<<<<<Final Results>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         outputFile << "Total Bwa TN : " << totalTN << endl;
         outputFile << "Total Bwa FN : " << bwaFN << endl;
         outputFile << "Total Parmik FNN : " << parmikFN << endl;
@@ -377,6 +381,19 @@ public:
         outputFile << "Different Read Equal : " << differentReadEqual << endl;
         outputFile << "bwaLowPI_FN : " << bwaLowPI_FN << endl;
         outputFile << "bwaLowPI_OutperformBestPm : " << bwaLowPIOutperformBestPm << endl;
+        pair<uint16_t, uint16_t> sameReadBwaOutperformBpsTuple = utils.calculateStatistics2(sameReadBwaOutperformBps);
+        printf("No. of Bp (same read) BWA outperforms => [average: %d, median: %d]\n", get<0>(sameReadBwaOutperformBpsTuple), get<1>(sameReadBwaOutperformBpsTuple));
+        pair<uint16_t, uint16_t> differentReadBwaOutperformBpsTuple = utils.calculateStatistics2(differentReadBwaOutperformBps);
+        printf("No. of Bp (different read) BWA outperforms => [average: %d, median: %d]\n", get<0>(differentReadBwaOutperformBpsTuple), get<1>(differentReadBwaOutperformBpsTuple));
+        pair<uint16_t, uint16_t> sameReadPmOutperformBpsTuple = utils.calculateStatistics2(sameReadPmOutperformBps);
+        printf("No. of Bp (same read) PARMIK outperforms => [average: %d, median: %d]\n", get<0>(sameReadPmOutperformBpsTuple), get<1>(sameReadPmOutperformBpsTuple));
+        pair<uint16_t, uint16_t> differentReadPmOutperformBpsTuple = utils.calculateStatistics2(differentReadPmOutperformBps);
+        printf("No. of Bp (different read) PARMIK outperforms => [average: %d, median: %d]\n", get<0>(differentReadPmOutperformBpsTuple), get<1>(differentReadPmOutperformBpsTuple));
+        pair<uint16_t, uint16_t> sameReadbwaLowPIOutperformBpsTuple = utils.calculateStatistics2(sameReadbwaLowPIOutperformBps);
+        printf("No. of Bp (same read) BWA outperforms (LowPI) => [average: %d, median: %d]\n", get<0>(sameReadbwaLowPIOutperformBpsTuple), get<1>(sameReadbwaLowPIOutperformBpsTuple));
+        pair<uint16_t, uint16_t> differentReadbwaLowPIOutperformBpsTuple = utils.calculateStatistics2(differentReadbwaLowPIOutperformBps);
+        printf("No. of Bp (different read) BWA outperforms (LowPI) => [average: %d, median: %d]\n", get<0>(differentReadbwaLowPIOutperformBpsTuple), get<1>(differentReadbwaLowPIOutperformBpsTuple));
+    
         outputFile.close();
     }
     
