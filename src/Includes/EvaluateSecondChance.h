@@ -26,7 +26,7 @@ public:
         tsl::robin_map <uint32_t, string> reads, queries;
         uint32_t baseAddress = 0;
         uint32_t qc = util.readContigsFromFile(queryFileAddress, queryCount, queries, baseAddress);
-        ofstream out(outputDir + "SC_vs_NoSC.txt");
+        ofstream out(outputDir + "/SC_vs_NoSC.txt");
         tsl::robin_map<int32_t, uint32_t> scAlignmentSizeImprovents;
         for (uint32_t queryInd = 0; queryInd < qc; queryInd++){
             tsl::robin_map<uint32_t, Alignment> parmikAlignmentsWithSCMap, parmikAlignmentsWithoutSCMap;
