@@ -68,3 +68,11 @@ queries processed: 24000 / 29754
 queries processed: 25000 / 29754
 queries processed: 26000 / 29754
 queries processed: 27000 / 29754
+queries processed: 28000 / 29754
+queries processed: 29000 / 29754
+No. of Bp (same read) BWA outperforms => [average: 1, median: 1]
+No. of Bp (different read) BWA outperforms => [average: 1, median: 1]
+No. of Bp (same read) PARMIK outperforms => [average: 2, median: 1]
+No. of Bp (different read) PARMIK outperforms => [average: 6, median: 3]
+No. of Bp (same read) BWA outperforms (LowPI) => [average: 0, median: 0]
+No. of Bp (different read) BWA outperforms (LowPI) => [average: 114, median: 112]

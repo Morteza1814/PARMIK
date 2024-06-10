@@ -58,13 +58,19 @@ def plot_histograms(buckets, kmer_freqs_list, labels, outputFile):
                             xytext=(0, 3),  
                             textcoords="offset points",
                             ha='center', va='bottom',
-                            fontsize=14, color='red')
+                            fontsize=22, color='red')
     bucket_labels = [f'{0}-{high}' for low, high in buckets]
-    ax.set_xlabel('K-mer Frequency Buckets', fontsize=16)
-    ax.set_ylabel('Cumulative Percentage of k-mers', fontsize=16)
+    # ax.set_xlabel('K-mer Frequency Buckets', fontsize=16)
+    ax.set_ylabel('Cumulative Percentage of k-mers', fontsize=26)
     ax.set_xticks(ind + width)
-    ax.set_xticklabels(bucket_labels, rotation=45, fontsize=12)
-    ax.legend(fontsize=12)
+    ax.set_xticklabels(bucket_labels, rotation=45, fontsize=20)
+    # Set the y-tick positions
+    ax.set_ylim(0, 115)
+    yticks = np.arange(0, 115, 25)
+    ax.set_yticks(yticks)
+    # Set the y-tick labels with appropriate font size
+    ax.set_yticklabels(yticks, fontsize=20)
+    ax.legend(fontsize=18)
 
     plt.tight_layout()
     plt.savefig(outputFile)
