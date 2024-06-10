@@ -38,13 +38,25 @@ public:
             tsl::robin_map<uint32_t, Alignment> parmikAlignmentsWithSCMap, parmikAlignmentsWithoutSCMap;
             for (Alignment it : parmikAlignmentsWithSC) {
                 if (it.queryID == (int)queryInd){
-                    parmikAlignmentsWithSCMap[it.readID] = it;
+                    if (parmikAlignmentsWithSCMap.find(it.readID) == parmikAlignmentsWithSCMap.end()){
+                        parmikAlignmentsWithSCMap[it.readID] = it;
+                    } else {
+                        if (it.partialMatchSize > parmikAlignmentsWithSCMap[it.readID].partialMatchSize){
+                            parmikAlignmentsWithSCMap[it.readID] = it;
+                        }
+                    }
                 }
             }
 
             for (Alignment it : parmikAlignmentsWithoutSC) {
                 if (it.queryID == (int)queryInd){
-                    parmikAlignmentsWithoutSCMap[it.readID] = it;
+                    if (parmikAlignmentsWithoutSCMap.find(it.readID) == parmikAlignmentsWithoutSCMap.end()){
+                        parmikAlignmentsWithoutSCMap[it.readID] = it;
+                    } else {
+                        if (it.partialMatchSize > parmikAlignmentsWithoutSCMap[it.readID].partialMatchSize){
+                            parmikAlignmentsWithoutSCMap[it.readID] = it;
+                        }
+                    }
                 }
             }
             std::map<int32_t, int> localScAlignmentSizeImprovements;
@@ -59,9 +71,10 @@ public:
                     #pragma omp critical
                     {
                         if (scAlignmentSizeImprovement < 0){
-                            scmissedaln << "QID: " << it.second.queryID << ", RID: " << it.second.readID 
-                            << "Q: " << it.second.query << ", R: " << it.second.read
-                            << "SC cigar: " << itt->second.cigar << ", noSC cigar: " << it.second.cigar  << endl;
+                            scmissedaln << "SCQID: " << it.second.queryID << ", SCRID: " << it.second.readID 
+                            << ", noSCQID: " << itt->second.queryID << ", noSCRID: " << itt->second.readID 
+                            << ", SC partialMatchSize: " << itt->second.partialMatchSize << ", noSC partialMatchSize: " << it.second.partialMatchSize
+                            << ", SC cigar: " << itt->second.cigar << ", noSC cigar: " << it.second.cigar  << ", scAlignmentSizeImprovement: " << scAlignmentSizeImprovement << endl;
                         }
                     }
                     if (scAlignmentSizeImprovements.find (scAlignmentSizeImprovement) != scAlignmentSizeImprovements.end()){

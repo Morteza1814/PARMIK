@@ -4,11 +4,11 @@ import sys
 
 def plot_scatter(input_file, output_file):
     # Read the data from the file using pandas for efficiency
-    data = pd.read_csv(input_file, sep=' ', header=None, names=['Alignment', 'Alignment_Second_Chance'])
+    data = pd.read_csv(input_file, sep=' ', header=None, names=['Alignment', 'Alignment_polishing'])
 
     # Separate the data into the two cases, excluding the equal ones
-    greater = data[data['Alignment_Second_Chance'] > data['Alignment']]
-    less = data[data['Alignment_Second_Chance'] < data['Alignment']]
+    greater = data[data['Alignment_polishing'] > data['Alignment']]
+    less = data[data['Alignment_polishing'] < data['Alignment']]
     
     print("reading the data finished!")
 
@@ -17,19 +17,19 @@ def plot_scatter(input_file, output_file):
 
     # Plot each case with different colors
     if not greater.empty:
-        plt.scatter(greater['Alignment'], greater['Alignment_Second_Chance'], color='green', label='Alignment+Second Chance > Alignment', s=1)
+        plt.scatter(greater['Alignment'], greater['Alignment_polishing'], color='green', label='Alignment+Polishing > Alignment', s=1)
     if not less.empty:
-        plt.scatter(less['Alignment'], less['Alignment_Second_Chance'], color='red', label='Alignment+Second Chance < Alignment', s=1)
+        plt.scatter(less['Alignment'], less['Alignment_polishing'], color='red', label='Alignment+Polishing < Alignment', s=1)
 
     print("plotting finished!")
 
     # Add a dotted line y = x
-    max_value = max(data['Alignment'].max(), data['Alignment_Second_Chance'].max())
+    max_value = max(data['Alignment'].max(), data['Alignment_polishing'].max())
     plt.plot([0, max_value], [0, max_value], 'k--', linewidth=0.5)
 
     # Set labels and title
     plt.xlabel('Alignment', fontsize=22)
-    plt.ylabel('Alignment+Second Chance', fontsize=22)
+    plt.ylabel('Alignment+Polishing', fontsize=22)
     # plt.title('Scatter Plot of Alignment vs Alignment+Second Chance')
     # plt.legend(fontsize=16)
     plt.xticks(fontsize=16)
