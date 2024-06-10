@@ -34,30 +34,30 @@ namespace fs = std::filesystem;
 
 int argParse(int argc, char** argv, Config &cfg){
 	args::ArgumentParser parser("=========================Arguments===========================", "======================================================");
-    args::ValueFlag<int> parmikModeArg(parser, "", "PARMIK mode",                               {'a', "mode"});
-    args::ValueFlag<string> otherToolAddressArg(parser, "", "Other tool output",                {'b', "tool"});
-	args::ValueFlag<int> contigSizeArg(parser, "", "Contig Size",                               {'c', "contigSize"});
-    args::ValueFlag<int> identityPercentageArg(parser, "", "Identity Percentage",               {'d', "identityPercentage"});
-	args::ValueFlag<int> editDistanceArg(parser, "", "Max Edit Distance (i/d/s)",               {'e', "editDistance"});
-	args::ValueFlag<string> offlineIndexAddressArg(parser, "", "Offline Index Address",         {'f', "offlineIndex"});
-    args::HelpFlag help(parser, "help", "Help",                                                 {'h', "help"});
-	args::ValueFlag<int> readsCountArg(parser, "", "Number of Reads",                           {'i', "readCount"});
-	args::ValueFlag<int> queryCountArg(parser, "", "Number of Queries",                         {'j', "queryCount"});
-	args::ValueFlag<int> kmerLengthArg(parser, "", "Kmer Length",                               {'k', "kmerLen"});
-    args::ValueFlag<string> otherToolArg(parser, "", "The Other Tool  (bwa, blast, etc)",       {'l', "otherTool"});
-    args::ValueFlag<int> minExactMatchLenArg(parser, "", "Minimum Exact Match Length",          {'m', "minExactMatchLen"});
-    args::ValueFlag<string> kmerRangesFileAddressArg(parser, "", "k-mer Ranges File Address",   {'n', "kmerRangesFileAddress"});
-	args::ValueFlag<string> outputDirArg(parser, "", "OutputDir",                               {'o', "outputDir"});
-    args::ValueFlag<string> penaltyFileAddressArg(parser, "", "Penalty File Address",           {'p', "penaltyFileAddress"});
-	args::ValueFlag<string> queryFileAddressArg(parser, "", "Query File Address",               {'q', "query"});
-	args::ValueFlag<string> readDatabaseAddressArg(parser, "", "Read Data Base Address",        {'r', "read"});
-	args::ValueFlag<int> regionSizeArg(parser, "", "Region Size",                               {'s', "regionSize"});
-    args::ValueFlag<int> cheapKmerThresholdArg(parser, "", "Cheap Kmer Threshold",              {'t', "cheapKmerThreshold"});
-    args::Flag isSecondChanceOff(parser, "", "Turn Second Chance Off",                          {'u', "isSecondChanceOff"});
-	args::Flag isVerboseLogArg(parser, "", "Verbose Logging",                                   {'v', "verboseLog"});
-    args::ValueFlag<int> numThreadsArg(parser, "", "Number of Threads",                         {'w', "numThreads"});
-	args::Flag isIndexOfflineArg(parser, "", "Is the read index offline",                       {'x', "isIndexOffline"});
-    args::ValueFlag<string> baselineBaseAddressArg(parser, "", "BaseLine file base address",    {'z', "baselineBaseAddress"});
+    args::ValueFlag<int> parmikModeArg(parser, "", "PARMIK mode",                                   {'a', "mode"});
+    args::ValueFlag<string> otherToolAddressArg(parser, "", "Other Tool Alignment File Address",    {'b', "toolFileAddress"});
+	args::ValueFlag<int> contigSizeArg(parser, "", "Contig Size",                                   {'c', "contigSize"});
+    args::ValueFlag<int> percentageIdentityArg(parser, "", "Percentage Identity",                   {'d', "percentageIdentity"});
+	args::ValueFlag<int> editDistanceArg(parser, "", "Max Edit Distance (i/d/s)",                   {'e', "editDistance"});
+	args::ValueFlag<string> offlineIndexAddressArg(parser, "", "Inexpensive K-mer Index Address",   {'f', "ikiAddress"});
+    args::HelpFlag help(parser, "help", "Help",                                                     {'h', "help"});
+	args::ValueFlag<int> readsCountArg(parser, "", "Number of Metageomic Reads",                    {'i', "readCount"});
+	args::ValueFlag<int> queryCountArg(parser, "", "Number of Queries",                             {'j', "queryCount"});
+	args::ValueFlag<int> kmerLengthArg(parser, "", "K-mer Length",                                  {'k', "kmerLen"});
+    args::ValueFlag<string> otherToolArg(parser, "", "The Other Tool  (bwa, blast, etc)",           {'l', "otherTool"});
+    args::ValueFlag<int> minExactMatchLenArg(parser, "", "Minimum Exact Match Length",              {'m', "minExactMatchLen"});
+    args::ValueFlag<string> kmerRangesFileAddressArg(parser, "", "K-mer Ranges File Address",       {'n', "kmerRangesFileAddress"});
+	args::ValueFlag<string> outputDirArg(parser, "", "OutputDir",                                   {'o', "outputDir"});
+    args::ValueFlag<string> penaltyFileAddressArg(parser, "", "Penalty File Address",               {'p', "penaltyFileAddress"});
+	args::ValueFlag<string> queryFileAddressArg(parser, "", "Query File Address",                   {'q', "query"});
+	args::ValueFlag<string> readDatabaseAddressArg(parser, "", "Metageomic Read Data Base Address", {'r', "read"});
+	args::ValueFlag<int> regionSizeArg(parser, "", "Region Size",                                   {'s', "regionSize"});
+    args::ValueFlag<int> cheapKmerThresholdArg(parser, "", "Cheap Kmer Threshold",                  {'t', "cheapKmerThreshold"});
+    args::Flag isSecondChanceOff(parser, "", "Turn Second Chance Off",                              {'u', "isSecondChanceOff"});
+	args::Flag isVerboseLogArg(parser, "", "Verbose Logging",                                       {'v', "verboseLog"});
+    args::ValueFlag<int> numThreadsArg(parser, "", "Number of Threads",                             {'w', "numThreads"});
+	args::Flag isIndexOfflineArg(parser, "", "Is the read index offline",                           {'x', "isIndexOffline"});
+    args::ValueFlag<string> baselineBaseAddressArg(parser, "", "BaseLine file base address",        {'z', "baselineBaseAddress"});
     try
     {
         parser.ParseCLI(argc, argv);
@@ -84,7 +84,7 @@ int argParse(int argc, char** argv, Config &cfg){
     if (penaltyFileAddressArg) {cfg.penaltyFileAddress = args::get(penaltyFileAddressArg);} else {cfg.penaltyFileAddress = ""; cout << "no penaltyFileAddress!"<< endl;}
 	if (outputDirArg) {cfg.outputDir = args::get(outputDirArg);} else {cout << "no outputDirArg!"<< endl; if(cfg.parmikMode != PARMIK_MODE_INDEX) return 0;}
     if (kmerRangesFileAddressArg) {cfg.kmerRangesFileAddress = args::get(kmerRangesFileAddressArg);} else {cout << "no kmerRangesFileAddressArg!"<< endl; cfg.kmerRangesFileAddress = "";}
-    if (identityPercentageArg) {cfg.identityPercentage = args::get(identityPercentageArg);cfg.identityPercentage = (double)(cfg.identityPercentage/100);} else {cout << "no identityPercentage (default = 0.9)!"<< endl;}
+    if (percentageIdentityArg) {cfg.percentageIdentity = args::get(percentageIdentityArg);cfg.percentageIdentity = (double)(cfg.percentageIdentity/100);} else {cout << "no percentageIdentity (default = 0.9)!"<< endl;}
 	if (readsCountArg) {cfg.readsCount = args::get(readsCountArg); } else {cfg.readsCount = NUMBER_OF_READS;}
 	if (queryCountArg) {cfg.queryCount = args::get(queryCountArg); } else {cfg.queryCount = NUMBER_OF_QUERIES;}
 	if (kmerLengthArg) {cfg.kmerLength = args::get(kmerLengthArg); } else {cfg.kmerLength = KMER_SZ;}
@@ -266,7 +266,7 @@ int run(int argc, char *argv[]) {
 	cout << left << setw(30) << "kmerLength: " << cfg.kmerLength << endl;
 	cout << left << setw(30) << "regionSize: " << cfg.regionSize << endl;
     cout << left << setw(30) << "cheapKmerThreshold: " << cfg.cheapKmerThreshold << endl;
-    cout << left << setw(30) << "identityPercentage: " << cfg.identityPercentage << endl;
+    cout << left << setw(30) << "percentageIdentity: " << cfg.percentageIdentity << endl;
     cout << left << setw(30) << "minExactMatchLen: " << cfg.minExactMatchLen << endl;
     cout << left << setw(30) << "numThreads: " << cfg.numThreads << endl;
     cout << left << setw(30) << "isSecondChanceOff: " << ((cfg.isSecondChanceOff == 1) ? "T":"F") << endl;
@@ -275,7 +275,7 @@ int run(int argc, char *argv[]) {
         if(cfg.minExactMatchLen > 0) {
             minNumExactMatchKmer = cfg.minExactMatchLen - (cfg.kmerLength - 1);
         } else {
-            cfg.editDistance = (uint32_t)(round(cfg.regionSize * (1-cfg.identityPercentage)));
+            cfg.editDistance = (uint32_t)(round(cfg.regionSize * (1-cfg.percentageIdentity)));
             uint16_t exactMatchSize = cfg.regionSize - cfg.editDistance;
             uint32_t regionKmers = (uint32_t)(floor(exactMatchSize/cfg.kmerLength));
             cout << "regionKmers: " << regionKmers << ", exactMatchSize: " << exactMatchSize << ", editDistance: " << cfg.editDistance << endl;
@@ -305,7 +305,7 @@ int run(int argc, char *argv[]) {
         uint32_t queryCount = 0;
         vector<Penalty> penalties = readPenalties(cfg.penaltyFileAddress);
         // experiment dir name
-        string expDirName = "IKT" + to_string(cfg.cheapKmerThreshold) + "_K" + to_string(cfg.kmerLength) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_M" + to_string(minNumExactMatchKmer) + "_T" + to_string(cfg.numThreads) + "_SC" + ((cfg.isSecondChanceOff == 1) ? "0":"1") + "_P" + getPenaltiesSubstr(penalties);
+        string expDirName = "IKT" + to_string(cfg.cheapKmerThreshold) + "_K" + to_string(cfg.kmerLength) + "_PI" + to_string((uint32_t)floor(cfg.percentageIdentity*100)) + "_M" + to_string(minNumExactMatchKmer) + "_T" + to_string(cfg.numThreads) + "_SC" + ((cfg.isSecondChanceOff == 1) ? "0":"1") + "_P" + getPenaltiesSubstr(penalties);
         string expDir = cfg.outputDir + "/" + expDirName;
         cout << "experiment dir: " << expDir << endl;
         uint32_t queryBaseIndex = 0;
@@ -324,7 +324,7 @@ int run(int argc, char *argv[]) {
         string offlineExpensiveIndexAddress = cfg.offlineIndexAddress + "ek_T" + to_string(cfg.cheapKmerThreshold) + "_K"+ to_string(cfg.kmerLength) + "_r" + to_string(cfg.readsCount);
         cout << "offlineCheapIndexAddress: " << offlineCheapIndexAddress << endl;
         cout << "offlineExpensiveIndexAddress: " << offlineExpensiveIndexAddress << endl;
-        // string parmikAlignmentsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
+        // string parmikAlignmentsAddress = cfg.outputDir + "/aln/pmAln_" + "R" + to_string(cfg.regionSize) + "_PI" + to_string((uint32_t)floor(cfg.percentageIdentity*100)) + "_L" + to_string(cfg.minExactMatchLen) + "_M" + to_string(minNumExactMatchKmer) + "_E" + to_string(cfg.editDistance) + "_K" + to_string(cfg.kmerLength) + "_T" + to_string(cfg.cheapKmerThreshold) + "_P" + getPenaltiesSubstr(penalties) + ".txt";
         string parmikAlignmentsAddress = expDir + "/" + "parmikAln.txt";
         string parmikExpensiveKmerFNsAddress = expDir + "/" + "parmikExpensiveKmerFNs.txt";
         cout << "pmrkAlignmentsAddress: " << parmikAlignmentsAddress << endl;
@@ -335,8 +335,8 @@ int run(int argc, char *argv[]) {
                 cerr << "Error: query file name is not valid" << endl;
                 return 1;
             }
-            string baselineAlignmentsAddress = cfg.outputDir + "/BL_Aln" + "_RS" + to_string(cfg.kmerLength) + "_PI" + to_string((uint32_t)floor(cfg.identityPercentage*100)) + "_P" + getPenaltiesSubstr(penalties) + "_Q" + queryFileName + ".txt";
-            SSW_BaseLine aligner(cfg.kmerLength, cfg.identityPercentage); 
+            string baselineAlignmentsAddress = cfg.outputDir + "/BL_Aln" + "_RS" + to_string(cfg.kmerLength) + "_PI" + to_string((uint32_t)floor(cfg.percentageIdentity*100)) + "_P" + getPenaltiesSubstr(penalties) + "_Q" + queryFileName + ".txt";
+            SSW_BaseLine aligner(cfg.kmerLength, cfg.percentageIdentity); 
             aligner.findPartiaMatches(reads, queries, queryCount, true, baselineAlignmentsAddress, penalties, queryBaseIndex);
             //do it again for the reverse strand
             tsl::robin_map <uint32_t, string> revQueries = util.reverseComplementMapValues(queries);
@@ -383,7 +383,7 @@ int run(int argc, char *argv[]) {
                     ckpm.cheapSeedFilter(cheapKmers, expensiveKmers, revQueries, revMinThCheapSeedReads, parmikExpensiveKmerFNsAddress);
                     // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
-                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage, cfg.isSecondChanceOff, cfg.numThreads);
+                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.percentageIdentity, cfg.isSecondChanceOff, cfg.numThreads);
                     aligner.findPartiaMatches(reads, queries, minThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
                     aligner.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
@@ -429,7 +429,7 @@ int run(int argc, char *argv[]) {
                     ckpm.cheapSeedFilter(cheapKmers, expensiveKmers, revQueries, revMinThCheapSeedReads, parmikExpensiveKmerFNsAddress);
                     // ckpm.printArrays();
                     // SeedMatchExtender<uint32_t, uint64_t> pm(cfg.minExactMatchLen, cfg.regionSize, cfg.isVerboseLog, cfg.editDistance, cfg.contigSize, cfg.inDelPenalty, cfg.subPenalty);
-                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.identityPercentage, cfg.isSecondChanceOff, cfg.numThreads);
+                    Aligner <uint32_t> aligner(cfg.regionSize, cfg.editDistance, cfg.contigSize, cfg.kmerLength, minNumExactMatchKmer, cfg.percentageIdentity, cfg.isSecondChanceOff, cfg.numThreads);
                     aligner.findPartiaMatches(reads, queries, minThCheapSeedReads, queryCount, true, parmikAlignmentsAddress, penalties);
                     //do it again for the reverse strand
                     aligner.findPartiaMatches(reads, revQueries, revMinThCheapSeedReads, queryCount, false, parmikAlignmentsAddress, penalties);
@@ -453,7 +453,7 @@ int run(int argc, char *argv[]) {
             string comparisonResultsFileAddress = expDir + "/" + "cmp_Baseline_" + cfg.otherTool + ".txt";
             string alnReportAddressBase = expDir + "/" + "cmp_Baseline_" + cfg.otherTool + "_";
             string baselineBaseAddress = cfg.baselineBaseAddress + "/BL_Aln" + "_RS" + "11" + "_PI85" + "_P" + getPenaltiesSubstr(penalties) + "_Q" + queryFileName;
-            CompareWithBaseLine blCmp(cfg.identityPercentage);
+            CompareWithBaseLine blCmp(cfg.percentageIdentity);
             if(cfg.otherTool == "parmik" || cfg.otherTool == "PARMIK") {
                 cfg.otherToolOutputFileAddress = parmikAlignmentsAddress;
                 cout << "updated otherToolOutputFileAddress alignments file: " << parmikAlignmentsAddress << endl;
@@ -464,11 +464,11 @@ int run(int argc, char *argv[]) {
             string comparisonResultsFileAddress = expDir + "/" + "cmp_parmik_" + cfg.otherTool + ".txt";
             if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
             {
-                ComparatorWithBWA cwb(cfg.identityPercentage);
+                ComparatorWithBWA cwb(cfg.percentageIdentity);
                 cwb.comparePmWithBwa(cfg, reads, queries, queryCount, comparisonResultsFileAddress);
             } else if(cfg.otherTool == "BLAST" || cfg.otherTool == "blast")
             {
-                CompareWithBlast cwb(cfg.identityPercentage);
+                CompareWithBlast cwb(cfg.percentageIdentity);
                 cwb.comparePmWithBlast(cfg, reads, queries, queryCount, comparisonResultsFileAddress);
             }
         }
@@ -547,8 +547,8 @@ int main(int argc, char *argv[])
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // checkParmikFNalignments(argc, argv);
     // expensiveKmerFNEval(argc, argv);
-    evaluateSecondChance(argc, argv);
-    // if(DEBUG_MODE) testAligner(argc, argv);
-    // if(EXE_MODE) run(argc, argv);
+    // evaluateSecondChance(argc, argv);
+    if(DEBUG_MODE) testAligner(argc, argv);
+    if(EXE_MODE) run(argc, argv);
     return 0;
 }

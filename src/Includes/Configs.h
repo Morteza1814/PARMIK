@@ -43,7 +43,7 @@ typedef struct config
     unsigned int contigSize;
     unsigned int parmikMode;
     unsigned int numThreads;
-    double identityPercentage = 0.9;
+    double percentageIdentity = 0.9;
     double inDelPenalty = 2;
     double subPenalty = 1;
     // unsigned int numberOfKmers;

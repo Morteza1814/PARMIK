@@ -25,11 +25,11 @@ private:
     uint16_t contigSize;
     uint16_t k_;
     uint16_t minNumExactMatchKmer;
-    double identityPercentage;
+    double percentageIdentity;
     bool isSecondChanceOff;
     int num_threads = 1;
 public:
-    Aligner(uint16_t R, uint16_t a, uint16_t c, uint16_t k, uint16_t m, double i, bool sc, int th) : regionSize(R), allowedEditDistance(a), contigSize(c), k_(k), minNumExactMatchKmer(m), identityPercentage(i), isSecondChanceOff(sc), num_threads(th) {}
+    Aligner(uint16_t R, uint16_t a, uint16_t c, uint16_t k, uint16_t m, double i, bool sc, int th) : regionSize(R), allowedEditDistance(a), contigSize(c), k_(k), minNumExactMatchKmer(m), percentageIdentity(i), isSecondChanceOff(sc), num_threads(th) {}
 
     string convertCigarToStr(const string& cigar) {
         stringstream simplifiedCigar;
@@ -282,7 +282,7 @@ public:
     Alignment alignDifferentPenaltyScores(string query, string read, uint32_t queryID, uint32_t readID, bool isForwardStran, vector<Penalty> &penalties)
     {
         Alignment bestAlignment;
-        PostFilter pf(regionSize, k_, contigSize, minNumExactMatchKmer, identityPercentage, isSecondChanceOff);
+        PostFilter pf(regionSize, k_, contigSize, minNumExactMatchKmer, percentageIdentity, isSecondChanceOff);
         if (penalties.size() == 0)
         {
             bestAlignment.read = read;
