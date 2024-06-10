@@ -7,6 +7,7 @@
 #include "Alignment.h"
 #include "Utils.h"
 #include "tsl/robin_map.h"
+#include "omp.h"
 
 using namespace std;
 
@@ -27,8 +28,13 @@ public:
         uint32_t baseAddress = 0;
         uint32_t qc = util.readContigsFromFile(queryFileAddress, queryCount, queries, baseAddress);
         ofstream out(outputDir + "/SC_vs_NoSC.txt");
-        tsl::robin_map<int32_t, uint32_t> scAlignmentSizeImprovents;
+        ofstream scmissedaln(outputDir + "/SC_MissedAlignments.txt");
+        tsl::robin_map<int32_t, uint32_t> scAlignmentSizeImprovements;
+        #pragma omp parallel for schedule(dynamic, 1)
         for (uint32_t queryInd = 0; queryInd < qc; queryInd++){
+            if (queryInd % 1000 == 0) {
+                cout << "Processing Query " << queryInd << endl;
+            }
             tsl::robin_map<uint32_t, Alignment> parmikAlignmentsWithSCMap, parmikAlignmentsWithoutSCMap;
             for (Alignment it : parmikAlignmentsWithSC) {
                 if (it.queryID == (int)queryInd){
@@ -41,22 +47,39 @@ public:
                     parmikAlignmentsWithoutSCMap[it.readID] = it;
                 }
             }
-
+            std::map<int32_t, int> localScAlignmentSizeImprovements;
             for (auto it : parmikAlignmentsWithoutSCMap){
                 auto itt = parmikAlignmentsWithSCMap.find(it.first);
                 if (itt != parmikAlignmentsWithSCMap.end()){
-                    out << it.second.partialMatchSize << " " << itt->second.partialMatchSize << endl;
-                    int32_t scAlignmentSizeImprovent = itt->second.partialMatchSize - it.second.partialMatchSize;
-                    if (scAlignmentSizeImprovents.find (scAlignmentSizeImprovent) != scAlignmentSizeImprovents.end()){
-                        scAlignmentSizeImprovents[scAlignmentSizeImprovent]++;
+                    #pragma omp critical
+                    {
+                        out << it.second.partialMatchSize << " " << itt->second.partialMatchSize << endl;
+                    }
+                    int32_t scAlignmentSizeImprovement = itt->second.partialMatchSize - it.second.partialMatchSize;
+                    #pragma omp critical
+                    {
+                        if (scAlignmentSizeImprovement < 0){
+                            scmissedaln << "QID: " << it.second.queryID << ", RID: " << it.second.readID 
+                            << "Q: " << it.second.query << ", R: " << it.second.read
+                            << "SC cigar: " << itt->second.cigar << ", noSC cigar: " << it.second.cigar  << endl;
+                        }
+                    }
+                    if (scAlignmentSizeImprovements.find (scAlignmentSizeImprovement) != scAlignmentSizeImprovements.end()){
+                        localScAlignmentSizeImprovements[scAlignmentSizeImprovement]++;
                     } else{
-                        scAlignmentSizeImprovents[scAlignmentSizeImprovent] = 1;
+                        localScAlignmentSizeImprovements[scAlignmentSizeImprovement] = 1;
                     }
                 }
             }
+            #pragma omp critical
+            {
+                for (auto &entry : localScAlignmentSizeImprovements) {
+                    scAlignmentSizeImprovements[entry.first] += entry.second;
+                }
+            }
         }
-        cout << "---------------------scAlignmentSizeImprovents--------------------------" << endl;
-        for (auto it : scAlignmentSizeImprovents){
+        cout << "---------------------scAlignmentSizeImprovements--------------------------" << endl;
+        for (auto it : scAlignmentSizeImprovements){
             cout << it.first << " " << it.second << endl;
         }
         out.close();
