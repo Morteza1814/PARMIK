@@ -15,10 +15,10 @@ private:
     uint16_t k_;
     uint16_t contigSize;
     uint16_t minNumExactMatchKmer;
-    double identityPercentage;
+    double percentageIdentity;
     bool isSecondChanceOff = false;
 public: 
-    PostFilter(uint16_t R, uint16_t k, uint16_t c, uint16_t m, double i, bool sc = false) : regionSize(R), k_(k), contigSize(c), minNumExactMatchKmer(m), identityPercentage(i), isSecondChanceOff(sc) {}
+    PostFilter(uint16_t R, uint16_t k, uint16_t c, uint16_t m, double i, bool sc = false) : regionSize(R), k_(k), contigSize(c), minNumExactMatchKmer(m), percentageIdentity(i), isSecondChanceOff(sc) {}
 
     uint32_t getMatchesCount(string cigarStr) {
         uint32_t cnt = 0;
@@ -34,7 +34,7 @@ public:
         uint32_t matches = getMatchesCount(cigarStr);
         double identity =  (double) matches / (double) cigarStr.size();
         if(DEBUG_MODE) cout << "matches: " << matches << ", cigarStr.size : " << cigarStr.size() << ", identity: " << identity << endl;
-        if(identity < identityPercentage)
+        if(identity < percentageIdentity)
             return false;
         return true;
     }

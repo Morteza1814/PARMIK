@@ -7,9 +7,9 @@
 class SSW_BaseLine {
 private:
     uint16_t regionSize; // min region size to be considered for the alignement
-    double identityPercentage;
+    double percentageIdentity;
 public:
-    SSW_BaseLine(uint16_t R, double i) : regionSize(R), identityPercentage(i) {}
+    SSW_BaseLine(uint16_t R, double i) : regionSize(R), percentageIdentity(i) {}
 
     uint32_t getMatchesCount(string cigarStr) {
         uint32_t cnt = 0;
@@ -25,7 +25,7 @@ public:
         uint32_t matches = getMatchesCount(cigarStr);
         double identity =  (double) matches / (double) cigarStr.size();
         if(DEBUG_MODE) cout << "matches: " << matches << ", cigarStr.size : " << cigarStr.size() << ", identity: " << identity << endl;
-        if(identity < identityPercentage)
+        if(identity < percentageIdentity)
             return false;
         return true;
     }
