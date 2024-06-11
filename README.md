@@ -2,7 +2,7 @@
 **PA**rtial **R**ead **M**atching with **I**nexpensive **K**-mers
 
 ### PARMIK parameters:
-Below are the PARMIK's parameters:
+Below are the PARMIK's parameters in alphabetical order:
 - `-a`, `--mode`: PARMIK mode (*required*)
   - PARMIK operation mode. It can get these values:
     - `PARMIK_MODE_INDEX (0)`
