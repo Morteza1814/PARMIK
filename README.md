@@ -11,7 +11,9 @@
     - `PARMIK_MODE_BASELINE (3)`
     - `PARMIK_MODE_CMP_BASELINE (4)`
 - `-b`, `--toolFileAddress`: Other Tool Alignment File Address
+  - The address of the output of the other tool (BLAST, BWA, etc)
 - `-c`, `--contigSize`: Contig Size
+  - Length of the contigs (default = 150)
 - `-d`, `--percentageIdentity`: Percentage Identity
 - `-e`, `--editDistance`: Max Edit Distance (i/d/s)
 - `-f`, `--ikiAddress`: Inexpensive K-mer Index Address
