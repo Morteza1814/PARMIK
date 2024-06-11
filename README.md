@@ -2,8 +2,14 @@
 **PA**rtial **R**ead **M**atching with **I**nexpensive **K**-mers
 
 ## Directory Structure ##
-- `src`: Contains source code for the project
--  `scripts`: Contains scripts
+- `dataPrepare/`: Contains scripts to extract contigs from read and query dataset files
+- `experiments/`: Contains scripts to run experiments for baseline, BLAST, BWA, and PARMIK
+- `plot/`: Contains scripts to draw plots
+- `scripts/`: Contains scripts to evaluate experiment results
+- `sraDownload/`: Contains scripts to download SRA files
+- `src/`: Contains source code for the project
+
+
 ## Prerequisites ##
 Before you begin, ensure you have the following installed on your system, (section):
 - Ubuntu: All testing has been done on Ubuntu 22.04+ Operating System.
