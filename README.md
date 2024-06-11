@@ -8,6 +8,12 @@ Before you begin, ensure you have the following installed on your system, (secti
 - Make: The build utility to automate the compilation.
 - OpenMP: Support for parallel programming in C++.
 
+## Download Datasets ##
+To download datasets, we used _SRA Toolkit (v3.0.7)_. Here is the command we used to download a metagenomic dataset:
+
+`sratoolkit.3.0.7-ubuntu64/bin/fasterq-dump SRR14381416 -p --fasta --outdir <outputDir> `
+ 
+Replace `<outputDir>` with the path to your desired output directory.
 ## PARMIK parameters:
 Below are the PARMIK's parameters in alphabetical order:
 - `-a`, `--mode`: PARMIK mode (*required*)
