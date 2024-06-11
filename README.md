@@ -4,6 +4,12 @@
 ### PARMIK Arguments:
 
 - `-a`, `--mode`: PARMIK mode
+  - **Values**: 
+    - `PARMIK_MODE_INDEX (0)`
+    - `PARMIK_MODE_ALIGN (1)`
+    - `PARMIK_MODE_COMPARE (2)`
+    - `PARMIK_MODE_BASELINE (3)`
+    - `PARMIK_MODE_CMP_BASELINE (4)`
 - `-b`, `--toolFileAddress`: Other Tool Alignment File Address
 - `-c`, `--contigSize`: Contig Size
 - `-d`, `--percentageIdentity`: Percentage Identity
