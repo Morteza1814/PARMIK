@@ -1,12 +1,16 @@
 # PARMIK
 **PA**rtial **R**ead **M**atching with **I**nexpensive **K**-mers
 
+## Directory Structure ##
+- `src`: Contains source code for the project
+-  `scripts`: Contains scripts
 ## Prerequisites ##
 Before you begin, ensure you have the following installed on your system, (section):
 - Ubuntu: All testing has been done on Ubuntu 22.04+ Operating System.
 - GCC: The GNU Compiler Collection, specifically g++9 which supports C++11 or later.
 - Make: The build utility to automate the compilation.
 - OpenMP: Support for parallel programming in C++.
+- Python3 for running the scripts
 
 ## How to Compile ##
 To compile, use:
