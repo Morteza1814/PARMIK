@@ -33,6 +33,42 @@ To download datasets, we used _SRA Toolkit (v3.0.7)_. Here is the command we use
 sratoolkit.3.0.7-ubuntu64/bin/fasterq-dump SRR12432009 -p --fasta --outdir <outputDir>
  ```
 Replace `<outputDir>` with the path to your desired output directory.
+
+## How to use PARMIK ##
+Here are some examples for how to use different PARMIK modes:
+
+### Create Index ###
+To execute PARMIK in the indexing mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
+
+```bash
+./parmik -a 0 -c <contig_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -i <read_count> -x -r <metagenomic_read_database_address> -f <k-mer_index_address>
+```
+
+### Alignment ###
+To execute PARMIK in the alignment mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
+
+```bash
+./parmik -a 1 -s <region_size> -c <contig_size> -m <min_exact_match_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -d <percentage_identity> -i <read_count> -j <query_count> -x -r <metagenomic_read_database_address> -q <query_file_address> -f <k-mer_index_address> -o <output_directory> -p <penalty_file_address>
+```
+### Compare ###
+To execute PARMIK in the compare mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
+
+```bash
+./parmik -a 2 -l <other_tool_name> -s <region_size> -c <contig_size> -m <min_exact_match_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -d <percentage_identity> -i <read_count> -j <query_count> -x -r <metagenomic_read_database_address> -q <query_file_address> -f <k-mer_index_address> -o <output_directory> -b <other_tool_alignment_file_address> -p <penalty_file_address>
+```
+### Baseline ###
+To execute PARMIK in the baseline mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
+
+```bash
+./parmik -a 3 -s <region_size> -c <contig_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -d <percentage_identity> -i <read_count> -j <query_count> -r <metagenomic_read_database_address> -q <query_file_address> -o <output_directory> -p <penalty_file_address>
+```
+### Compare Baseline ###
+To execute PARMIK in the compare baseline mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
+
+```bash
+./parmik -a 4 -l <other_tool_name> -s <region_size> -c <contig_size> -m <min_exact_match_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -d <percentage_identity> -i <read_count> -j <query_count> -x -r <metagenomic_read_database_address> -q <query_file_address> -f <k-mer_index_address> -o <output_directory> -b <other_tool_alignment_file_address> -p <penalty_file_address>
+```
+
 ## PARMIK parameters:
 Below are the PARMIK's parameters in alphabetical order:
 - `-a`, `--mode`: PARMIK mode (*required*)
@@ -76,7 +112,7 @@ Below are the PARMIK's parameters in alphabetical order:
   - Path to the read metagenomic dataset file
 - `-s`, `--regionSize`: Region Size (*default = 48*)
   - Minimum size of the alignment
-- `-t`, `--cheapKmerThreshold`: Cheap (Inexpensive) Kmer Threshold (*required*)
+- `-t`, `--cheapKmerThreshold`: Cheap (Inexpensive) k-mer Threshold (*required*)
   - -t 0: includes all k-mers in the IKI (Inexpensive K-mer Index).
 - `-u`, `--isSecondChanceOff`: Turn Second Chance Off
   - Turn off the second chance
