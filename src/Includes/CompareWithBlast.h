@@ -370,8 +370,6 @@ public:
                             sameReadEqual++;
                             outputFile << "sameReadEqual";
                         } else {
-                            differentReadEqual++;
-                            outputFile << "differentReadEqual";
                             if((parmikAlnForBlastSameReadID.partialMatchSize > 0) && (bestAlnBlast.partialMatchSize == parmikAlnForBlastSameReadID.matches + parmikAlnForBlastSameReadID.inDels + parmikAlnForBlastSameReadID.substitutions) && 
                             (bestAlnBlast.inDels + bestAlnBlast.substitutions == parmikAlnForBlastSameReadID.inDels + parmikAlnForBlastSameReadID.substitutions)) {
                                 sameReadEqual++;
