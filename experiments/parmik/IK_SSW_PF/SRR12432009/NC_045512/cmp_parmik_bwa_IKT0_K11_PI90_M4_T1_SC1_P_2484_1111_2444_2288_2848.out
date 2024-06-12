@@ -14,7 +14,7 @@ queryCount:                   30000
 kmerLength:                   11
 regionSize:                   48
 cheapKmerThreshold:           0
-identityPercentage:           0.9
+percentageIdentity:           0.9
 minExactMatchLen:             14
 numThreads:                   1
 isSecondChanceOff:            F
@@ -58,21 +58,3 @@ queries processed: 14000 / 29754
 queries processed: 15000 / 29754
 queries processed: 16000 / 29754
 queries processed: 17000 / 29754
-queries processed: 18000 / 29754
-queries processed: 19000 / 29754
-queries processed: 20000 / 29754
-queries processed: 21000 / 29754
-queries processed: 22000 / 29754
-queries processed: 23000 / 29754
-queries processed: 24000 / 29754
-queries processed: 25000 / 29754
-queries processed: 26000 / 29754
-queries processed: 27000 / 29754
-queries processed: 28000 / 29754
-queries processed: 29000 / 29754
-No. of Bp (same read) BWA outperforms => [average: 1, median: 1]
-No. of Bp (different read) BWA outperforms => [average: 1, median: 1]
-No. of Bp (same read) PARMIK outperforms => [average: 2, median: 1]
-No. of Bp (different read) PARMIK outperforms => [average: 6, median: 3]
-No. of Bp (same read) BWA outperforms (LowPI) => [average: 0, median: 0]
-No. of Bp (different read) BWA outperforms (LowPI) => [average: 114, median: 112]

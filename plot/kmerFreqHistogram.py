@@ -53,12 +53,13 @@ def plot_histograms(buckets, kmer_freqs_list, labels, outputFile):
             height = rect.get_height()
             if height > 99 and annotated == False:
                 annotated = True
+                color = rect.get_facecolor()
                 ax.annotate(f'{height:.1f}%', 
                             xy=(rect.get_x() + rect.get_width() / 2, height),
                             xytext=(0, 3),  
                             textcoords="offset points",
                             ha='center', va='bottom',
-                            fontsize=22, color='red')
+                            fontsize=22, color=color)
     bucket_labels = [f'{0}-{high}' for low, high in buckets]
     # ax.set_xlabel('K-mer Frequency Buckets', fontsize=16)
     ax.set_ylabel('Cumulative Percentage of k-mers', fontsize=26)
