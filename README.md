@@ -34,7 +34,7 @@ sratoolkit.3.0.7-ubuntu64/bin/fasterq-dump SRR12432009 -p --fasta --outdir <outp
  ```
 Replace `<outputDir>` with the path to your desired output directory.
 
-## How to use PARMIK ##
+## How to run PARMIK ##
 Here are some examples for how to use different PARMIK modes:
 
 ### Create Index ###
