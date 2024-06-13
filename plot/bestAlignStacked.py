@@ -43,8 +43,8 @@ def plot_stacked_bar_chart(input_file, output_image):
     
     bars = []
     for i in range(len(labels)):
-        bar1 = ax.bar(ind[0], parmik_vs_bwa[i], width=0.35, bottom=bottom_bwa, label=labels[i], color=colors[i])
-        bar2 = ax.bar(ind[1], parmik_vs_blast[i], width=0.35, bottom=bottom_blast, color=colors[i])
+        bar1 = ax.bar(ind[0], parmik_vs_bwa[i], width=0.15, bottom=bottom_bwa, label=labels[i], color=colors[i])
+        bar2 = ax.bar(ind[1], parmik_vs_blast[i], width=0.15, bottom=bottom_blast, color=colors[i])
         bars.append(bar1)
         bottom_bwa += parmik_vs_bwa[i]
         bottom_blast += parmik_vs_blast[i]
@@ -59,8 +59,10 @@ def plot_stacked_bar_chart(input_file, output_image):
     # Formatter for y-ticks to display in kilo format
     ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: f'{int(x/1000)}K' if x >= 1000 else f'{int(x)}'))
     
+    reversed_labels = labels[::-1]
+    reversed_bars = bars[::-1]
     # Add legend
-    ax.legend([bar[0] for bar in bars], labels)
+    ax.legend([bar[0] for bar in reversed_bars], reversed_labels, fontsize=16, loc='upper center')
     
     # Save the figure
     plt.tight_layout()
