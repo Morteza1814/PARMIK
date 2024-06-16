@@ -44,3 +44,33 @@ pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_
 updated otherToolOutputFileAddress alignments file: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI90_M2_T1_SC1_P_2484_1111_2444_2288_2848/parmikAln.txt
 Comparing Baseline and parmik
 cmp file address: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/NC_045512/IKT0_K11_PI90_M2_T1_SC1_P_2484_1111_2444_2288_2848/cmp_Baseline_parmik.txt
+queries processed: 0 / 29754
+Sam: Read 64554405 alignments.
+queries processed: 1000 / 29754
+Sam: Read 71013068 alignments.
+queries processed: 2000 / 29754
+Sam: Read 64041457 alignments.
+queries processed: 3000 / 29754
+Sam: Read 104504957 alignments.
+queries processed: 4000 / 29754
+Sam: Read 61442229 alignments.
+queries processed: 5000 / 29754
+Sam: Read 53469810 alignments.
+queries processed: 6000 / 29754
+Sam: Read 56239334 alignments.
+queries processed: 7000 / 29754
+Sam: Read 61405502 alignments.
+queries processed: 8000 / 29754
+Sam: Read 69483312 alignments.
+queries processed: 9000 / 29754
+Sam: Read 57460226 alignments.
+queries processed: 10000 / 29754
+Sam: Read 178819222 alignments.
+queries processed: 11000 / 29754
+Sam: Read 62197509 alignments.
+queries processed: 12000 / 29754
+Sam: Read 54299015 alignments.
+queries processed: 13000 / 29754
+Sam: Read 71505874 alignments.
+queries processed: 14000 / 29754
+Sam: Read 57975525 alignments.
