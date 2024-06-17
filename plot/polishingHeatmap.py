@@ -13,7 +13,7 @@ first_column_ranges = [
 
 second_column_ranges = [
     (0, 0),
-    (0, 9),
+    (1, 9),
     (10, 29),
     (30, 59),
     (60, 99),

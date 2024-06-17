@@ -17,7 +17,7 @@ def plot_scatter(input_file, output_file):
 
     # Plot each case with different colors
     if not greater.empty:
-        plt.scatter(greater['Alignment'], greater['Alignment_polishing'], color='midnightblue', label='Alignment+Polishing > Alignment', s=1)
+        plt.scatter(greater['Alignment'], greater['Alignment_polishing'], color='royalblue', label='Alignment+Polishing > Alignment', s=1)
     if not less.empty:
         plt.scatter(less['Alignment'], less['Alignment_polishing'], color='red', label='Alignment+Polishing < Alignment', s=1)
 
@@ -40,7 +40,7 @@ def plot_scatter(input_file, output_file):
     below_line = less.shape[0] if not less.empty else 0
 
     # Add text annotations for counts below and above y=x line
-    plt.text(max_value * 0.05, max_value * 0.95, f'Count = {above_line}', fontsize=20, color='midnightblue')
+    plt.text(max_value * 0.05, max_value * 0.95, f'Count = {above_line}', fontsize=20, color='royalblue')
     plt.text(max_value * 0.75, max_value * 0.05, f'Count = {below_line}', fontsize=20, color='red')
 
     # Save the plot to the output file
