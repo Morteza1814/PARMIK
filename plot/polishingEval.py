@@ -17,7 +17,7 @@ def plot_scatter(input_file, output_file):
 
     # Plot each case with different colors
     if not greater.empty:
-        plt.scatter(greater['Alignment'], greater['Alignment_polishing'], color='green', label='Alignment+Polishing > Alignment', s=1)
+        plt.scatter(greater['Alignment'], greater['Alignment_polishing'], color='midnightblue', label='Alignment+Polishing > Alignment', s=1)
     if not less.empty:
         plt.scatter(less['Alignment'], less['Alignment_polishing'], color='red', label='Alignment+Polishing < Alignment', s=1)
 
@@ -28,20 +28,20 @@ def plot_scatter(input_file, output_file):
     plt.plot([0, max_value], [0, max_value], 'k--', linewidth=0.5)
 
     # Set labels and title
-    plt.xlabel('Alignment', fontsize=22)
-    plt.ylabel('Alignment+Polishing', fontsize=22)
+    plt.xlabel('Alignment (bp)', fontsize=22)
+    plt.ylabel('Alignment+Polishing (bp)', fontsize=22)
     # plt.title('Scatter Plot of Alignment vs Alignment+Second Chance')
     # plt.legend(fontsize=16)
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
 
     # Count number of points above and below y=x line
     above_line = greater.shape[0] if not greater.empty else 0
     below_line = less.shape[0] if not less.empty else 0
 
     # Add text annotations for counts below and above y=x line
-    plt.text(max_value * 0.05, max_value * 0.95, f'Count = {above_line}', fontsize=18, color='green')
-    plt.text(max_value * 0.75, max_value * 0.05, f'Count = {below_line}', fontsize=18, color='red')
+    plt.text(max_value * 0.05, max_value * 0.95, f'Count = {above_line}', fontsize=20, color='midnightblue')
+    plt.text(max_value * 0.75, max_value * 0.05, f'Count = {below_line}', fontsize=20, color='red')
 
     # Save the plot to the output file
     plt.savefig(output_file, dpi=300)
