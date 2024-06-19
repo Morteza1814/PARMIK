@@ -30,7 +30,8 @@ fig, ax1 = plt.subplots()
 
 # Plot FN_normalized
 ax1.set_xlabel('Minimum No. of Shared K-mers', fontsize=16)
-ax1.set_ylabel('No. of False Negative', color='tab:blue',  fontsize=16)
+scale_factor = 1e8 
+ax1.set_ylabel(f'No. of False Negative (×10^{int(np.log10(scale_factor))})', color='tab:blue',  fontsize=16)
 ax1.plot(M, FN_normalized, color='tab:blue', marker='o', linestyle='-')
 ax1.tick_params(axis='y', labelcolor='tab:blue', labelsize=12)
 

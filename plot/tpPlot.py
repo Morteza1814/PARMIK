@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
 import sys
+import numpy as np
+import matplotlib.ticker as ticker
+
 # Initialize empty lists for x, y1, and y2
 x = []
 y1 = []
@@ -8,7 +11,7 @@ y3 = []
 
 # Check if the correct number of command-line arguments are provided
 if len(sys.argv) != 6:
-    print("Usage: python script.py input_file output_file first_ax_name second_ax_name")
+    print("Usage: python script.py input_file output_file first_ax_name second_ax_name third_ax_name")
     sys.exit(1)
 
 # Extract input and output file paths from command-line arguments
@@ -43,8 +46,8 @@ ax1.set_ylabel('No. of TP (log)', fontsize=20)
 
 
 # Specify the range for the zoomed-in plot
-zoom_start = int(21 - x[0])
-zoom_end = int(35 - x[0])
+zoom_start = int(26 - x[0])
+zoom_end = int(50 - x[0])
 
 print("Zoom Start:", zoom_start, " Zoom End:", zoom_end)
 # Plot the zoomed-in portion as a bar chart in the bottom subplot
@@ -54,7 +57,12 @@ ax2.bar([i + 2 * bar_width for i in x[zoom_start:zoom_end]], y3[zoom_start:zoom_
 # ax2.set_title('FN rates for Alignment sizes between [21-35]')
 ax2.legend(fontsize=18)
 ax2.tick_params(axis='both', which='major', labelsize=18)
-ax2.set_ylabel('No. of TP (Millions)', fontsize=20)
+# Format the y-axis ticks
+formatter = ticker.FuncFormatter(lambda x, pos: '0' if x == 0 else '{:.0f}k'.format(x*1e-3))
+ax2.yaxis.set_major_formatter(formatter)
+# scale_factor = 1e6 
+# ax2.set_ylabel(f'No. of TP (×10^{int(np.log10(scale_factor))})',  fontsize=20)
+ax2.set_ylabel('No. of TP',  fontsize=20)
 
 plt.xlabel('Alignment Size', fontsize=20)
 

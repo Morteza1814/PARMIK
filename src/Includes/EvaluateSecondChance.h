@@ -29,6 +29,7 @@ public:
         uint32_t qc = util.readContigsFromFile(queryFileAddress, queryCount, queries, baseAddress);
         ofstream out(outputDir + "/SC_vs_NoSC.txt");
         ofstream scmissedaln(outputDir + "/SC_MissedAlignments.txt");
+        ofstream scimprovedaln(outputDir + "/SC_ImprovedAlignments.txt");
         tsl::robin_map<int32_t, uint32_t> scAlignmentSizeImprovements;
         #pragma omp parallel for schedule(dynamic, 1)
         for (uint32_t queryInd = 0; queryInd < qc; queryInd++){
@@ -71,10 +72,15 @@ public:
                     #pragma omp critical
                     {
                         if (scAlignmentSizeImprovement < 0){
-                            scmissedaln << "SCQID: " << it.second.queryID << ", SCRID: " << it.second.readID 
-                            << ", noSCQID: " << itt->second.queryID << ", noSCRID: " << itt->second.readID 
+                            scmissedaln << "noSCQID: " << it.second.queryID << ", noSCRID: " << it.second.readID 
+                            << ", SCQID: " << itt->second.queryID << ", SCRID: " << itt->second.readID 
                             << ", SC partialMatchSize: " << itt->second.partialMatchSize << ", noSC partialMatchSize: " << it.second.partialMatchSize
                             << ", SC cigar: " << itt->second.cigar << ", noSC cigar: " << it.second.cigar  << ", scAlignmentSizeImprovement: " << scAlignmentSizeImprovement << endl;
+                        } else if (scAlignmentSizeImprovement > 0) {
+                            scimprovedaln << "noSCQID: " << it.second.queryID << ", noSCRID: " << it.second.readID 
+                            << ", SCQID: " << itt->second.queryID << ", SCRID: " << itt->second.readID 
+                            << ", noSC partialMatchSize: " << it.second.partialMatchSize << ", SC partialMatchSize: " << itt->second.partialMatchSize 
+                            << ", noSC cigar: " << it.second.cigar << ", SC cigar: " << itt->second.cigar  << ", scAlignmentSizeImprovement: " << scAlignmentSizeImprovement << endl;
                         }
                     }
                     if (scAlignmentSizeImprovements.find (scAlignmentSizeImprovement) != scAlignmentSizeImprovements.end()){

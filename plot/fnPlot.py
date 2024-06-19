@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import sys
+import numpy as np
+
 # Initialize empty lists for x, y1, and y2
 x = []
 y1 = []
@@ -47,7 +49,8 @@ ax2.bar([i + 0.4 for i in x[zoom_start:zoom_end]], y2[zoom_start:zoom_end], labe
 # ax2.set_title('FN rates for Alignment sizes between [21-35]')
 ax2.legend(fontsize=18)
 ax2.tick_params(axis='both', which='major', labelsize=18)
-ax2.set_ylabel('No. of FN (Millions)', fontsize=20)
+scale_factor = 1e6 
+ax2.set_ylabel(f'No. of FN (×10^{int(np.log10(scale_factor))})',  fontsize=20)
 
 plt.xlabel('Alignment Size', fontsize=20)
 
