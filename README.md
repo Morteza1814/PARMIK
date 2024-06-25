@@ -1,6 +1,6 @@
 # PARMIK
 
-This repository contains the code for **PA**rtial **R**ead **M**atching with **I**nexpensive **K**-mers (PARMIK), a tool designed to identify alignments with sufficient overlapping regions between two sequences, such as a query from a newly discovered genome and a read from a metagenomic dataset. PARMIK supports gapped, local, and paired-end alignment. Multiple processors can be used simultaneously to achieve greater alignment speed. To enhance alignment speed, PARMIK supports multi-threading.
+This repository contains the code for **PA**rtial **R**ead **M**atching with **I**nexpensive **K**-mers (PARMIK), a tool designed to identify alignments with sufficient overlapping regions between two sequences, such as a query from a newly discovered genome and a read from a metagenomic dataset. PARMIK supports gapped, local, and paired-end alignment and outputs a set of alignments in SAM format. Multiple processors can be used simultaneously to achieve greater alignment speed. To enhance alignment speed, PARMIK supports multi-threading.
 
 ## Directory Structure ##
 - `dataPrepare/`: Contains scripts to extract contigs from read and query dataset files
