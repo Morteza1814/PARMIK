@@ -30,14 +30,22 @@ def calculate_percentages(kmer_freqs, buckets):
     percentages = []
     cumulative = 0
     
-    # for lower, upper in buckets:
-    #     count = sum(lower <= freq <= upper for freq in kmer_freqs)
-    #     cumulative += count
     for s in kmer_freqs:
         cumulative += s
         percentages.append((cumulative / total_kmers) * 100)
     
     return percentages
+
+def format_value(value):
+    if value >= 1_000_000:
+        return f'{value // 1_000_000}M'
+    elif value >= 1_000:
+        return f'{value // 1_000}K'
+    else:
+        return str(value)
+
+def format_bucket_label(lower, upper):
+    return f'[{format_value(lower)}-{format_value(upper)}]'
 
 def plot_histograms(buckets, kmer_freqs_list, labels, outputFile):
     n = len(buckets)
@@ -51,7 +59,7 @@ def plot_histograms(buckets, kmer_freqs_list, labels, outputFile):
         annotated = False
         for rect in rects:
             height = rect.get_height()
-            if height > 99 and annotated == False:
+            if height > 99 and not annotated:
                 annotated = True
                 color = rect.get_facecolor()
                 ax.annotate(f'{height:.1f}%', 
@@ -60,8 +68,10 @@ def plot_histograms(buckets, kmer_freqs_list, labels, outputFile):
                             textcoords="offset points",
                             ha='center', va='bottom',
                             fontsize=22, color=color)
-    bucket_labels = [f'{0}-{high}' for low, high in buckets]
-    # ax.set_xlabel('K-mer Frequency Buckets', fontsize=16)
+    
+    # Create formatted bucket labels
+    bucket_labels = [format_bucket_label(0, high) for low, high in buckets]
+    
     ax.set_ylabel('Cumulative Percentage of k-mers', fontsize=26)
     ax.set_xticks(ind + width)
     ax.set_xticklabels(bucket_labels, rotation=45, fontsize=20)
@@ -71,10 +81,12 @@ def plot_histograms(buckets, kmer_freqs_list, labels, outputFile):
     ax.set_yticks(yticks)
     # Set the y-tick labels with appropriate font size
     ax.set_yticklabels(yticks, fontsize=20)
+    ax.set_xlabel('Inexpensive K-mer Threshold Range', fontsize=26)
     ax.legend(fontsize=18)
 
     plt.tight_layout()
     plt.savefig(outputFile)
+    plt.show()  # Ensure the plot is shown if running interactively
 
 
 # Example usage
