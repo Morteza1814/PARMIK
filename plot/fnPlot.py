@@ -37,6 +37,7 @@ ax1.legend(fontsize=18)
 ax1.set_yscale('log')  # Set logarithmic scale on the y-axis
 ax1.tick_params(axis='both', which='major', labelsize=18)
 ax1.set_ylabel('No. of FN (log)', fontsize=20)
+ax1.text(-0.1, 1.1, '(C)', transform=ax1.transAxes, fontsize=24, fontweight='bold', va='top', ha='right', color='blue')
 
 # Specify the range for the zoomed-in plot
 zoom_start = int(21 - x[0])
@@ -51,8 +52,9 @@ ax2.legend(fontsize=18)
 ax2.tick_params(axis='both', which='major', labelsize=18)
 scale_factor = 1e6 
 ax2.set_ylabel(f'No. of FN (×10^{int(np.log10(scale_factor))})',  fontsize=20)
+ax2.text(-0.1, 1.1, '(D)', transform=ax2.transAxes, fontsize=24, fontweight='bold', va='top', ha='right', color='blue')
 
-plt.xlabel('Alignment Size', fontsize=20)
+plt.xlabel('Minimum Alignment Size (R)', fontsize=20)
 
 # Show the plot
 plt.tight_layout()

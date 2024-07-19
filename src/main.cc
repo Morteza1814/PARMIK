@@ -547,8 +547,8 @@ int main(int argc, char *argv[])
     // testCheckBlastEditPositionsWrapper(argc, argv);
     // checkParmikFNalignments(argc, argv);
     // expensiveKmerFNEval(argc, argv);
-    evaluateSecondChance(argc, argv);
-    // if(DEBUG_MODE) testAligner(argc, argv);
-    // if(EXE_MODE) run(argc, argv);
+    // evaluateSecondChance(argc, argv);
+    if(DEBUG_MODE) testAligner(argc, argv);
+    if(EXE_MODE) run(argc, argv);
     return 0;
 }

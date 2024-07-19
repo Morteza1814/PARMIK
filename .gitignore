@@ -1,2 +1,6 @@
 # Ignore all .env files
 *.o
+*.err
+*.png
+*.jpg
+parmik

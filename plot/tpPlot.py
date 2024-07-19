@@ -43,11 +43,12 @@ ax1.legend(fontsize=18)
 ax1.set_yscale('log')  # Set logarithmic scale on the y-axis
 ax1.tick_params(axis='both', which='major', labelsize=18)
 ax1.set_ylabel('No. of TP (log)', fontsize=20)
+ax1.text(-0.1, 1.1, '(A)', transform=ax1.transAxes, fontsize=24, fontweight='bold', va='top', ha='right', color='blue')
 
 
 # Specify the range for the zoomed-in plot
-zoom_start = int(26 - x[0])
-zoom_end = int(50 - x[0])
+zoom_start = int(21 - x[0])
+zoom_end = int(35 - x[0])
 
 print("Zoom Start:", zoom_start, " Zoom End:", zoom_end)
 # Plot the zoomed-in portion as a bar chart in the bottom subplot
@@ -58,13 +59,15 @@ ax2.bar([i + 2 * bar_width for i in x[zoom_start:zoom_end]], y3[zoom_start:zoom_
 ax2.legend(fontsize=18)
 ax2.tick_params(axis='both', which='major', labelsize=18)
 # Format the y-axis ticks
-formatter = ticker.FuncFormatter(lambda x, pos: '0' if x == 0 else '{:.0f}k'.format(x*1e-3))
+# formatter = ticker.FuncFormatter(lambda x, pos: '0' if x == 0 else '{:.0f}k'.format(x*1e-3))
+formatter = ticker.FuncFormatter(lambda x, pos: '0' if x == 0 else '{:.0f}'.format(x*1e-6))
 ax2.yaxis.set_major_formatter(formatter)
-# scale_factor = 1e6 
-# ax2.set_ylabel(f'No. of TP (×10^{int(np.log10(scale_factor))})',  fontsize=20)
-ax2.set_ylabel('No. of TP',  fontsize=20)
+scale_factor = 1e6 
+ax2.set_ylabel(f'No. of TP (×10^{int(np.log10(scale_factor))})',  fontsize=20)
+# ax2.set_ylabel('No. of TP',  fontsize=20)
+ax2.text(-0.1, 1.1, '(B)', transform=ax2.transAxes, fontsize=24, fontweight='bold', va='top', ha='right', color='blue')
 
-plt.xlabel('Alignment Size', fontsize=20)
+plt.xlabel('Minimum Alignment Size (R)', fontsize=20)
 
 # Show the plot
 plt.tight_layout()
