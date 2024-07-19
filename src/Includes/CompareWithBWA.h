@@ -115,6 +115,16 @@ public:
         return true;
     }
 
+    unordered_map<uint16_t, uint32_t> countOccurrences(const multiset<uint16_t>& ms) {
+        unordered_map<uint16_t, uint32_t> countMap;
+
+        for (const uint16_t& element : ms) {
+            countMap[element]++;
+        }
+
+        return countMap;
+    }
+
     void comparePmWithBwa(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, const uint32_t queryCount, const string& outputAddress)
     {
         Utilities<uint16_t> utils;
@@ -136,6 +146,7 @@ public:
         uint64_t sameReadBwaOutperform = 0, differentReadBwaOutperform = 0, sameReadPmOutperform = 0, differentReadPmOutperform = 0, sameReadEqual = 0, differentReadEqual = 0;
         uint64_t bwaLowPI_FN = 0, bwaLowPIOutperformBestPm = 0;
         multiset<uint16_t> sameReadBwaOutperformBps, differentReadBwaOutperformBps, sameReadPmOutperformBps, differentReadPmOutperformBps, sameReadbwaLowPIOutperformBps, differentReadbwaLowPIOutperformBps;
+        unordered_map<uint16_t, uint32_t> pmBestAlnSizeWhenBwaFN;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
             outputFile << "------------------------------------------------------" << endl;
@@ -200,6 +211,24 @@ public:
                 if(bwaLowPI_Alignments.size() > 0) {
                     bwaHasLowPIFN = true;
                 }
+                //this is for this condition only
+                Alignment bestAlnPm;
+                for (auto it = query_parmikAlignments.begin(); it != query_parmikAlignments.end(); it++) {
+                    Alignment pmAlnn = (*it);
+                    if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
+                    {
+                        bestAlnPm = pmAlnn;
+                    }
+                    else if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
+                    {
+                        if (pmAlnn.inDels + pmAlnn.substitutions < bestAlnPm.inDels + bestAlnPm.substitutions) // InDel has the same wight as substitution
+                        {
+                            bestAlnPm = pmAlnn;
+                        }
+                    }
+                }
+                uint32_t pmBestAlnSize = bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions;
+                pmBestAlnSizeWhenBwaFN[pmBestAlnSize]++;
             } else if(bwaReadPerQuery > 0 && parmikReadPerQuery == 0) {
                 //FN
                 parmikFN++;
@@ -400,7 +429,32 @@ public:
         outputFile << "No. of Bp (same read) BWA outperforms (LowPI) => [average: " << std::get<0>(sameReadbwaLowPIOutperformBpsTuple) << ", median: " << std::get<1>(sameReadbwaLowPIOutperformBpsTuple) << "]" << std::endl;
         pair<uint16_t, uint16_t> differentReadbwaLowPIOutperformBpsTuple = utils.calculateStatistics2(differentReadbwaLowPIOutperformBps);
         outputFile << "No. of Bp (different read) BWA outperforms (LowPI) => [average: " << std::get<0>(differentReadbwaLowPIOutperformBpsTuple) << ", median: " << std::get<1>(differentReadbwaLowPIOutperformBpsTuple) << "]" << std::endl;
-    
+        //report the histogram of diferrences
+        outputFile << "<<<<<<<<<<<<<Histogram of differences>>>>>>>>>>>>>" << endl;
+        outputFile << "BWA > PARMIK (same read)" << endl;
+        unordered_map<uint16_t, uint32_t> sameReadBWAOutperformMap = countOccurrences(sameReadBwaOutperformBps);
+        for (const auto& pair : sameReadBWAOutperformMap) {
+            outputFile << pair.first << ": " << pair.second << endl;
+        }
+        outputFile << "BWA > PARMIK (different read)" << endl;
+        unordered_map<uint16_t, uint32_t> differentReadBWAOutperformMap = countOccurrences(differentReadBwaOutperformBps);
+        for (const auto& pair : differentReadBWAOutperformMap) {
+            outputFile << pair.first << ": " << pair.second << endl;
+        }
+        outputFile << "PARMIK > BWA (same read)" << endl;
+        unordered_map<uint16_t, uint32_t> sameReadPmOutperformMap = countOccurrences(sameReadPmOutperformBps);
+        for (const auto& pair : sameReadPmOutperformMap) {
+            outputFile << pair.first << ": " << pair.second << endl;
+        }
+        outputFile << "PARMIK > BWA (different read)" << endl;
+        unordered_map<uint16_t, uint32_t> differentReadPmOutperformMap = countOccurrences(differentReadPmOutperformBps);
+        for (const auto& pair : differentReadPmOutperformMap) {
+            outputFile << pair.first << ": " << pair.second << endl;
+        }
+        outputFile << "<<<<<<<<<<<<<<<<<<<<<<<<PARMIK best aln size histo when BWA FN>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+        for (const auto& pair : pmBestAlnSizeWhenBwaFN) {
+            outputFile << pair.first << ": " << pair.second << endl;
+        }
         outputFile.close();
     }
     
