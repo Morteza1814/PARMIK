@@ -181,6 +181,16 @@ public:
         return cigar.str();
     }
 
+    unordered_map<uint16_t, uint32_t> countOccurrences(const multiset<uint16_t>& ms) {
+        unordered_map<uint16_t, uint32_t> countMap;
+
+        for (const uint16_t& element : ms) {
+            countMap[element]++;
+        }
+
+        return countMap;
+    }
+
     void comparePmWithBlast(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, const uint32_t queryCount, const string& outputAddress)
     {
         Utilities<uint16_t> utils;
@@ -201,6 +211,7 @@ public:
         uint64_t blastOutperform = 0, parmikOutperform = 0, equalPerformance = 0;
         uint64_t sameReadBlastOutperform = 0, differentReadBlastOutperform = 0, sameReadPmOutperform = 0, differentReadPmOutperform = 0, sameReadEqual = 0, differentReadEqual = 0;
         multiset<uint16_t> sameReadBlastOutperformBps, differentReadBlastOutperformBps, sameReadPmOutperformBps, differentReadPmOutperformBps;
+        unordered_map<uint16_t, uint32_t> pmBestAlnSizeWhenBlastFN;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
             outputFile << "------------------------------------------------------" << endl;
@@ -255,6 +266,24 @@ public:
             } else if(blastReadPerQuery == 0 && parmikReadPerQuery > 0) {
                 //FN
                 blastFN++;
+                //this is for this condition only
+                Alignment bestAlnPm;
+                for (auto it = query_parmikAlignments.begin(); it != query_parmikAlignments.end(); it++) {
+                    Alignment pmAlnn = (*it);
+                    if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions > bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) // only exact matches
+                    {
+                        bestAlnPm = pmAlnn;
+                    }
+                    else if (pmAlnn.matches + pmAlnn.inDels + pmAlnn.substitutions == bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions)
+                    {
+                        if (pmAlnn.inDels + pmAlnn.substitutions < bestAlnPm.inDels + bestAlnPm.substitutions) // InDel has the same wight as substitution
+                        {
+                            bestAlnPm = pmAlnn;
+                        }
+                    }
+                }
+                uint32_t pmBestAlnSize = bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions;
+                pmBestAlnSizeWhenBlastFN[pmBestAlnSize]++;
             } else if(blastReadPerQuery > 0 && parmikReadPerQuery == 0) {
                 //FN
                 parmikFN++;
@@ -401,13 +430,40 @@ public:
         outputFile << "Same Read Equal : " << sameReadEqual << endl;
         outputFile << "Different Read Equal : " << differentReadEqual << endl;
         pair<uint16_t, uint16_t> sameReadBlastOutperformBpsTuple = utils.calculateStatistics2(sameReadBlastOutperformBps);
-        outputFile << "No. of Bp (same read) BLAST outperforms => [average: " << std::get<0>(sameReadBlastOutperformBpsTuple) << ", median: " << std::get<1>(sameReadBlastOutperformBpsTuple) << "]" << std::endl;
+        outputFile << "No. of Bp (same read) BLAST outperforms => [average: " << get<0>(sameReadBlastOutperformBpsTuple) << ", median: " << get<1>(sameReadBlastOutperformBpsTuple) << "]" << endl;
         pair<uint16_t, uint16_t> differentReadBlastOutperformBpsTuple = utils.calculateStatistics2(differentReadBlastOutperformBps);
-        outputFile << "No. of Bp (different read) BLAST outperforms => [average: " << std::get<0>(differentReadBlastOutperformBpsTuple) << ", median: " << std::get<1>(differentReadBlastOutperformBpsTuple) << "]" << std::endl;
+        outputFile << "No. of Bp (different read) BLAST outperforms => [average: " << get<0>(differentReadBlastOutperformBpsTuple) << ", median: " << get<1>(differentReadBlastOutperformBpsTuple) << "]" << endl;
         pair<uint16_t, uint16_t> sameReadPmOutperformBpsTuple = utils.calculateStatistics2(sameReadPmOutperformBps);
-        outputFile << "No. of Bp (same read) PARMIK outperforms => [average: " << std::get<0>(sameReadPmOutperformBpsTuple) << ", median: " << std::get<1>(sameReadPmOutperformBpsTuple) << "]" << std::endl;
+        outputFile << "No. of Bp (same read) PARMIK outperforms => [average: " << get<0>(sameReadPmOutperformBpsTuple) << ", median: " << get<1>(sameReadPmOutperformBpsTuple) << "]" << endl;
         pair<uint16_t, uint16_t> differentReadPmOutperformBpsTuple = utils.calculateStatistics2(differentReadPmOutperformBps);
-        outputFile << "No. of Bp (different read) PARMIK outperforms => [average: " << std::get<0>(differentReadPmOutperformBpsTuple) << ", median: " << std::get<1>(differentReadPmOutperformBpsTuple) << "]" << std::endl;
+        outputFile << "No. of Bp (different read) PARMIK outperforms => [average: " << get<0>(differentReadPmOutperformBpsTuple) << ", median: " << get<1>(differentReadPmOutperformBpsTuple) << "]" << endl;
+        //report the histogram of diferrences
+        outputFile << "<<<<<<<<<<<<<Histogram of differences>>>>>>>>>>>>>" << endl;
+        outputFile << "BLAST > PARMIK (same read)" << endl;
+        unordered_map<uint16_t, uint32_t> sameReadBlastOutperformMap = countOccurrences(sameReadBlastOutperformBps);
+        for (const auto& pair : sameReadBlastOutperformMap) {
+            outputFile << pair.first << ": " << pair.second << endl;
+        }
+        outputFile << "BLAST > PARMIK (different read)" << endl;
+        unordered_map<uint16_t, uint32_t> differentReadBlastOutperformMap = countOccurrences(differentReadBlastOutperformBps);
+        for (const auto& pair : differentReadBlastOutperformMap) {
+            outputFile << pair.first << ": " << pair.second << endl;
+        }
+        outputFile << "PARMIK > BLAST (same read)" << endl;
+        unordered_map<uint16_t, uint32_t> sameReadPmOutperformMap = countOccurrences(sameReadPmOutperformBps);
+        for (const auto& pair : sameReadPmOutperformMap) {
+            outputFile << pair.first << ": " << pair.second << endl;
+        }
+        outputFile << "PARMIK > BLAST (different read)" << endl;
+        unordered_map<uint16_t, uint32_t> differentReadPmOutperformMap = countOccurrences(differentReadPmOutperformBps);
+        for (const auto& pair : differentReadPmOutperformMap) {
+            outputFile << pair.first << ": " << pair.second << endl;
+        }
+        outputFile << "<<<<<<<<<<<<<<<<<<<<<<<<PARMIK best aln size histo when BLAST FN>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+        for (const auto& pair : pmBestAlnSizeWhenBlastFN) {
+            outputFile << pair.first << ": " << pair.second << endl;
+        }
+        outputFile.close();
     }
 };
 
