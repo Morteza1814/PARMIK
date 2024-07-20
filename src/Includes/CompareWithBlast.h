@@ -239,7 +239,6 @@ public:
                     }
                 }
             }
-            blastAlignments.clear();
             size_t blastReadPerQuery = query_blastAlignments.size();
 
             vector<Alignment> query_parmikAlignments;
@@ -255,7 +254,6 @@ public:
                     }
                 }
             }
-            parmikAlignments.clear();
             size_t parmikReadPerQuery = query_parmikAlignments.size();
 
             // cout << "# of reads found by BLAST : " << blastReadPerQuery << endl;
