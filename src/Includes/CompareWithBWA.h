@@ -180,7 +180,6 @@ public:
                     }
                 }
             }
-            bwaAlignments.clear();
             size_t bwaReadPerQuery = query_bwaAlignments.size();
 
             vector<Alignment> query_parmikAlignments;
@@ -196,7 +195,6 @@ public:
                     }
                 }
             }
-            parmikAlignments.clear();
             size_t parmikReadPerQuery = query_parmikAlignments.size();
 
             // cout << "# of reads found by BWA : " << bwaReadPerQuery << endl;
