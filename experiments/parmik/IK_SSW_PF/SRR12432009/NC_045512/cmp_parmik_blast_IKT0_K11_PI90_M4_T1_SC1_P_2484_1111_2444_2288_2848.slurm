@@ -2,7 +2,7 @@
 #SBATCH --job-name="cmp_parmik_blast_IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848"
 #SBATCH --error="cmp_parmik_blast_IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848.err"
 #SBATCH --output="cmp_parmik_blast_IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848.out"
-#SBATCH --mem=400G
+#SBATCH --mem=450G
 #SBATCH --time=4-00:00:00
 #SBATCH --partition=cpu
 /u/rgq5aw/GIT/PARMIK/src/parmik -a 2 -l blast -s 48 -c 150 -m 14 -t 0 -k 11 -d 90 -i 17000000 -j 30000 -x \

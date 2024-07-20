@@ -34,7 +34,7 @@ def plot_stacked_bar_chart(input_file, output_image):
     fig, ax = plt.subplots(figsize=(10, 6))
     
     # Colors for each stacked part
-    cmap = plt.get_cmap('tab20')
+    cmap = plt.get_cmap('tab20_r')
     colors = [cmap(i) for i in np.linspace(0, 1, len(labels))]
     
     # Plot the bars
