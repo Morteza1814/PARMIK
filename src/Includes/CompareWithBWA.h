@@ -180,6 +180,7 @@ public:
                     }
                 }
             }
+            bwaAlignments.clear();
             size_t bwaReadPerQuery = query_bwaAlignments.size();
 
             vector<Alignment> query_parmikAlignments;
@@ -195,6 +196,7 @@ public:
                     }
                 }
             }
+            parmikAlignments.clear();
             size_t parmikReadPerQuery = query_parmikAlignments.size();
 
             // cout << "# of reads found by BWA : " << bwaReadPerQuery << endl;
@@ -316,11 +318,11 @@ public:
                             bwaOutperform++;
                             if (foundSameRead){
                                 sameReadBwaOutperform++;
-                                sameReadBwaOutperformBps.insert(bestAlnPm.inDels + bestAlnPm.substitutions - (bestAlnBwa.inDels + bestAlnBwa.substitutions));
+                                sameReadBwaOutperformBps.insert((bestAlnPm.inDels + bestAlnPm.substitutions) - (bestAlnBwa.inDels + bestAlnBwa.substitutions));
                                 outputFile << "sameReadBwaOutperform";
                             } else {
                                 differentReadBwaOutperform++;
-                                differentReadBwaOutperformBps.insert(bestAlnPm.inDels + bestAlnPm.substitutions - (bestAlnBwa.inDels + bestAlnBwa.substitutions));
+                                differentReadBwaOutperformBps.insert((bestAlnPm.inDels + bestAlnPm.substitutions) - (bestAlnBwa.inDels + bestAlnBwa.substitutions));
                                 if(parmikAlnForBwaSameReadID.partialMatchSize > 0) outputFile << "parmikAlnForBwaSameReadID: " << parmikAlnForBwaSameReadID.cigar << ", M: " << parmikAlnForBwaSameReadID.matches << ", S: " << parmikAlnForBwaSameReadID.substitutions << ", InDels: " << parmikAlnForBwaSameReadID.inDels << endl;
                                 outputFile << "differentReadBwaOutperform";
                             }
@@ -332,12 +334,12 @@ public:
                             parmikOutperform++;
                             if (foundSameRead){
                                 outputFile << "sameReadPmOutperform";
-                                sameReadPmOutperformBps.insert(bestAlnBwa.inDels + bestAlnBwa.substitutions - (bestAlnPm.inDels + bestAlnPm.substitutions));
+                                sameReadPmOutperformBps.insert((bestAlnBwa.inDels + bestAlnBwa.substitutions) - (bestAlnPm.inDels + bestAlnPm.substitutions));
                                 sameReadPmOutperform++;
                             } else {
                                 if(parmikAlnForBwaSameReadID.partialMatchSize > 0) outputFile << "parmikAlnForBwaSameReadID: " << parmikAlnForBwaSameReadID.cigar << ", M: " << parmikAlnForBwaSameReadID.matches << ", S: " << parmikAlnForBwaSameReadID.substitutions << ", InDels: " << parmikAlnForBwaSameReadID.inDels << endl;
                                 outputFile << "differentReadPmOutperform";
-                                differentReadPmOutperformBps.insert(bestAlnBwa.inDels + bestAlnBwa.substitutions - (bestAlnPm.inDels + bestAlnPm.substitutions));
+                                differentReadPmOutperformBps.insert((bestAlnBwa.inDels + bestAlnBwa.substitutions) - (bestAlnPm.inDels + bestAlnPm.substitutions));
                                 differentReadPmOutperform++;
                             }
                             outputFile << " (fewer edits) for [" << bestAlnBwa.queryID << ", " << bestAlnBwa.readID << "]:, bwa cigar: " 

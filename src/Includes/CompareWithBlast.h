@@ -239,6 +239,7 @@ public:
                     }
                 }
             }
+            blastAlignments.clear();
             size_t blastReadPerQuery = query_blastAlignments.size();
 
             vector<Alignment> query_parmikAlignments;
@@ -254,6 +255,7 @@ public:
                     }
                 }
             }
+            parmikAlignments.clear();
             size_t parmikReadPerQuery = query_parmikAlignments.size();
 
             // cout << "# of reads found by BLAST : " << blastReadPerQuery << endl;
@@ -366,11 +368,11 @@ public:
                         blastOutperform++;
                         if (foundSameRead){
                             sameReadBlastOutperform++;
-                            sameReadBlastOutperformBps.insert(bestAlnBlast.partialMatchSize - (bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions));
+                            sameReadBlastOutperformBps.insert((bestAlnPm.inDels + bestAlnPm.substitutions) - (bestAlnBlast.inDels + bestAlnBlast.substitutions));
                             outputFile << "sameReadBlastOutperform";
                         } else {
                             differentReadBlastOutperform++;
-                            differentReadBlastOutperformBps.insert(bestAlnBlast.partialMatchSize - (bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions));
+                            differentReadBlastOutperformBps.insert((bestAlnPm.inDels + bestAlnPm.substitutions) - (bestAlnBlast.inDels + bestAlnBlast.substitutions));
                             if(parmikAlnForBlastSameReadID.partialMatchSize > 0) outputFile << "parmikAlnForBlastSameReadID: " << parmikAlnForBlastSameReadID.cigar << ", M: " << parmikAlnForBlastSameReadID.matches << ", S: " << parmikAlnForBlastSameReadID.substitutions << ", InDels: " << parmikAlnForBlastSameReadID.inDels << endl;
                             outputFile << "differentReadBlastOutperform";
                         }
@@ -382,11 +384,11 @@ public:
                         parmikOutperform++;
                         if (foundSameRead){
                             sameReadPmOutperform++;
-                            sameReadPmOutperformBps.insert((bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) - bestAlnBlast.partialMatchSize);
+                            sameReadPmOutperformBps.insert((bestAlnBlast.inDels + bestAlnBlast.substitutions) - (bestAlnPm.inDels + bestAlnPm.substitutions));
                          outputFile << "sameReadPmOutperform";
                         } else {
                             differentReadPmOutperform++;
-                            differentReadPmOutperformBps.insert((bestAlnPm.matches + bestAlnPm.inDels + bestAlnPm.substitutions) - bestAlnBlast.partialMatchSize);
+                            differentReadPmOutperformBps.insert((bestAlnBlast.inDels + bestAlnBlast.substitutions) - (bestAlnPm.inDels + bestAlnPm.substitutions));
                             if(parmikAlnForBlastSameReadID.partialMatchSize > 0) outputFile << "parmikAlnForBlastSameReadID: " << parmikAlnForBlastSameReadID.cigar << ", M: " << parmikAlnForBlastSameReadID.matches << ", S: " << parmikAlnForBlastSameReadID.substitutions << ", InDels: " << parmikAlnForBlastSameReadID.inDels << endl;
                             outputFile << "differentReadPmOutperform";
                         }
