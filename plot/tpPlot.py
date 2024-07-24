@@ -47,8 +47,8 @@ ax1.text(-0.1, 1.1, '(A)', transform=ax1.transAxes, fontsize=24, fontweight='bol
 
 
 # Specify the range for the zoomed-in plot
-zoom_start = int(26 - x[0])
-zoom_end = int(50 - x[0])
+zoom_start = int(21 - x[0])
+zoom_end = int(35 - x[0])
 
 print("Zoom Start:", zoom_start, " Zoom End:", zoom_end)
 # Plot the zoomed-in portion as a bar chart in the bottom subplot
