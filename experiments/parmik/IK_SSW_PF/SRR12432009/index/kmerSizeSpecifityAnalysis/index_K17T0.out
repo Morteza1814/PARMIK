@@ -207,21 +207,22 @@ The 160 100k contigs have been processed!
 The 161 100k contigs have been processed!
 The 162 100k contigs have been processed!
 The 163 100k contigs have been processed!
-Index Construction took: 1347.62 seconds
+Index Construction took: 1397.87 seconds
 Number of kmers:                        2190182698
 Number of contigs:                      16344647
 Size of inverted index:                 2190182698
 Number of Reads Containing N:           0
 <<<<<<<<<<<<<<<<<<<<<<<Index Construction Ended!!>>>>>>>>>>>>>>>>>>>>>>> 
-start : 0 end : 5000
-start : 5001 end : 50000
-start : 50001 end : 500000
-start : 500001 end : 5000000
-start : 5000001 end : 50000000
-start : 50000001 end : 500000000
+start : 0 end : 250
+start : 251 end : 500
+start : 501 end : 1000
+start : 1001 end : 2000
+start : 2001 end : 3000
+start : 3001 end : 4000
+start : 4001 end : 5000
 <<<<<<<<<<<<<<<<<<<<<<<<Cheap Kmers Collection Started!!>>>>>>>>>>>>>>>>>>>>>>>>
 cheap k-mer threshold:        0
-Cheap Kmers Collection Time:  1212.92 seconds
+Cheap Kmers Collection Time:  1258.63 seconds
 Total k-mers:                 2190182698
 Distinct k-mers:              262185564 [11% of totalkmers]
 Unique k-mers:                169357549 [64% of distinctKmers]
@@ -229,12 +230,13 @@ Cheap k-mers:                 262185564 [100% of distinctKmers]
 Expensive k-mers:             0 [0% of distinctKmers]
 Most expensive k-mer has:     48483107 read ptr
 Histogram of k-mer ranges:
-[0-5000]: 262161198 k-mers
-[5001-50000]: 21527 k-mers
-[50001-500000]: 2456 k-mers
-[500001-5000000]: 373 k-mers
-[5000001-50000000]: 10 k-mers
-[50000001-500000000]: 0 k-mers
+[0-250]: 261777335 k-mers
+[251-500]: 203463 k-mers
+[501-1000]: 92885 k-mers
+[1001-2000]: 55356 k-mers
+[2001-3000]: 16593 k-mers
+[3001-4000]: 9076 k-mers
+[4001-5000]: 6490 k-mers
 <<<<<<<<<<<<<<<<<<<<<<<<CollectCheapKmers Ended!!>>>>>>>>>>>>>>>>>>>>>>>>
-Cheap Kmers Serialization Time: 510.57 seconds
+Cheap Kmers Serialization Time: 514.98 seconds
 -------End of loading k-mer indices-------

@@ -207,21 +207,22 @@ The 160 100k contigs have been processed!
 The 161 100k contigs have been processed!
 The 162 100k contigs have been processed!
 The 163 100k contigs have been processed!
-Index Construction took: 1108.80 seconds
+Index Construction took: 1179.64 seconds
 Number of kmers:                        2239216639
 Number of contigs:                      16344647
 Size of inverted index:                 2239216639
 Number of Reads Containing N:           0
 <<<<<<<<<<<<<<<<<<<<<<<Index Construction Ended!!>>>>>>>>>>>>>>>>>>>>>>> 
-start : 0 end : 5000
-start : 5001 end : 50000
-start : 50001 end : 500000
-start : 500001 end : 5000000
-start : 5000001 end : 50000000
-start : 50000001 end : 500000000
+start : 0 end : 250
+start : 251 end : 500
+start : 501 end : 1000
+start : 1001 end : 2000
+start : 2001 end : 3000
+start : 3001 end : 4000
+start : 4001 end : 5000
 <<<<<<<<<<<<<<<<<<<<<<<<Cheap Kmers Collection Started!!>>>>>>>>>>>>>>>>>>>>>>>>
 cheap k-mer threshold:        0
-Cheap Kmers Collection Time:  1029.02 seconds
+Cheap Kmers Collection Time:  1107.55 seconds
 Total k-mers:                 2239216639
 Distinct k-mers:              135898902 [6% of totalkmers]
 Unique k-mers:                51473815 [37% of distinctKmers]
@@ -229,12 +230,13 @@ Cheap k-mers:                 135898902 [100% of distinctKmers]
 Expensive k-mers:             0 [0% of distinctKmers]
 Most expensive k-mer has:     55471612 read ptr
 Histogram of k-mer ranges:
-[0-5000]: 135873777 k-mers
-[5001-50000]: 22180 k-mers
-[50001-500000]: 2512 k-mers
-[500001-5000000]: 421 k-mers
-[5000001-50000000]: 11 k-mers
-[50000001-500000000]: 1 k-mers
+[0-250]: 135484632 k-mers
+[251-500]: 210784 k-mers
+[501-1000]: 92513 k-mers
+[1001-2000]: 54548 k-mers
+[2001-3000]: 16224 k-mers
+[3001-4000]: 8681 k-mers
+[4001-5000]: 6395 k-mers
 <<<<<<<<<<<<<<<<<<<<<<<<CollectCheapKmers Ended!!>>>>>>>>>>>>>>>>>>>>>>>>
-Cheap Kmers Serialization Time: 491.58 seconds
+Cheap Kmers Serialization Time: 484.64 seconds
 -------End of loading k-mer indices-------
