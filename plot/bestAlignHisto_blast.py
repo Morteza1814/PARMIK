@@ -85,7 +85,7 @@ def create_histogram(data_blast_same_read, data_blast_diff_read, data_same_read,
     plt.ylabel('Count (Log Scale)', fontsize=28)
 
     xticks_labels = [f"[{key}-{key + bucket_size - 1}]" for key in all_keys_extended]
-    plt.xticks(positions + 2 * bar_width, xticks_labels, fontsize=22)
+    plt.xticks(positions + 2 * bar_width, xticks_labels, rotation=45, fontsize=22)
     plt.yticks(fontsize=22)
     plt.legend(fontsize=24)
 

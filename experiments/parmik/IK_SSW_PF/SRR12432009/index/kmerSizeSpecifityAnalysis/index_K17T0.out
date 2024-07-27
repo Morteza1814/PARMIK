@@ -207,7 +207,7 @@ The 160 100k contigs have been processed!
 The 161 100k contigs have been processed!
 The 162 100k contigs have been processed!
 The 163 100k contigs have been processed!
-Index Construction took: 1329.93 seconds
+Index Construction took: 1347.62 seconds
 Number of kmers:                        2190182698
 Number of contigs:                      16344647
 Size of inverted index:                 2190182698
@@ -221,3 +221,20 @@ start : 5000001 end : 50000000
 start : 50000001 end : 500000000
 <<<<<<<<<<<<<<<<<<<<<<<<Cheap Kmers Collection Started!!>>>>>>>>>>>>>>>>>>>>>>>>
 cheap k-mer threshold:        0
+Cheap Kmers Collection Time:  1212.92 seconds
+Total k-mers:                 2190182698
+Distinct k-mers:              262185564 [11% of totalkmers]
+Unique k-mers:                169357549 [64% of distinctKmers]
+Cheap k-mers:                 262185564 [100% of distinctKmers]
+Expensive k-mers:             0 [0% of distinctKmers]
+Most expensive k-mer has:     48483107 read ptr
+Histogram of k-mer ranges:
+[0-5000]: 262161198 k-mers
+[5001-50000]: 21527 k-mers
+[50001-500000]: 2456 k-mers
+[500001-5000000]: 373 k-mers
+[5000001-50000000]: 10 k-mers
+[50000001-500000000]: 0 k-mers
+<<<<<<<<<<<<<<<<<<<<<<<<CollectCheapKmers Ended!!>>>>>>>>>>>>>>>>>>>>>>>>
+Cheap Kmers Serialization Time: 510.57 seconds
+-------End of loading k-mer indices-------
