@@ -207,22 +207,26 @@ The 160 100k contigs have been processed!
 The 161 100k contigs have been processed!
 The 162 100k contigs have been processed!
 The 163 100k contigs have been processed!
-Index Construction took: 1106.32 seconds
+Index Construction took: 1106.33 seconds
 Number of kmers:                        2288250580
 Number of contigs:                      16344647
 Size of inverted index:                 2288250580
 Number of Reads Containing N:           0
 <<<<<<<<<<<<<<<<<<<<<<<Index Construction Ended!!>>>>>>>>>>>>>>>>>>>>>>> 
-start : 0 end : 250
+start : 0 end : 25
+start : 26 end : 50
+start : 51 end : 100
+start : 101 end : 150
+start : 151 end : 200
+start : 201 end : 250
 start : 251 end : 500
-start : 501 end : 1000
-start : 1001 end : 2000
-start : 2001 end : 3000
-start : 3001 end : 4000
-start : 4001 end : 5000
+start : 501 end : 750
+start : 751 end : 1000
+start : 1001 end : 1500
+start : 1501 end : 2000
 <<<<<<<<<<<<<<<<<<<<<<<<Cheap Kmers Collection Started!!>>>>>>>>>>>>>>>>>>>>>>>>
 cheap k-mer threshold:        0
-Cheap Kmers Collection Time:  1096.41 seconds
+Cheap Kmers Collection Time:  1094.48 seconds
 Total k-mers:                 2288250580
 Distinct k-mers:              4194303 [0% of totalkmers]
 Unique k-mers:                9 [0% of distinctKmers]
@@ -230,13 +234,17 @@ Cheap k-mers:                 4194303 [100% of distinctKmers]
 Expensive k-mers:             0 [0% of distinctKmers]
 Most expensive k-mer has:     64450175 read ptr
 Histogram of k-mer ranges:
-[0-250]: 3230854 k-mers
+[0-25]: 110035 k-mers
+[26-50]: 457116 k-mers
+[51-100]: 1079833 k-mers
+[101-150]: 769764 k-mers
+[151-200]: 494205 k-mers
+[201-250]: 319901 k-mers
 [251-500]: 609191 k-mers
-[501-1000]: 215824 k-mers
-[1001-2000]: 76571 k-mers
-[2001-3000]: 19790 k-mers
-[3001-4000]: 9215 k-mers
-[4001-5000]: 6305 k-mers
+[501-750]: 156160 k-mers
+[751-1000]: 59664 k-mers
+[1001-1500]: 51632 k-mers
+[1501-2000]: 24939 k-mers
 <<<<<<<<<<<<<<<<<<<<<<<<CollectCheapKmers Ended!!>>>>>>>>>>>>>>>>>>>>>>>>
-Cheap Kmers Serialization Time: 535.35 seconds
+Cheap Kmers Serialization Time: 535.15 seconds
 -------End of loading k-mer indices-------

@@ -3,10 +3,11 @@ import pandas as pd
 
 # Data provided
 data = {
-    'Range': ['[0-5K]', '[5K-50K]', '[50K-500K]', '[500K-5M]', '[5M-50M]', '[50M-500M]'],
-    'k=11': [4167750, 23467, 2561, 513, 11, 1],
-    'k=14': [135873777, 22180, 2512, 421, 11, 1],
-    'k=17': [262161198, 21527, 2456, 373, 10, 0]
+    # 'Range': ['[0-5K]', '[5K-50K]', '[50K-500K]', '[500K-5M]', '[5M-50M]', '[50M-500M]'
+    'Range': ['[0-25]', '[26-50]', '[51-100]', '[101-150]', '[151-200]', '[201-250]', '[251-500]', '[501-750]', '[751-1000]', '[1001-1500]', '[1501-2000]'],
+    'k=11': [110035, 457116, 1079833, 769764, 494205, 319901, 609191, 156160, 59664, 51632, 24939],
+    'k=14': [131569770, 2227792, 1060533, 357538, 167659, 101340, 210784, 61759, 30754, 36609, 17939],
+    'k=17': [258453785, 1762322, 952797, 343622, 164668, 100141, 203463, 60978, 31907, 37652, 17704],
 }
 
 # Creating DataFrame
@@ -47,4 +48,4 @@ plt.tight_layout()
 # Display the plot
 plt.show()
 
-plt.savefig('/p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/kmerSizeSpecifityAnalysis/kmerFrequencySpecifity.png')
+plt.savefig('/p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/kmerSizeSpecifityAnalysis/kmerFrequencySpecifity.pdf')
