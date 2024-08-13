@@ -42,7 +42,7 @@ bar_width = 0.2
 # ax1.legend(fontsize=18)
 # ax1.set_yscale('log')  # Set logarithmic scale on the y-axis
 # ax1.tick_params(axis='both', which='major', labelsize=18)
-# ax1.set_ylabel('No. of TP (log)', fontsize=20)
+# ax1.set_ylabel('No. of TP (log)', fontsize=20)                      
 # ax1.text(-0.1, 1.1, '(A)', transform=ax1.transAxes, fontsize=24, fontweight='bold', va='top', ha='right', color='blue')
 
 # Plot using dots

@@ -37,7 +37,7 @@ ax1.plot(x, y3, 'v-', label=third_ax_name, color='firebrick', markersize=10)
 
 ax1.legend(fontsize=18)
 ax1.tick_params(axis='both', which='major', labelsize=18)
-ax1.set_ylabel('Recall Rate', fontsize=20)
+ax1.set_ylabel('Recall Rate (%)', fontsize=20)
 ax1.text(-0.1, 1.1, '(A)', transform=ax1.transAxes, fontsize=24, fontweight='bold', va='top', ha='right', color='blue')
 
 # Specify the range for the zoomed-in plot
@@ -53,12 +53,12 @@ ax2.legend(fontsize=18)
 ax2.tick_params(axis='both', which='major', labelsize=18)
 
 # Format the y-axis ticks
-formatter = ticker.FuncFormatter(lambda x, pos: '0' if x == 0 else '{:.0f}k'.format(x*1e-3))
-ax2.yaxis.set_major_formatter(formatter)
-ax2.set_ylabel('Recall Rate', fontsize=20)
+# formatter = ticker.FuncFormatter(lambda x, pos: '0' if x == 0 else '{:.0f}k'.format(x*1e-3))
+# ax2.yaxis.set_major_formatter(formatter)
+ax2.set_ylabel('Recall Rate (%)', fontsize=20)
 ax2.text(-0.1, 1.1, '(B)', transform=ax2.transAxes, fontsize=24, fontweight='bold', va='top', ha='right', color='blue')
 
-plt.xlabel('Alignment Size', fontsize=20)
+plt.xlabel('Minimum Alignment Size (R)', fontsize=20)
 
 # Show the plot
 plt.tight_layout()
