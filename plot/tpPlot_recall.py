@@ -35,7 +35,7 @@ bar_width = 0.2
 ax1.plot(x, y2, 's-', label=second_ax_name, color='navy', markersize=10)
 ax1.plot(x, y3, 'v-', label=third_ax_name, color='firebrick', markersize=10)
 
-ax1.legend(fontsize=18)
+ax1.legend(fontsize=18, loc='lower right')
 ax1.tick_params(axis='both', which='major', labelsize=18)
 ax1.set_ylabel('Recall Rate (%)', fontsize=20)
 ax1.text(-0.1, 1.1, '(A)', transform=ax1.transAxes, fontsize=24, fontweight='bold', va='top', ha='right', color='blue')
@@ -49,8 +49,11 @@ print("Zoom Start:", zoom_start, " Zoom End:", zoom_end)
 # Plot the zoomed-in portion as a bar chart in the bottom subplot
 ax2.bar(x[zoom_start:zoom_end], y2[zoom_start:zoom_end], label=second_ax_name, color='navy', width=bar_width)
 ax2.bar([i + bar_width for i in x[zoom_start:zoom_end]], y3[zoom_start:zoom_end], label=third_ax_name, color='firebrick', width=bar_width)  # Shift x values for Dataset 3
-ax2.legend(fontsize=18)
+ax2.legend(fontsize=18, loc='lower right')
 ax2.tick_params(axis='both', which='major', labelsize=18)
+
+# Set y-axis limits to 50-100 for the zoomed-in plot
+ax2.set_ylim(50, 100)
 
 # Format the y-axis ticks
 # formatter = ticker.FuncFormatter(lambda x, pos: '0' if x == 0 else '{:.0f}k'.format(x*1e-3))

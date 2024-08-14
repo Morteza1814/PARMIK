@@ -58,6 +58,9 @@ ax2.bar([i + 2 * bar_width for i in x[zoom_start:zoom_end]], y4[zoom_start:zoom_
 ax2.legend(fontsize=18, loc='lower right')
 ax2.tick_params(axis='both', which='major', labelsize=18)
 
+# Set y-axis limits to 50-100 for the zoomed-in plot
+ax2.set_ylim(80, 100)
+
 # Format the y-axis ticks
 # formatter = ticker.FuncFormatter(lambda x, pos: '0' if x == 0 else '{:.0f}k'.format(x*1e-3))
 # ax2.yaxis.set_major_formatter(formatter)
