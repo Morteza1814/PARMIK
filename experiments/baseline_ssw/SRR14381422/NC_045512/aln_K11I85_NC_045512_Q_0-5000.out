@@ -1,0 +1,61 @@
+Starting the job at Wed Aug 14 07:51:59 PM EDT 2024
+no kmerRangesFileAddressArg!
+no baselineBaseAddress!
+no otherToolArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  3
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR14381422/SRR14381422_reads
+readFileName:                 SRR14381422_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_chunks/NC_045512_queries_0-999
+queryFileName:                NC_045512_queries_0-999
+otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR14381422/NC_045512/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381422/NC_045512
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/2484_1111_2444_2288_2848
+kmerRangesFileAddress:        
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   11
+regionSize:                   48
+cheapKmerThreshold:           0
+percentageIdentity:           0.85
+minExactMatchLen:             0
+numThreads:                   1
+isSecondChanceOff:            F
+minNumExactMatchKmer:         0
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381422/
+baselineBaseAddress:          
+max editDistance in min region: 2
+otherTool:                    
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 2, s: 4, go: 8, ge: 4
+m: 1, s: 1, go: 1, ge: 1
+m: 2, s: 4, go: 4, ge: 4
+m: 2, s: 2, go: 8, ge: 8
+m: 2, s: 8, go: 4, ge: 8
+------------------------------------
+experiment dir: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381422/NC_045512/IKT0_K11_PI85_M0_T1_SC1_P_2484_1111_2444_2288_2848
+Directory created successfully: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381422/NC_045512/IKT0_K11_PI85_M0_T1_SC1_P_2484_1111_2444_2288_2848
+numberOfReadsWithN : 0
+queryCount : 1000
+numberOfReadsWithN : 0
+readCount : 17000000
+offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381422/ck_T0_K11_r17000000
+offlineExpensiveIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381422/ek_T0_K11_r17000000
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381422/NC_045512/IKT0_K11_PI85_M0_T1_SC1_P_2484_1111_2444_2288_2848/parmikAln.txt
+Starting alignment for all queries [fwd]...
+queryBaseIndex: 0
+query [0]: # of matches found 70394 and it took: 89320.8ms
+query [1]: # of matches found 69932 and it took: 90878.3ms
+query [2]: # of matches found 69240 and it took: 90131.4ms
+query [3]: # of matches found 68577 and it took: 90345.8ms
+query [4]: # of matches found 67972 and it took: 90822.5ms
+query [5]: # of matches found 68708 and it took: 90290.4ms
+query [6]: # of matches found 68746 and it took: 90766.9ms
+query [7]: # of matches found 69019 and it took: 90651.7ms
+query [8]: # of matches found 69039 and it took: 91203.2ms
+query [9]: # of matches found 68232 and it took: 90929.7ms
+query [10]: # of matches found 67678 and it took: 90212.1ms
+query [11]: # of matches found 67711 and it took: 91219.2ms
+query [12]: # of matches found 66949 and it took: 90840.7ms

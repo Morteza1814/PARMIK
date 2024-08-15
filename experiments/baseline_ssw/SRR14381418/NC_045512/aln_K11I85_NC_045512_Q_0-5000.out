@@ -1,0 +1,161 @@
+Starting the job at Wed Aug 14 06:04:53 PM EDT 2024
+no kmerRangesFileAddressArg!
+no baselineBaseAddress!
+no otherToolArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  3
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR14381418/SRR14381418_reads
+readFileName:                 SRR14381418_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_chunks/NC_045512_queries_0-999
+queryFileName:                NC_045512_queries_0-999
+otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR14381418/NC_045512/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381418/NC_045512
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/2484_1111_2444_2288_2848
+kmerRangesFileAddress:        
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   11
+regionSize:                   48
+cheapKmerThreshold:           0
+percentageIdentity:           0.85
+minExactMatchLen:             0
+numThreads:                   1
+isSecondChanceOff:            F
+minNumExactMatchKmer:         0
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381418/
+baselineBaseAddress:          
+max editDistance in min region: 2
+otherTool:                    
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 2, s: 4, go: 8, ge: 4
+m: 1, s: 1, go: 1, ge: 1
+m: 2, s: 4, go: 4, ge: 4
+m: 2, s: 2, go: 8, ge: 8
+m: 2, s: 8, go: 4, ge: 8
+------------------------------------
+experiment dir: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381418/NC_045512/IKT0_K11_PI85_M0_T1_SC1_P_2484_1111_2444_2288_2848
+Directory already exists or could not be created: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381418/NC_045512/IKT0_K11_PI85_M0_T1_SC1_P_2484_1111_2444_2288_2848
+numberOfReadsWithN : 0
+queryCount : 1000
+numberOfReadsWithN : 0
+readCount : 15664284
+offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381418/ck_T0_K11_r17000000
+offlineExpensiveIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381418/ek_T0_K11_r17000000
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381418/NC_045512/IKT0_K11_PI85_M0_T1_SC1_P_2484_1111_2444_2288_2848/parmikAln.txt
+Starting alignment for all queries [fwd]...
+queryBaseIndex: 0
+query [0]: # of matches found 56870 and it took: 64017.7ms
+query [1]: # of matches found 56057 and it took: 64652.5ms
+query [2]: # of matches found 55549 and it took: 64639.4ms
+query [3]: # of matches found 55220 and it took: 64719.2ms
+query [4]: # of matches found 54941 and it took: 64983.3ms
+query [5]: # of matches found 55086 and it took: 64772.6ms
+query [6]: # of matches found 55231 and it took: 65305.2ms
+query [7]: # of matches found 55438 and it took: 65364.8ms
+query [8]: # of matches found 55695 and it took: 65002.1ms
+query [9]: # of matches found 55479 and it took: 65446.2ms
+query [10]: # of matches found 55372 and it took: 65238.7ms
+query [11]: # of matches found 55472 and it took: 65507.9ms
+query [12]: # of matches found 55393 and it took: 65187.2ms
+query [13]: # of matches found 55475 and it took: 65430.5ms
+query [14]: # of matches found 55420 and it took: 65930.1ms
+query [15]: # of matches found 55151 and it took: 65704.3ms
+query [16]: # of matches found 55224 and it took: 65823.6ms
+query [17]: # of matches found 55169 and it took: 66407.2ms
+query [18]: # of matches found 54944 and it took: 66364.3ms
+query [19]: # of matches found 54905 and it took: 66233.6ms
+query [20]: # of matches found 54860 and it took: 65929.6ms
+query [21]: # of matches found 54713 and it took: 66573.5ms
+query [22]: # of matches found 54814 and it took: 66764.2ms
+query [23]: # of matches found 54449 and it took: 66592.8ms
+query [24]: # of matches found 54351 and it took: 66762.8ms
+query [25]: # of matches found 52341 and it took: 66653.3ms
+query [26]: # of matches found 51290 and it took: 66533.9ms
+query [27]: # of matches found 50620 and it took: 67129.6ms
+query [28]: # of matches found 49411 and it took: 66727ms
+query [29]: # of matches found 48809 and it took: 66980.6ms
+query [30]: # of matches found 48360 and it took: 66752ms
+query [31]: # of matches found 48313 and it took: 67070.7ms
+query [32]: # of matches found 48258 and it took: 67043.6ms
+query [33]: # of matches found 48121 and it took: 67250.4ms
+query [34]: # of matches found 47853 and it took: 67027ms
+query [35]: # of matches found 48383 and it took: 67412.4ms
+query [36]: # of matches found 48495 and it took: 67383.9ms
+query [37]: # of matches found 48733 and it took: 67497.6ms
+query [38]: # of matches found 49634 and it took: 67414.4ms
+query [39]: # of matches found 50536 and it took: 67191.8ms
+query [40]: # of matches found 50922 and it took: 67306.9ms
+query [41]: # of matches found 51031 and it took: 67655.6ms
+query [42]: # of matches found 50769 and it took: 67581.9ms
+query [43]: # of matches found 50813 and it took: 67642.2ms
+query [44]: # of matches found 51089 and it took: 67749.9ms
+query [45]: # of matches found 51315 and it took: 67504.4ms
+query [46]: # of matches found 51696 and it took: 67603.9ms
+query [47]: # of matches found 51538 and it took: 67977.6ms
+query [48]: # of matches found 51353 and it took: 67520.6ms
+query [49]: # of matches found 51308 and it took: 67779.8ms
+query [50]: # of matches found 51799 and it took: 67396ms
+query [51]: # of matches found 51576 and it took: 67885.8ms
+query [52]: # of matches found 51667 and it took: 67541.8ms
+query [53]: # of matches found 51794 and it took: 68147.3ms
+query [54]: # of matches found 51879 and it took: 67921.7ms
+query [55]: # of matches found 52057 and it took: 67462.6ms
+query [56]: # of matches found 52261 and it took: 67640.3ms
+query [57]: # of matches found 52211 and it took: 67600.7ms
+query [58]: # of matches found 52414 and it took: 67335.7ms
+query [59]: # of matches found 51159 and it took: 67324.1ms
+query [60]: # of matches found 50894 and it took: 66591.6ms
+query [61]: # of matches found 50227 and it took: 67297.4ms
+query [62]: # of matches found 50383 and it took: 67683.9ms
+query [63]: # of matches found 50429 and it took: 66898.8ms
+query [64]: # of matches found 50383 and it took: 67257.2ms
+query [65]: # of matches found 49450 and it took: 67230.8ms
+query [66]: # of matches found 49012 and it took: 67039.9ms
+query [67]: # of matches found 47707 and it took: 67298.1ms
+query [68]: # of matches found 47425 and it took: 67568.6ms
+query [69]: # of matches found 47814 and it took: 67759.3ms
+query [70]: # of matches found 47731 and it took: 67023.5ms
+query [71]: # of matches found 47809 and it took: 67901.7ms
+query [72]: # of matches found 47732 and it took: 67733ms
+query [73]: # of matches found 47107 and it took: 67723.8ms
+query [74]: # of matches found 46211 and it took: 68330.4ms
+query [75]: # of matches found 45651 and it took: 67766.5ms
+query [76]: # of matches found 45397 and it took: 68185.5ms
+query [77]: # of matches found 44287 and it took: 68185.5ms
+query [78]: # of matches found 43675 and it took: 68238.4ms
+query [79]: # of matches found 43034 and it took: 68507.9ms
+query [80]: # of matches found 43434 and it took: 67884.2ms
+query [81]: # of matches found 43606 and it took: 68857.1ms
+query [82]: # of matches found 43909 and it took: 68462.4ms
+query [83]: # of matches found 44626 and it took: 68080.2ms
+query [84]: # of matches found 44581 and it took: 68697.1ms
+query [85]: # of matches found 44503 and it took: 68913.6ms
+query [86]: # of matches found 44072 and it took: 68946.4ms
+query [87]: # of matches found 43536 and it took: 68974.5ms
+query [88]: # of matches found 43434 and it took: 69048.3ms
+query [89]: # of matches found 42696 and it took: 69278.9ms
+query [90]: # of matches found 42556 and it took: 68958.6ms
+query [91]: # of matches found 42366 and it took: 69337.9ms
+query [92]: # of matches found 42456 and it took: 68847.3ms
+query [93]: # of matches found 42521 and it took: 68439.1ms
+query [94]: # of matches found 42429 and it took: 68747.7ms
+query [95]: # of matches found 42410 and it took: 68745.8ms
+query [96]: # of matches found 42280 and it took: 68837.4ms
+query [97]: # of matches found 41953 and it took: 68523.6ms
+query [98]: # of matches found 42109 and it took: 68814.7ms
+query [99]: # of matches found 42785 and it took: 68389.5ms
+query [100]: # of matches found 43264 and it took: 67747.2ms
+query [101]: # of matches found 43185 and it took: 68210.8ms
+query [102]: # of matches found 43048 and it took: 68279.4ms
+query [103]: # of matches found 42883 and it took: 67817.4ms
+query [104]: # of matches found 42978 and it took: 68483.5ms
+query [105]: # of matches found 42868 and it took: 68110.8ms
+query [106]: # of matches found 42908 and it took: 67871.3ms
+query [107]: # of matches found 42964 and it took: 67247.1ms
+query [108]: # of matches found 42937 and it took: 67470.5ms
+query [109]: # of matches found 43105 and it took: 67895ms
+query [110]: # of matches found 43194 and it took: 67307.5ms
+query [111]: # of matches found 43287 and it took: 67797.6ms
+query [112]: # of matches found 43397 and it took: 67819.8ms

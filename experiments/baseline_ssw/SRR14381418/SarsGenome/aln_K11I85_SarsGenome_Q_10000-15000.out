@@ -1,0 +1,76 @@
+Starting the job at Wed Aug 14 07:29:14 PM EDT 2024
+no kmerRangesFileAddressArg!
+no baselineBaseAddress!
+no otherToolArg!
+**********************CONFIGURATIONS*****************************
+PARMIK mode:                  3
+readDatabaseAddress:          /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR14381418/SRR14381418_reads
+readFileName:                 SRR14381418_reads
+queryFileAddress:             /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/SarsGenome_chunks/SarsGenome_queries_10000-10999
+queryFileName:                SarsGenome_queries_10000-10999
+otherToolOutputFileAddress:   /u/rgq5aw/GIT/PARMIK/partialMatcherProject/tools/blast/SRR14381418/SarsGenome/blastn_ws30_results.out
+outputDir:                    /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381418/SarsGenome
+penaltyFileAddress:           /u/rgq5aw/GIT/PARMIK/experiments/parmik/CK_SSW_ID_PRCNTG/PenaltySets/2484_1111_2444_2288_2848
+kmerRangesFileAddress:        
+readsCount:                   17000000
+queryCount:                   30000
+kmerLength:                   11
+regionSize:                   48
+cheapKmerThreshold:           0
+percentageIdentity:           0.85
+minExactMatchLen:             0
+numThreads:                   1
+isSecondChanceOff:            F
+minNumExactMatchKmer:         0
+isIndexOffline:               1
+offlineIndexAddress:          /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381418/
+baselineBaseAddress:          
+max editDistance in min region: 2
+otherTool:                    
+**********************CONFIGURATIONS*****************************
+--------------Penalties--------------
+m: 2, s: 4, go: 8, ge: 4
+m: 1, s: 1, go: 1, ge: 1
+m: 2, s: 4, go: 4, ge: 4
+m: 2, s: 2, go: 8, ge: 8
+m: 2, s: 8, go: 4, ge: 8
+------------------------------------
+experiment dir: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381418/SarsGenome/IKT0_K11_PI85_M0_T1_SC1_P_2484_1111_2444_2288_2848
+Directory already exists or could not be created: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381418/SarsGenome/IKT0_K11_PI85_M0_T1_SC1_P_2484_1111_2444_2288_2848
+numberOfReadsWithN : 0
+queryCount : 1000
+numberOfReadsWithN : 0
+readCount : 15664284
+offlineCheapIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381418/ck_T0_K11_r17000000
+offlineExpensiveIndexAddress: /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR14381418/ek_T0_K11_r17000000
+pmrkAlignmentsAddress: /p/lava/parmik/partialMatcherProject/tools/baseline_ssw/SRR14381418/SarsGenome/IKT0_K11_PI85_M0_T1_SC1_P_2484_1111_2444_2288_2848/parmikAln.txt
+Starting alignment for all queries [fwd]...
+queryBaseIndex: 10000
+query [10000]: # of matches found 48574 and it took: 88364.6ms
+query [10001]: # of matches found 49646 and it took: 89192.5ms
+query [10002]: # of matches found 50031 and it took: 89602.6ms
+query [10003]: # of matches found 50073 and it took: 89148.7ms
+query [10004]: # of matches found 50175 and it took: 89496.7ms
+query [10005]: # of matches found 50671 and it took: 89083.5ms
+query [10006]: # of matches found 50854 and it took: 90375.4ms
+query [10007]: # of matches found 51332 and it took: 90068.4ms
+query [10008]: # of matches found 51043 and it took: 89341.2ms
+query [10009]: # of matches found 50856 and it took: 89531.4ms
+query [10010]: # of matches found 50914 and it took: 89024.5ms
+query [10011]: # of matches found 51103 and it took: 89794.7ms
+query [10012]: # of matches found 51222 and it took: 89407.9ms
+query [10013]: # of matches found 50884 and it took: 89163.3ms
+query [10014]: # of matches found 50505 and it took: 89587.2ms
+query [10015]: # of matches found 49793 and it took: 89386ms
+query [10016]: # of matches found 49066 and it took: 90646.9ms
+query [10017]: # of matches found 46474 and it took: 90565.9ms
+query [10018]: # of matches found 45136 and it took: 89951.9ms
+query [10019]: # of matches found 44846 and it took: 90114.9ms
+query [10020]: # of matches found 44909 and it took: 90008.5ms
+query [10021]: # of matches found 45443 and it took: 90778.4ms
+query [10022]: # of matches found 45629 and it took: 90189.8ms
+query [10023]: # of matches found 45896 and it took: 90246ms
+query [10024]: # of matches found 46759 and it took: 90273.9ms
+query [10025]: # of matches found 47198 and it took: 90322.4ms
+query [10026]: # of matches found 47419 and it took: 91227.8ms
+query [10027]: # of matches found 47772 and it took: 90292.6ms
