@@ -132,9 +132,9 @@ public:
         return false;
     }
 
-    Alignment alignDifferentPenaltyScores(string query, string read, uint32_t queryID, uint32_t readID, bool isForwardStran, vector<Penalty> &penalties)
+    vector<Alignment> alignDifferentPenaltyScores(string query, string read, uint32_t queryID, uint32_t readID, bool isForwardStran, vector<Penalty> &penalties)
     {
-        Alignment bestAlignment;
+        vector<Alignment> alignments;
         if (penalties.size() == 0)
         {
             Alignment aln;
@@ -148,10 +148,11 @@ public:
             cigarStr = trimClips(cigarStr);
             if(hasConsecutiveMatches(cigarStr, regionSize) && checkIdentityPercentange(cigarStr)) {
                 if(DEBUG_MODE) cout << "cigar len was smaller than the R or K at the beginning\n";
-                return aln;
+                alignments.push_back(aln);
+                return alignments;
             } else {
-                //return an empty alignment
-                return bestAlignment;
+                //return an empty list of alignments
+                return alignments;
             }
         }
         for (auto penalty : penalties)
@@ -172,11 +173,11 @@ public:
             cigarStr = trimClips(cigarStr);
             if(hasConsecutiveMatches(cigarStr, regionSize) && checkIdentityPercentange(cigarStr)) {
                 if(DEBUG_MODE) cout << "cigar len was smaller than the R or K at the beginning\n";
-                if (aln.partialMatchSize > bestAlignment.partialMatchSize || (aln.partialMatchSize == bestAlignment.partialMatchSize && aln.editDistance < bestAlignment.editDistance))
-                    bestAlignment = aln;
+                // if (aln.partialMatchSize > bestAlignment.partialMatchSize || (aln.partialMatchSize == bestAlignment.partialMatchSize && aln.editDistance < bestAlignment.editDistance))
+                alignments.push_back(aln);
             }
         }
-        return bestAlignment;
+        return alignments;
     }
 
     void findPartiaMatches(tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, uint32_t queryCount, bool isForwardStrand, string parmikAlignments, vector<Penalty> penalties, uint32_t queryBaseIndex)
@@ -202,7 +203,7 @@ public:
             if (query.find('n') != string::npos || query.find('N') != string::npos)
                 continue;
             // read the candidate reads of cheap k-mer filter of front
-            tsl::robin_map <uint32_t, Alignment> alignments;
+            vector <Alignment> alignments;
             auto start = chrono::high_resolution_clock::now();
             #pragma omp parallel for
             for (size_t j = 0; j < reads.size(); j++)
@@ -213,11 +214,12 @@ public:
                 if (itr == reads.end())
                     continue;
                 string read = itr->second;
-                Alignment aln = alignDifferentPenaltyScores(query, read, qID, j, isForwardStrand, penalties);
-                if (aln.partialMatchSize > 0){
+                vector<Alignment> alns = alignDifferentPenaltyScores(query, read, qID, j, isForwardStrand, penalties);
+                if (alns.size() > 0){
                     #pragma omp critical
                     {
-                        alignments.insert(make_pair(j, aln));
+                        for (auto it = alns.begin(); it!= alns.end(); it++)
+                            alignments.push_back(*it);
                     }
                 }
             }
@@ -227,7 +229,7 @@ public:
             //dump the alignments
             for (auto it = alignments.begin(); it!= alignments.end(); it++)
             {
-                dumpSam(pAln, it->second);
+                dumpSam(pAln, *it);
             }
             matchesPerQuery.insert(alignments.size());
             // cout << "queryID: " << qID << ", " << (isForwardStrand ? ("fwd"):("rev")) <<", total matches: " << alignments.size() << i << ", matches accepted: " << matchesAccepted << ", matches passed with starting pos over ED: " << matchesPassedWithStartingPosOverED << endl;
