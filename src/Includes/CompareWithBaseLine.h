@@ -354,7 +354,7 @@ public:
             parmikSam.parseFile(queryCount, tool2Alignments, false);
         }
 
-        uint32_t numberOfQueryContainN = 0, numberOfTool2ReadsContainingN = 0, 
+        uint32_t numberOfQueryContainN = 0,
         queriestool2FoundMatch = 0, queriesblfoundMatch = 0,
         baseLineTotalNumberOfReadIDs = 0, tool2TotalNumberOfReadIDs = 0,
         numnberOfBaseLine_FN = 0, tool2FN = 0, tool2FN_noCriteriaFittedMatches = 0, // places where tool2 found no matches or none of the matches conform with the criteria
@@ -488,12 +488,12 @@ public:
                 for (auto it = query_t2Alignments.begin(); it != query_t2Alignments.end(); it++) 
                 {
                     Alignment aln = (*it);
-                    string tool2R = reads[aln.readID]; 
-                    if(tool2R.find('N') != string::npos || tool2R.find('n') != string::npos)
-                    {
-                        numberOfTool2ReadsContainingN++;
-                        continue;
-                    }
+                    // string tool2R = reads[aln.readID]; 
+                    // if(tool2R.find('N') != string::npos || tool2R.find('n') != string::npos)
+                    // {
+                    //     numberOfTool2ReadsContainingN++;
+                    //     continue;
+                    // }
                     bool isFP = false;
                     string cigarStr = getCigarStr(aln, cfg, tool2Name);
                     if(CHECK_EXACT_MATCH_CRITERION && !hasConsecutiveMatches(cigarStr, cfg.kmerLength)) {
@@ -744,7 +744,7 @@ public:
         cmp << "------------------------------------------------------------------------------------------" << endl;
         cmp << left << setw(80) << "# Of readIDs found by Baseline (total): " << baseLineTotalNumberOfReadIDs << endl;
         cmp << left << setw(80) << "# Of readIDs found by " + tool2Name + " (total): " << tool2TotalNumberOfReadIDs << endl;
-        cmp << left << setw(80) << "# Of readIDs found by " + tool2Name + " containing N (total): " << numberOfTool2ReadsContainingN << endl;
+        // cmp << left << setw(80) << "# Of readIDs found by " + tool2Name + " containing N (total): " << numberOfTool2ReadsContainingN << endl;
         
         cmp << "------------------------------------------------------------------------------------------" << endl;
         cmp << left << setw(80) << "# Of total " + tool2Name + " (TP): " << totaltool2TP << endl;
