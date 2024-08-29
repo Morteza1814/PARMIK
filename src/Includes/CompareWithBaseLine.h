@@ -129,6 +129,14 @@ public:
         }
     }
 
+    void removeBaselineTPAlnSz(uint16_t aln_sz) {
+        if (baselineTP_aln_sz.find(aln_sz) == baselineTP_aln_sz.end()) {
+            //do nothing
+        } else {
+            if(baselineTP_aln_sz[aln_sz] > 0) baselineTP_aln_sz[aln_sz]--;
+        }
+    }
+
     void addTool2BestAlnSz(uint16_t aln_sz) {
         if (tool2Best_aln_sz.find(aln_sz) == tool2Best_aln_sz.end()) {
             tool2Best_aln_sz[aln_sz] = 1;
@@ -384,7 +392,6 @@ public:
         multiset<uint32_t> tool2FN_baseLine_alnLen_allQ, tool2FN_baseLine_ed_allQ;// baseLine alignment characteristics for all queries when tool2 did not find a match
         multiset<uint32_t> tool2FN_noCriteria_baseLine_alnLen_allQ, tool2FN_noCriteria_tool1_ed_allQ;
         multiset<uint32_t> tool2FN_noCriteria_baseLine_ed_allQ, baseLineFN_tool2_alnLen_allQ, baseLineFN_tool2_ed_allQ;// tool2 alignment characteristics for all queries when baseLine did not find a match
-        // IndexContainer<uint32_t, Alignment> baseLineAlignments;
         vector<Alignment> baseLineSamAlignments;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
@@ -400,21 +407,53 @@ public:
             if(queryInd % 1000 == 0) {
                 cout << "queries processed: " << queryInd << " / " << queryCount << endl;
                 readChunkOfBaseLine(baseLineSamAlignments, baseLineFilePrefixAddress, queryInd, 1000);
-                // cout << "baseLineAlignments: " << baseLineAlignments2.size() << endl;
             }
             //baseline alignments for query
-            vector<Alignment> baseLineAlignments;
+            tsl::robin_map<uint32_t, Alignment> baselineReadID_Aln;
+            Alignment baseLineBestAln;
             for (const Alignment& aln : baseLineSamAlignments) 
             {
                 if ((uint32_t)aln.queryID == queryInd) {
                     string cigarStr = convertCigarToStr(aln.cigar, true);
                     // only add alignments whose pi > PI
                     if (checkIdentityPercentange(cigarStr)) {
-                        baseLineAlignments.push_back(aln);
+                        auto readIt = baselineReadID_Aln.find(aln.readID);
+                        if(readIt == baselineReadID_Aln.end()) {
+                            baselineReadID_Aln[aln.readID] = aln;
+                            addBaselineTPAlnSz(aln.matches + aln.inDels + aln.substitutions);
+                        } else {
+                            Alignment readAln = readIt->second;
+                            if ((readAln.matches + readAln.inDels + readAln.substitutions < aln.matches + aln.inDels + aln.substitutions) || 
+                            ((readAln.matches + readAln.inDels + readAln.substitutions == aln.matches + aln.inDels + aln.substitutions) &&
+                            (readAln.inDels + readAln.substitutions > aln.inDels + aln.substitutions))) {
+                                baselineReadID_Aln[aln.readID] = aln;
+                                removeBaselineTPAlnSz(readAln.matches + readAln.inDels + readAln.substitutions);
+                                addBaselineTPAlnSz(aln.matches + aln.inDels + aln.substitutions);
+                            }
+                        }
+                        if (aln.matches + aln.inDels + aln.substitutions > baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions) // only exact matches
+                        {
+                            baseLineBestAln = aln;
+                        }
+                        else if (aln.matches + aln.inDels + aln.substitutions == baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions)
+                        {
+                            if (aln.inDels + aln.substitutions < baseLineBestAln.inDels + baseLineBestAln.substitutions) // InDel has the same wight as substitution
+                            {
+                                baseLineBestAln = aln;
+                            }
+                        }
                     }
                 }
             }
-            // cout << "baseLineAlignments: " << baseLineAlignments.size() << endl;
+
+            size_t baseLineReadPerQuery = baselineReadID_Aln.size();
+            baseLineTotalNumberOfReadIDs += baseLineReadPerQuery;
+            baseLineReadPerQuerySet.insert(baseLineReadPerQuery);
+            if(baseLineReadPerQuery > 0){
+                queriesblfoundMatch++;
+                baseLineBestAlnSize = baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions;
+                addBaselineBestAlnSz(baseLineBestAlnSize);
+            }
             //query level parameters
             uint32_t tool2TP = 0, tool2FP = 0;
             uint32_t tool2TP_nobaseLineMatches = 0, tool2TP_tool2Outperfomed = 0, tool2TP_baseLineOutperfomed = 0, tool2TP_tool2EqualbaseLine = 0;
@@ -424,56 +463,31 @@ public:
             cmp << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
             cmp << "Q : " << query << ", queryInd: " << queryInd << endl;
             Alignment bestAlntool2;
-            // auto baseLineRange = baseLineAlignments.getRange(queryInd);
-            // size_t baseLineReadPerQuery = distance(baseLineRange.first, baseLineRange.second);
-            size_t baseLineReadPerQuery = baseLineAlignments.size();
-            baseLineTotalNumberOfReadIDs += baseLineReadPerQuery;
-            baseLineReadPerQuerySet.insert(baseLineReadPerQuery);
 
-            vector<Alignment> query_t2Alignments;
+            tsl::robin_map<uint32_t, Alignment> query_t2Alignments;
             for (const Alignment& aln : tool2Alignments) 
             {
                 if ((uint32_t)aln.queryID == queryInd) {
-                    query_t2Alignments.push_back(aln);
+                    auto readIt = query_t2Alignments.find(aln.readID);
+                    if(readIt == query_t2Alignments.end()) {
+                        query_t2Alignments[aln.readID] = aln;
+                    } else {
+                        Alignment readAln = readIt->second;
+                        if ((readAln.matches + readAln.inDels + readAln.substitutions < aln.matches + aln.inDels + aln.substitutions) || 
+                        ((readAln.matches + readAln.inDels + readAln.substitutions == aln.matches + aln.inDels + aln.substitutions) &&
+                        (readAln.inDels + readAln.substitutions > aln.inDels + aln.substitutions))) {
+                            query_t2Alignments[aln.readID] = aln;
+                        }
+                    }
                 }
             }
-            // cout << "tool2Alignments: " << query_t2Alignments.size() << endl;
-            // auto tool2Rrange = tool2Alignments.getRange(queryInd);
             size_t tool2ReadPerQuery = query_t2Alignments.size();
             tool2TotalNumberOfReadIDs += tool2ReadPerQuery;
             tool2ReadPerQuerySet.insert(tool2ReadPerQuery);
             cmp << "# of reads found by " + tool2Name + " : " << tool2ReadPerQuery << endl;
             cmp << "# of reads found by Baseline : " << baseLineReadPerQuery << endl;
-            Alignment baseLineBestAln;
+            
             vector<uint32_t> tool2TPReadIds;
-            IndexContainer<uint32_t, Alignment> baselineReadID_Aln;
-            //get the best baseLine alignment
-            if(baseLineReadPerQuery > 0){
-                queriesblfoundMatch++;
-                for (auto it = baseLineAlignments.begin(); it != baseLineAlignments.end(); it++) {
-                    Alignment baseLineAln = (*it);
-                    baselineReadID_Aln.put(baseLineAln.readID, baseLineAln);//this will be used for the future searches in the baseline alignemnts
-                    addBaselineTPAlnSz(baseLineAln.matches + baseLineAln.inDels + baseLineAln.substitutions);
-                    if (baseLineAln.matches + baseLineAln.inDels + baseLineAln.substitutions > baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions) // only exact matches
-                    {
-                        baseLineBestAln = baseLineAln;
-                    }
-                    else if (baseLineAln.matches + baseLineAln.inDels + baseLineAln.substitutions == baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions)
-                    {
-                        if (baseLineAln.inDels + baseLineAln.substitutions < baseLineBestAln.inDels + baseLineBestAln.substitutions) // InDel has the same wight as substitution
-                        {
-                            baseLineBestAln = baseLineAln;
-                        }
-                    }
-                }
-                baseLineBestAlnSize = baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions;
-                addBaselineBestAlnSz(baseLineBestAlnSize);
-            }
-            // if (baseLineReadPerQuery == 0)
-            //     totalbaseLineTN++;
-            // if(tool2ReadPerQuery == 0 || baseLineReadPerQuery == 0){
-            //     if(REPORT_BEST_ALN) bestAlnCmp << "- -" << endl;
-            // }
             if(tool2ReadPerQuery == 0 && baseLineReadPerQuery == 0){
                 //TN
                 totalTool2TN++;
@@ -487,7 +501,7 @@ public:
             } else {    // if both tool2 and baseLine have alignments or only tool2 has alignments
                 for (auto it = query_t2Alignments.begin(); it != query_t2Alignments.end(); it++) 
                 {
-                    Alignment aln = (*it);
+                    Alignment aln = it->second;
                     // string tool2R = reads[aln.readID]; 
                     // if(tool2R.find('N') != string::npos || tool2R.find('n') != string::npos)
                     // {
@@ -520,23 +534,12 @@ public:
                         tool2TPReadIds.push_back(aln.readID);
                         addTool2TPAlnSz(aln.partialMatchSize);
                         bool blfound = false;
+                        auto baselineReadIt = baselineReadID_Aln.find(aln.readID);
                         Alignment baselineAln;
-                        auto baselineReadIDRange = baselineReadID_Aln.getRange(aln.readID);
-                        for (auto itt = baselineReadIDRange.first; itt != baselineReadIDRange.second; itt++) 
+                        if(baselineReadIt != baselineReadID_Aln.end())
                         {
-                            Alignment tmpAln = itt->second;
-                            // if(tmpAln.readID == aln.readID)
-                            // {
-                            if (!blfound)
-                                baselineAln = itt->second;
+                            baselineAln = baselineReadIt->second;
                             blfound = true;
-                            if ((tmpAln.matches + tmpAln.inDels + tmpAln.substitutions > baselineAln.matches + baselineAln.inDels + baselineAln.substitutions) || 
-                            ((tmpAln.matches + tmpAln.inDels + tmpAln.substitutions == baselineAln.matches + baselineAln.inDels + baselineAln.substitutions) && 
-                            (tmpAln.inDels + tmpAln.substitutions <  baselineAln.inDels + baselineAln.substitutions))) 
-                            {
-                                baselineAln = tmpAln;
-                            }
-                            // }
                         }
                         if (!blfound)
                         {
@@ -605,9 +608,9 @@ public:
                     }
                 }
                 addTool2BestAlnSz(bestAlntool2.partialMatchSize);
-                for (auto itt = baseLineAlignments.begin(); itt != baseLineAlignments.end(); itt++) 
+                for (auto itt = baselineReadID_Aln.begin(); itt != baselineReadID_Aln.end(); itt++) 
                 {
-                    Alignment aaln = (*itt);
+                    Alignment aaln = itt->second;
                     bool tool2found = false;
                     for (const auto& element : tool2TPReadIds)
                     {
@@ -709,7 +712,7 @@ public:
             cmp << tool2Name + "Best_baseLineOutperfomed: " << tool2Best_baseLineOutperfomed << ", " + tool2Name + "Best_tool2Outperfomed: " << tool2Best_tool2Outperfomed << ", " + tool2Name + "Best_tool2EqualbaseLine: " << tool2Best_tool2EqualbaseLine << endl;
             // best_aln_sz.push_back(make_pair(baseLineBestAlnSize, tool2BestAlnSize)); 
             //baseLine and tool2 alignments per query
-            if(REPORT_ALN_PER_Q) alnPerQ << queryInd << " " << baseLineAlignments.size() << " " << tool2TP << endl;
+            if(REPORT_ALN_PER_Q) alnPerQ << queryInd << " " << baselineReadID_Aln.size() << " " << tool2TP << endl;
         }
         Utilities<uint32_t> util;   
         cmp << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Overall Comparison Results>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
