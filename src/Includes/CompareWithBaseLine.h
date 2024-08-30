@@ -361,6 +361,13 @@ public:
             SamReader parmikSam(cfg.otherToolOutputFileAddress);
             parmikSam.parseFile(queryCount, tool2Alignments, false);
         }
+        IndexContainer<uint32_t, Alignment> queryTool2Alignment;
+        for (const Alignment& aln : tool2Alignments)
+        {
+            queryTool2Alignment.put(aln.queryID, aln);
+        }
+        tool2Alignments.clear();
+
 
         uint32_t numberOfQueryContainN = 0,
         queriestool2FoundMatch = 0, queriesblfoundMatch = 0,
@@ -393,6 +400,7 @@ public:
         multiset<uint32_t> tool2FN_noCriteria_baseLine_alnLen_allQ, tool2FN_noCriteria_tool1_ed_allQ;
         multiset<uint32_t> tool2FN_noCriteria_baseLine_ed_allQ, baseLineFN_tool2_alnLen_allQ, baseLineFN_tool2_ed_allQ;// tool2 alignment characteristics for all queries when baseLine did not find a match
         vector<Alignment> baseLineSamAlignments;
+        IndexContainer<uint32_t, Alignment> queryBaselineAlignment;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
             uint32_t baseLineBestAlnSize = 0;
@@ -405,45 +413,51 @@ public:
                 continue;
             }
             if(queryInd % 1000 == 0) {
+                queryBaselineAlignment.clear();
                 cout << "queries processed: " << queryInd << " / " << queryCount << endl;
                 readChunkOfBaseLine(baseLineSamAlignments, baseLineFilePrefixAddress, queryInd, 1000);
+                for (const Alignment& aln : baseLineSamAlignments)
+                {
+                    queryBaselineAlignment.put(aln.queryID, aln);
+                }
+                baseLineSamAlignments.clear();
             }
             //baseline alignments for query
             tsl::robin_map<uint32_t, Alignment> baselineReadID_Aln;
             Alignment baseLineBestAln;
-            for (const Alignment& aln : baseLineSamAlignments) 
-            {
-                if ((uint32_t)aln.queryID == queryInd) {
-                    string cigarStr = convertCigarToStr(aln.cigar, true);
-                    // only add alignments whose pi > PI
-                    if (checkIdentityPercentange(cigarStr)) {
-                        auto readIt = baselineReadID_Aln.find(aln.readID);
-                        if(readIt == baselineReadID_Aln.end()) {
+
+            auto blQueryRrange = queryBaselineAlignment.getRange(queryInd);
+            for (auto it = blQueryRrange.first; it != blQueryRrange.second; it++){
+                Alignment aln = it->second;
+                string cigarStr = convertCigarToStr(aln.cigar, true);
+                // only add alignments whose pi > PI
+                if (checkIdentityPercentange(cigarStr)) {
+                    auto readIt = baselineReadID_Aln.find(aln.readID);
+                    if(readIt == baselineReadID_Aln.end()) {
+                        baselineReadID_Aln[aln.readID] = aln;
+                        addBaselineTPAlnSz(aln.matches + aln.inDels + aln.substitutions);
+                    } else {
+                        Alignment readAln = readIt->second;
+                        if ((readAln.matches + readAln.inDels + readAln.substitutions < aln.matches + aln.inDels + aln.substitutions) || 
+                        ((readAln.matches + readAln.inDels + readAln.substitutions == aln.matches + aln.inDels + aln.substitutions) &&
+                        (readAln.inDels + readAln.substitutions > aln.inDels + aln.substitutions))) {
                             baselineReadID_Aln[aln.readID] = aln;
+                            removeBaselineTPAlnSz(readAln.matches + readAln.inDels + readAln.substitutions);
                             addBaselineTPAlnSz(aln.matches + aln.inDels + aln.substitutions);
-                        } else {
-                            Alignment readAln = readIt->second;
-                            if ((readAln.matches + readAln.inDels + readAln.substitutions < aln.matches + aln.inDels + aln.substitutions) || 
-                            ((readAln.matches + readAln.inDels + readAln.substitutions == aln.matches + aln.inDels + aln.substitutions) &&
-                            (readAln.inDels + readAln.substitutions > aln.inDels + aln.substitutions))) {
-                                baselineReadID_Aln[aln.readID] = aln;
-                                removeBaselineTPAlnSz(readAln.matches + readAln.inDels + readAln.substitutions);
-                                addBaselineTPAlnSz(aln.matches + aln.inDels + aln.substitutions);
-                            }
                         }
-                        if (aln.matches + aln.inDels + aln.substitutions > baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions) // only exact matches
+                    }
+                    if (aln.matches + aln.inDels + aln.substitutions > baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions) // only exact matches
+                    {
+                        baseLineBestAln = aln;
+                    }
+                    else if (aln.matches + aln.inDels + aln.substitutions == baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions)
+                    {
+                        if (aln.inDels + aln.substitutions < baseLineBestAln.inDels + baseLineBestAln.substitutions) // InDel has the same wight as substitution
                         {
                             baseLineBestAln = aln;
                         }
-                        else if (aln.matches + aln.inDels + aln.substitutions == baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions)
-                        {
-                            if (aln.inDels + aln.substitutions < baseLineBestAln.inDels + baseLineBestAln.substitutions) // InDel has the same wight as substitution
-                            {
-                                baseLineBestAln = aln;
-                            }
-                        }
                     }
-                }
+                }   
             }
 
             size_t baseLineReadPerQuery = baselineReadID_Aln.size();
@@ -465,19 +479,18 @@ public:
             Alignment bestAlntool2;
 
             tsl::robin_map<uint32_t, Alignment> query_t2Alignments;
-            for (const Alignment& aln : tool2Alignments) 
-            {
-                if ((uint32_t)aln.queryID == queryInd) {
-                    auto readIt = query_t2Alignments.find(aln.readID);
-                    if(readIt == query_t2Alignments.end()) {
+            auto tool2QueryRrange = queryTool2Alignment.getRange(queryInd);
+            for (auto it = tool2QueryRrange.first; it != tool2QueryRrange.second; it++){
+                Alignment aln = it->second;
+                auto readIt = query_t2Alignments.find(aln.readID);
+                if(readIt == query_t2Alignments.end()) {
+                    query_t2Alignments[aln.readID] = aln;
+                } else {
+                    Alignment readAln = readIt->second;
+                    if ((readAln.matches + readAln.inDels + readAln.substitutions < aln.matches + aln.inDels + aln.substitutions) || 
+                    ((readAln.matches + readAln.inDels + readAln.substitutions == aln.matches + aln.inDels + aln.substitutions) &&
+                    (readAln.inDels + readAln.substitutions > aln.inDels + aln.substitutions))) {
                         query_t2Alignments[aln.readID] = aln;
-                    } else {
-                        Alignment readAln = readIt->second;
-                        if ((readAln.matches + readAln.inDels + readAln.substitutions < aln.matches + aln.inDels + aln.substitutions) || 
-                        ((readAln.matches + readAln.inDels + readAln.substitutions == aln.matches + aln.inDels + aln.substitutions) &&
-                        (readAln.inDels + readAln.substitutions > aln.inDels + aln.substitutions))) {
-                            query_t2Alignments[aln.readID] = aln;
-                        }
                     }
                 }
             }
