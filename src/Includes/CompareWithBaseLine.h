@@ -326,8 +326,23 @@ public:
         return true;
     }
 
-    //baseLine is always baseline
+    int longestRunOfMatches(const std::string& cigarStr) {
+        int maxRun = 0;
+        int currentRun = 0;
 
+        for (char c : cigarStr) {
+            if (c == '=') {
+                currentRun++;
+                maxRun = std::max(maxRun, currentRun);
+            } else {
+                currentRun = 0; // Reset the current run if the character is not '='
+            }
+        }
+
+        return maxRun;
+    }
+
+    //baseLine is always baseline
     void compareWithBaseLine(const Config& cfg, tsl::robin_map <uint32_t, string>& reads, tsl::robin_map <uint32_t, string>& queries, string comparisonResultsFileAddress, 
     const uint32_t queryCount, const string alnReportAddressBase, string baseLineFilePrefixAddress)
     {
@@ -394,7 +409,7 @@ public:
         multiset<uint32_t> tool2Best_tool2Outperfomed_ed_allQ, tool2Best_baseLineOutperfomed_ed_allQ, tool2Best_tool2EqualbaseLine_ed_allQ; 
         multiset<uint32_t> baseLineBest_tool2Outperfomed_alnLen_allQ, baseLineBest_baseLineOutperfomed_alnLen_allQ, baseLineBest_tool2EqualbaseLine_alnLen_allQ; 
         multiset<uint32_t> baseLineBest_tool2Outperfomed_ed_allQ, baseLineBest_baseLineOutperfomed_ed_allQ, baseLineBest_tool2EqualbaseLine_ed_allQ; 
-        multiset<uint32_t> tool2FP_lowAlnLen_alnLen_allQ, tool2FP_lowerExactMatchKmers_alnLen_allQ, tool2FP_lowPercentageIdentity_alnLen_allQ;
+        multiset<uint32_t> tool2FP_lowAlnLen_alnLen_allQ, tool2FP_lowAlnLen_matchsize_allQ, tool2FP_lowerExactMatchKmers_alnLen_allQ, tool2FP_lowPercentageIdentity_alnLen_allQ;
         multiset<uint32_t> tool2FP_lowAlnLen_ed_allQ, tool2FP_lowerExactMatchKmers_ed_allQ, tool2FP_lowPercentageIdentity_ed_allQ;
         multiset<uint32_t> tool2FN_baseLine_alnLen_allQ, tool2FN_baseLine_ed_allQ;// baseLine alignment characteristics for all queries when tool2 did not find a match
         multiset<uint32_t> tool2FN_noCriteria_baseLine_alnLen_allQ, tool2FN_noCriteria_tool1_ed_allQ;
@@ -527,9 +542,11 @@ public:
                         // isFP = true; // this is FP in terms of not finding exact match, but in total it is TP
                         aln.criteriaCode = 0x10;
                         tool2FP_lowAlnLen++;
+                        uint16_t ltm = longestRunOfMatches(cigarStr);
                         tool2FP_lowAlnLen_alnLen_allQ.insert(aln.partialMatchSize);
                         tool2FP_lowAlnLen_ed_allQ.insert(aln.substitutions + aln.inDels);
-                        cmp << "FP for " + tool2Name + ", due to low aln len, alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << endl;
+                        tool2FP_lowAlnLen_matchsize_allQ.insert(ltm);
+                        cmp << "FP for " + tool2Name + ", due to low aln len, alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", match size: " << ltm << endl;
                     } else if (!checkIdentityPercentange(cigarStr)){
                         isFP = true;
                         aln.criteriaCode = 0x80;
@@ -844,8 +861,10 @@ public:
         cmp << left << setw(80) << "# Of " + tool2Name + " (FP) that alignment length < R: " << tool2FP_lowAlnLen_allQ << endl;
         pair<uint32_t, uint32_t> avgtool2FP_lowAlnLen_alnLen_allQ = util.calculateStatistics2(tool2FP_lowAlnLen_alnLen_allQ);
         pair<uint32_t, uint32_t> avgtool2FP_lowAlnLen_ed_allQ = util.calculateStatistics2(tool2FP_lowAlnLen_ed_allQ);
+        pair<uint32_t, uint32_t> avgtool2FP_lowAlnLen_matchsize_allQ = util.calculateStatistics2(tool2FP_lowAlnLen_matchsize_allQ);
         cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s alignment length where alignment length < R: " << avgtool2FP_lowAlnLen_alnLen_allQ.first << ", " << avgtool2FP_lowAlnLen_alnLen_allQ.second << endl;
         cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s edit distance where alignment length < R: " << avgtool2FP_lowAlnLen_ed_allQ.first << ", " << avgtool2FP_lowAlnLen_ed_allQ.second << endl;
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s match size where alignment length < R: " << avgtool2FP_lowAlnLen_matchsize_allQ.first << ", " << avgtool2FP_lowAlnLen_matchsize_allQ.second << endl;
 
         // cmp << left << setw(80) << "# Of " + tool2Name + " (FP) that # of kmers is lower than regionSize" << tool2FP_lowerExactMatchKmers_allQ << endl;
         // pair<uint32_t, uint32_t> avgtool2FP_lowerExactMatchKmers_alnLen_allQ = util.calculateStatistics2(tool2FP_lowerExactMatchKmers_alnLen_allQ);
