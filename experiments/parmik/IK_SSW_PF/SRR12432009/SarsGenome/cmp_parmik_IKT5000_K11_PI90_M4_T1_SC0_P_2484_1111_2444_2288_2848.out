@@ -45,62 +45,62 @@ updated otherToolOutputFileAddress alignments file: /p/lava/parmik/partialMatche
 Comparing Baseline and parmik
 cmp file address: /p/lava/parmik/partialMatcherProject/tools/parmik/IK_SSW_PF/SRR12432009/SarsGenome/IKT5000_K11_PI90_M4_T1_SC0_P_2484_1111_2444_2288_2848/cmp_Baseline_parmik.txt
 queries processed: 0 / 29602
-Sam: Read 54215901 alignments.
+Sam: Read 211539808 alignments.
 queries processed: 1000 / 29602
-Sam: Read 57392672 alignments.
+Sam: Read 224788785 alignments.
 queries processed: 2000 / 29602
-Sam: Read 58570493 alignments.
+Sam: Read 228888061 alignments.
 queries processed: 3000 / 29602
-Sam: Read 66596613 alignments.
+Sam: Read 257144456 alignments.
 queries processed: 4000 / 29602
-Sam: Read 70862210 alignments.
+Sam: Read 273012008 alignments.
 queries processed: 5000 / 29602
-Sam: Read 54437626 alignments.
+Sam: Read 211680687 alignments.
 queries processed: 6000 / 29602
-Sam: Read 55411773 alignments.
+Sam: Read 213961283 alignments.
 queries processed: 7000 / 29602
-Sam: Read 84976650 alignments.
+Sam: Read 330253529 alignments.
 queries processed: 8000 / 29602
-Sam: Read 56066441 alignments.
+Sam: Read 216636849 alignments.
 queries processed: 9000 / 29602
-Sam: Read 171010183 alignments.
+Sam: Read 677377034 alignments.
 queries processed: 10000 / 29602
-Sam: Read 73644534 alignments.
+Sam: Read 287036334 alignments.
 queries processed: 11000 / 29602
-Sam: Read 59726613 alignments.
+Sam: Read 232065277 alignments.
 queries processed: 12000 / 29602
-Sam: Read 53018814 alignments.
+Sam: Read 207156421 alignments.
 queries processed: 13000 / 29602
-Sam: Read 49086608 alignments.
+Sam: Read 188044427 alignments.
 queries processed: 14000 / 29602
-Sam: Read 59762367 alignments.
+Sam: Read 234200841 alignments.
 queries processed: 15000 / 29602
-Sam: Read 55531627 alignments.
+Sam: Read 218899790 alignments.
 queries processed: 16000 / 29602
-Sam: Read 51897053 alignments.
+Sam: Read 202000560 alignments.
 queries processed: 17000 / 29602
-Sam: Read 75710900 alignments.
+Sam: Read 309039970 alignments.
 queries processed: 18000 / 29602
-Sam: Read 57045017 alignments.
+Sam: Read 222131759 alignments.
 queries processed: 19000 / 29602
-Sam: Read 64122383 alignments.
+Sam: Read 245938828 alignments.
 queries processed: 20000 / 29602
-Sam: Read 56325468 alignments.
+Sam: Read 218505197 alignments.
 queries processed: 21000 / 29602
-Sam: Read 66416062 alignments.
+Sam: Read 258362344 alignments.
 queries processed: 22000 / 29602
-Sam: Read 64578437 alignments.
+Sam: Read 248568494 alignments.
 queries processed: 23000 / 29602
-Sam: Read 73425211 alignments.
+Sam: Read 275572469 alignments.
 queries processed: 24000 / 29602
-Sam: Read 69518655 alignments.
+Sam: Read 269850948 alignments.
 queries processed: 25000 / 29602
-Sam: Read 54494952 alignments.
+Sam: Read 211813058 alignments.
 queries processed: 26000 / 29602
-Sam: Read 51229730 alignments.
+Sam: Read 200349072 alignments.
 queries processed: 27000 / 29602
-Sam: Read 59943931 alignments.
+Sam: Read 231991316 alignments.
 queries processed: 28000 / 29602
-Sam: Read 99666176 alignments.
+Sam: Read 401583333 alignments.
 queries processed: 29000 / 29602
-Sam: Read 39884266 alignments.
+Sam: Read 155071274 alignments.

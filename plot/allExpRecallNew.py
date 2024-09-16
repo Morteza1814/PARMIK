@@ -6,34 +6,32 @@ output_file = sys.argv[1]
 # Data preparation
 datasets = [
     "Wuhan-Hu-1 vs. SRR12432009",
-    "Wuhan-Hu-1 vs. SRR14381434",
     "SarsGenome vs. SRR12432009",
-    "SarsGenome vs. SRR14381434"
+    "Wuhan-Hu-1 vs. SRR14381418",
+    "SarsGenome vs. SRR14381418",
+    "Wuhan-Hu-1 vs. SRR14381422",
 ]
 
 # Data for each R value
 data_R20 = {
     "datasets": datasets,
-    "IKT5000 (M=4)": [52.80095746, 37.25102095, 53.07612692, 34.49456604],
-    "IKT5000 (M=3)": [62.54326518, 49.45897665, 62.84850645, 50.39463211],
-    "IKT5000 (M=2)": [0, 0, 0, 70.36842839],
-    "BLAST": [38.66163316, 6.161500533, 23.05702906, 6.8264615]
+    "PARMIK IKT0": [55.75292153, 54.11686794, 58.56529963, 52.59595631, 32.78385713],
+    "PARMIK IKT5000": [49.64803852, 50.11007477, 54.66315307, 50.92667077, 28.14434258],
+    "BLAST": [35.36943983, 20.10555709, 20.55594172, 12.33344455, 1.631199671]
 }
 
 data_R25 = {
     "datasets": datasets,
-    "IKT5000 (M=4)": [89.70509073, 73.65415134, 95.08374426, 31.6410791],
-    "IKT5000 (M=3)": [90.29823846, 74.93916996, 95.69130276, 58.68833887],
-    "IKT5000 (M=2)": [0, 0, 0, 93.59675425],
-    "BLAST": [87.53722366, 14.98524763, 81.39740709, 53.90948672]
+    "PARMIK IKT0": [98.38093052, 96.50427376, 95.36952138, 94.74096345, 80.94908302],
+    "PARMIK IKT5000": [89.02840505, 93.86112245, 94.51615055, 94.33153348, 69.29804234],
+    "BLAST": [84.5726937, 66.69167501, 60.03873669, 46.91984642, 29.97161647]
 }
 
 data_R30 = {
     "datasets": datasets,
-    "IKT5000 (M=4)": [93.98951691, 67.06122773, 98.22773907, 27.9798201],
-    "IKT5000 (M=3)": [94.26968699, 69.0871133, 98.62382188, 52.79704134],
-    "IKT5000 (M=2)": [0, 0, 0, 98.13914856],
-    "BLAST": [92.31669621, 19.64922576, 87.6407173, 89.12914712]
+    "PARMIK IKT0": [99.14989974, 97.69927326, 97.06250289, 96.95812982, 86.1822551],
+    "PARMIK IKT5000": [93.57272954, 97.28001911, 96.65432061, 96.78509413, 79.15427524],
+    "BLAST": [89.44510742, 71.4221907, 64.43928323, 49.76253448, 36.25012331]
 }
 
 df_R20 = pd.DataFrame(data_R20)
@@ -44,9 +42,9 @@ df_R30 = pd.DataFrame(data_R30)
 fig, axs = plt.subplots(3, 1, figsize=(10, 15))
 
 # Colors for the bars
-colors_R20 = ['skyblue', 'dodgerblue', 'navy', 'firebrick']
-colors_R25 = ['skyblue', 'dodgerblue', 'navy', 'firebrick']
-colors_R30 = ['skyblue', 'dodgerblue', 'navy', 'firebrick']
+colors_R20 = ['navy', 'dodgerblue', 'firebrick']
+colors_R25 = ['navy', 'dodgerblue', 'firebrick']
+colors_R30 = ['navy', 'dodgerblue', 'firebrick']
 
 # Plot for R=20
 df_R20.plot(x='datasets', kind='bar', ax=axs[0], color=colors_R20)
@@ -57,7 +55,6 @@ axs[0].tick_params(axis='both', which='major', labelsize=14)
 axs[0].legend(fontsize=14, ncol=1)
 axs[0].set_ylim(0, 100)
 axs[0].set_yticks(range(0, 101, 20))
-
 
 # Plot for R=25
 df_R25.plot(x='datasets', kind='bar', ax=axs[1], color=colors_R25)

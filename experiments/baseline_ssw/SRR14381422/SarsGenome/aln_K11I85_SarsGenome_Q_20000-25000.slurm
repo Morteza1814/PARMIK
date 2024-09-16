@@ -4,7 +4,7 @@
 #SBATCH --output="aln_K11I85_SarsGenome_Q_20000-25000.out"
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=155
+#SBATCH --cpus-per-task=150
 #SBATCH --threads-per-core=2
 #SBATCH --mem=60G
 #SBATCH --time=4-00:00:00
