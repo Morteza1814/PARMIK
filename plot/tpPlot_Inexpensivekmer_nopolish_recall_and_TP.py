@@ -63,7 +63,7 @@ with open(input_file2, 'r') as file:
 fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(18, 25))
 plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.95, hspace=0.4)
 
-bar_width = 0.15
+bar_width = 0.14
 
 # Plot using dots
 ax1.plot(x, y1, 's-', label=second_ax_name, color='navy', markersize=10)
@@ -104,6 +104,7 @@ ax2.set_xlabel('Minimum Alignment Size (R)', fontsize=24)
 ax2.text(-0.1, 1.1, '(B)', transform=ax2.transAxes, fontsize=26, fontweight='bold', va='top', ha='right', color='blue')
 
 #ax3
+bar_width = 0.12
 ax3.bar(tp_x[zoom_start:zoom_end], tp_y1[zoom_start:zoom_end], label=first_ax_name, color='grey', width=bar_width)
 ax3.bar([i + bar_width for i in tp_x[zoom_start:zoom_end]], tp_y2[zoom_start:zoom_end], label=second_ax_name, color='navy', width=bar_width)  # Shift x values for Dataset 2
 ax3.bar([i + 2 * bar_width for i in tp_x[zoom_start:zoom_end]], tp_y3[zoom_start:zoom_end], label=fourth_ax_name, color='skyblue', width=bar_width)  # Shift x values for Dataset 3
@@ -111,18 +112,18 @@ ax3.bar([i + 3 * bar_width for i in tp_x[zoom_start:zoom_end]], tp_y4[zoom_start
 ax3.bar([i + 4 * bar_width for i in tp_x[zoom_start:zoom_end]], tp_y5[zoom_start:zoom_end], label=fifth_ax_name, color='darkseagreen', width=bar_width)  # Shift x values for Dataset 5
 ax3.bar([i + 5 * bar_width for i in tp_x[zoom_start:zoom_end]], tp_y6[zoom_start:zoom_end], label=sixth_ax_name, color='firebrick', width=bar_width)  # Shift x values for Dataset 5
 
-ax3.legend(fontsize=20, loc='lower right', ncols=3)
+ax3.legend(fontsize=20, loc='lower right')
 ax3.tick_params(axis='both', which='major', labelsize=20)
 
 # Format the y-axis ticks
-formatter = ticker.FuncFormatter(lambda x, pos: '0' if x == 0 else '{:.1f}'.format(x*1e-5))
+formatter = ticker.FuncFormatter(lambda x, pos: '0' if x == 0 else '{:.1f}'.format(x*1e-7))
 
 ax3.yaxis.set_major_formatter(formatter)
-scale_factor = 1e5 
+scale_factor = 1e7 
 ax3.set_ylabel(f'No. of TP (×10^{int(np.log10(scale_factor))})',  fontsize=24)
 
 ax3.text(-0.1, 1.1, '(C)', transform=ax3.transAxes, fontsize=26, fontweight='bold', va='top', ha='right', color='blue')
-ax3.set_xlabel('Alignment Size', fontsize=24)
+ax3.set_xlabel('Minimum Alignment Size (R)', fontsize=24)
 
 # ax4
 # Data
@@ -157,7 +158,7 @@ ax4.bar(x_values, y_values, color=colors, label=labels)
 ax4.set_yscale('log') 
 
 # Adding custom legend
-legend_labels = ['PARMIK IKT0 < Baseline', 'PARMIK IKT0 = Baseline', 'PARMIK IKT0 > Baseline']
+legend_labels = ['PARMIK IKT0+Polishing < Baseline', 'PARMIK IKT0+Polishing = Baseline', 'PARMIK IKT0+Polishing > Baseline']
 legend_colors = ['firebrick', 'grey', 'navy']
 handles = [plt.Rectangle((0, 0), 1, 1, color=color) for color in legend_colors]
 ax4.legend(handles, legend_labels, fontsize=20)
