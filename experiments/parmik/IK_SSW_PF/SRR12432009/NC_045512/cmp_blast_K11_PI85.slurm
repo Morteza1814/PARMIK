@@ -2,9 +2,8 @@
 #SBATCH --job-name="cmp_blast_K11_PI85"
 #SBATCH --error="cmp_blast_K11_PI85.err"
 #SBATCH --output="cmp_blast_K11_PI85.out"
-#SBATCH --mem=1000G
+#SBATCH --mem=1000000
 #SBATCH --time=4-00:00:00
-#SBATCH --nodelist=adriatic04 
 #SBATCH --partition=gpu
 /u/rgq5aw/GIT/PARMIK/src/parmik -a 4 -l blast -s 48 -c 150 -m 14 -t 0 -k 11 -d 85 -i 17000000 -j 30000 -x \
 -r /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads \

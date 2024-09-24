@@ -153,12 +153,12 @@ y_values = np.array([1, 2, 0, 0, 0, 0, 0, 0, 0, 2, 7, 3, 2, 2, 0, 0, 0, 1, 1, 1,
 colors = ['firebrick' if x < 0 else 'navy' if x > 0 else 'grey' for x in x_values]
 
 # Labels
-labels = ['PARMIK IKT0 < Baseline' if x < 0 else 'PARMIK IKT0 > Baseline' if x > 0 else 'PARMIK IKT0 = Baseline' for x in x_values]
+labels = ['PARMIK IKT[All] < Baseline' if x < 0 else 'PARMIK IKT[All] > Baseline' if x > 0 else 'PARMIK IKT[All] = Baseline' for x in x_values]
 ax4.bar(x_values, y_values, color=colors, label=labels)
 ax4.set_yscale('log') 
 
 # Adding custom legend
-legend_labels = ['PARMIK IKT0+Polishing < Baseline', 'PARMIK IKT0+Polishing = Baseline', 'PARMIK IKT0+Polishing > Baseline']
+legend_labels = ['PARMIK IKT[All]+Polishing < Baseline', 'PARMIK IKT[All]+Polishing = Baseline', 'PARMIK IKT[All]+Polishing > Baseline']
 legend_colors = ['firebrick', 'grey', 'navy']
 handles = [plt.Rectangle((0, 0), 1, 1, color=color) for color in legend_colors]
 ax4.legend(handles, legend_labels, fontsize=20)
