@@ -3,3 +3,5 @@
 *.err
 *.png
 *.jpg
+*.slurm
+*.out

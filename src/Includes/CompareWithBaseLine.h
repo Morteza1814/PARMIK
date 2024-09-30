@@ -215,14 +215,14 @@ public:
         return cigar.str();
     }
 
-    void readChunkOfBaseLine(vector<Alignment> &baseLineSamAlignments, const string alignmentFileAddressPrefix, uint32_t queryRangeBase, uint32_t queryRangeSize)
+    void readChunkOfBaseLine(vector<Alignmen_Baseline> &baseLineSamAlignments, const string alignmentFileAddressPrefix, uint32_t queryRangeBase, uint32_t queryRangeSize)
     {
         baseLineSamAlignments.clear();
         string alignmentFileAddress = alignmentFileAddressPrefix + "_" + to_string(queryRangeBase) + "-" + to_string(queryRangeBase + queryRangeSize - 1) + ".txt";
         // cout << "alignmentFileAddress: " << alignmentFileAddress << endl;
         uint32_t queryCount = queryRangeBase + queryRangeSize - 1;
         SamReader baseLineSam(alignmentFileAddress);
-        baseLineSam.parseFile(queryCount, baseLineSamAlignments, true);
+        baseLineSam.parseFileBaseline(queryCount, baseLineSamAlignments, true);
         cout << "Sam: Read " << baseLineSamAlignments.size() << " alignments." << endl;
     }
 
@@ -414,8 +414,8 @@ public:
         multiset<uint32_t> tool2FN_baseLine_alnLen_allQ, tool2FN_baseLine_ed_allQ;// baseLine alignment characteristics for all queries when tool2 did not find a match
         multiset<uint32_t> tool2FN_noCriteria_baseLine_alnLen_allQ, tool2FN_noCriteria_tool1_ed_allQ;
         multiset<uint32_t> tool2FN_noCriteria_baseLine_ed_allQ, baseLineFN_tool2_alnLen_allQ, baseLineFN_tool2_ed_allQ;// tool2 alignment characteristics for all queries when baseLine did not find a match
-        vector<Alignment> baseLineSamAlignments;
-        IndexContainer<uint32_t, Alignment> queryBaselineAlignment;
+        vector<Alignmen_Baseline> baseLineSamAlignments;
+        IndexContainer<uint32_t, Alignmen_Baseline> queryBaselineAlignment;
         for(uint32_t queryInd = 0; queryInd < queryCount; queryInd++)
         {
             uint32_t baseLineBestAlnSize = 0;
@@ -431,19 +431,19 @@ public:
                 queryBaselineAlignment.clear();
                 cout << "queries processed: " << queryInd << " / " << queryCount << endl;
                 readChunkOfBaseLine(baseLineSamAlignments, baseLineFilePrefixAddress, queryInd, 1000);
-                for (const Alignment& aln : baseLineSamAlignments)
+                for (const Alignmen_Baseline& aln : baseLineSamAlignments)
                 {
                     queryBaselineAlignment.put(aln.queryID, aln);
                 }
                 baseLineSamAlignments.clear();
             }
             //baseline alignments for query
-            tsl::robin_map<uint32_t, Alignment> baselineReadID_Aln;
-            Alignment baseLineBestAln;
+            tsl::robin_map<uint32_t, Alignmen_Baseline> baselineReadID_Aln;
+            Alignmen_Baseline baseLineBestAln;
 
             auto blQueryRrange = queryBaselineAlignment.getRange(queryInd);
             for (auto it = blQueryRrange.first; it != blQueryRrange.second; it++){
-                Alignment aln = it->second;
+                Alignmen_Baseline aln = it->second;
                 string cigarStr = convertCigarToStr(aln.cigar, true);
                 // only add alignments whose pi > PI
                 if (checkIdentityPercentange(cigarStr)) {
@@ -452,7 +452,7 @@ public:
                         baselineReadID_Aln[aln.readID] = aln;
                         addBaselineTPAlnSz(aln.matches + aln.inDels + aln.substitutions);
                     } else {
-                        Alignment readAln = readIt->second;
+                        auto readAln = readIt->second;
                         if ((readAln.matches + readAln.inDels + readAln.substitutions < aln.matches + aln.inDels + aln.substitutions) || 
                         ((readAln.matches + readAln.inDels + readAln.substitutions == aln.matches + aln.inDels + aln.substitutions) &&
                         (readAln.inDels + readAln.substitutions > aln.inDels + aln.substitutions))) {
@@ -565,7 +565,7 @@ public:
                         addTool2TPAlnSz(aln.partialMatchSize);
                         bool blfound = false;
                         auto baselineReadIt = baselineReadID_Aln.find(aln.readID);
-                        Alignment baselineAln;
+                        Alignmen_Baseline baselineAln;
                         if(baselineReadIt != baselineReadID_Aln.end())
                         {
                             baselineAln = baselineReadIt->second;
@@ -640,7 +640,7 @@ public:
                 addTool2BestAlnSz(bestAlntool2.partialMatchSize);
                 for (auto itt = baselineReadID_Aln.begin(); itt != baselineReadID_Aln.end(); itt++) 
                 {
-                    Alignment aaln = itt->second;
+                    Alignmen_Baseline aaln = itt->second;
                     bool tool2found = false;
                     for (const auto& element : tool2TPReadIds)
                     {

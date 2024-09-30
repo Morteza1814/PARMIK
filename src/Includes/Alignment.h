@@ -28,20 +28,31 @@ typedef struct Alignment
     string alignedQuery;        //the region in query aligned for the partial match
     string editDistanceTypes;   //edit distance types of the region of the partial match
     string mismatchPositions;   // positions of mismatches in BWA
-    uint32_t editDistance = 0;           //number of edit distances detected in the region
-    uint32_t partialMatchSize = 0;       //partial match region size
+    uint8_t editDistance = 0;           //number of edit distances detected in the region
+    uint8_t partialMatchSize = 0;       //partial match region size
     vector<uint16_t> editLocations;  //the positions of the edit distances in the partial match region
     string cigar;               //CIGAR string of the alignment
-    uint32_t substitutions = 0;       //number of substitutions
-    uint32_t inDels = 0;       //number of InDel
-    uint32_t matches = 0;       //number of matched bp
-    uint32_t readRegionStartPos = 0;
-    uint32_t readRegionEndPos = 0;
-    uint32_t queryRegionStartPos = 0;
-    uint32_t queryRegionEndPos = 0;
-    uint32_t flag = 0;                  // determines the strand for now
-    uint32_t score = 0;
-    uint32_t criteriaCode = 0;     // criteria code for the alignment
+    uint8_t substitutions = 0;       //number of substitutions
+    uint8_t inDels = 0;       //number of InDel
+    uint8_t matches = 0;       //number of matched bp
+    uint8_t readRegionStartPos = 0;
+    uint8_t readRegionEndPos = 0;
+    uint8_t queryRegionStartPos = 0;
+    uint8_t queryRegionEndPos = 0;
+    uint8_t flag = 0;                  // determines the strand for now
+    uint8_t score = 0;
+    uint8_t criteriaCode = 0;     // criteria code for the alignment
 } Alignment;
+
+typedef struct Alignmen_Baseline
+{
+    int readID = -1;            //read ID of the alignment
+    int queryID = -1;            //query ID of the alignment
+    string cigar;               //CIGAR string of the alignment
+    uint8_t substitutions = 0;       //number of substitutions
+    uint8_t inDels = 0;       //number of InDel
+    uint8_t matches = 0;       //number of matched bp
+    uint8_t flag = 0;                  // determines the strand for now
+} Alignmen_Baseline;
 
 #endif
