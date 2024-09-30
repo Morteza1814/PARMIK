@@ -178,7 +178,7 @@ public:
         return queryCount;
     }
 
-    void parseCigar(const string& cigar, uint32_t& matches, uint32_t& substitutions, uint32_t& inDels, vector<uint16_t> &editLocations) {
+    void parseCigar(const string& cigar, uint8_t& matches, uint8_t& substitutions, uint8_t& inDels, vector<uint16_t> &editLocations) {
         substitutions = inDels = 0;
         int currentPos = 0; // Current position in the read
         int len = cigar.length();
