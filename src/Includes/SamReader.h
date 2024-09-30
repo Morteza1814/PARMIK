@@ -50,7 +50,14 @@ public:
 
         for (; iter != end; ++iter) {
             char op = (*iter)[2].str()[0];
-            int length = stoi((*iter)[1].str());
+            int length = 0;
+            try {
+                length = stoi((*iter)[1].str());
+            } catch (const std::invalid_argument& e) {
+                std::cerr << "Invalid argument: " << e.what() << '\n';
+            } catch (const std::out_of_range& e) {
+                std::cerr << "Out of range: " << e.what() << '\n';
+            }
             switch (op) {
                 case 'X':
                     counts.subCount += length;
@@ -127,42 +134,50 @@ public:
                 continue;
             }
             // cout << queryID << " " << readID << " " << flag << " " << pos << " " << mapQ << " " << cigar << " " << rNext << " " << pNext << " " << tLen << " " << seq << " " << qual << endl;
-            if (flag.find("*") != string::npos) sam.flag = 0; else sam.flag = stoi(flag.c_str());
-            if (pos.find("*") != string::npos) sam.pos = 0; else sam.pos = stoi(pos.c_str());
-            if (cigar.find("*") != string::npos) sam.cigar = ""; else sam.cigar = cigar;
-            if (!compressedFormat) {
-                if (mapQ.find("*") != string::npos) sam.mapQ = 0; else sam.mapQ = stoi(mapQ.c_str());
-                if (rNext.find("*") != string::npos) sam.rNext = ""; else sam.rNext = rNext;
-                if (pNext.find("*") != string::npos) sam.pNext = ""; else sam.pNext = pNext;
-                if (tLen.find("*") != string::npos) sam.tLen = 0; else sam.tLen = stoi(tLen.c_str());
-                if (seq.find("*") != string::npos) sam.seq = ""; else sam.seq = seq;
-                if (qual.find("*") != string::npos) sam.qual = ""; else sam.qual = qual;
-            }
-            if(sam.cigar == "")
-            {
-                cout << "!!Empty cigar!!\n";
-                continue;
-            }
-            sam.queryId = utl.extractContigId(queryID);
-            sam.readId = utl.extractContigId(readID);
-            if(sam.queryId > lastQueryID)
-                break;
-            // Parse other flags as needed
-
-            // Find the CIGAR field
-            // for (int i = 0; i < 9; ++i) {
-            //     iss >> sam.cigar;
-            // }
-
-            string token;
-            while (iss >> token) {
-                if (token.find("NM:") == 0) {
-                    sam.editDistance = stoi(token.substr(5));
-                } else if (token.find("MD:") == 0) {
-                    sam.mismatchPositions = token.substr(5);
-                } else if (token.find("AS:") == 0) {
-                    sam.alignmentScore = stoi(token.substr(5));
+            try{
+                if (flag.find("*") != string::npos) sam.flag = 0; else sam.flag = stoi(flag.c_str());
+                if (pos.find("*") != string::npos) sam.pos = 0; else sam.pos = stoi(pos.c_str());
+                if (cigar.find("*") != string::npos) sam.cigar = ""; else sam.cigar = cigar;
+                if (!compressedFormat) {
+                    if (mapQ.find("*") != string::npos) sam.mapQ = 0; else sam.mapQ = stoi(mapQ.c_str());
+                    if (rNext.find("*") != string::npos) sam.rNext = ""; else sam.rNext = rNext;
+                    if (pNext.find("*") != string::npos) sam.pNext = ""; else sam.pNext = pNext;
+                    if (tLen.find("*") != string::npos) sam.tLen = 0; else sam.tLen = stoi(tLen.c_str());
+                    if (seq.find("*") != string::npos) sam.seq = ""; else sam.seq = seq;
+                    if (qual.find("*") != string::npos) sam.qual = ""; else sam.qual = qual;
                 }
+                if(sam.cigar == "")
+                {
+                    cout << "!!Empty cigar!!\n";
+                    continue;
+                }
+                sam.queryId = utl.extractContigId(queryID);
+                sam.readId = utl.extractContigId(readID);
+                if(sam.queryId > lastQueryID)
+                    break;
+                // Parse other flags as needed
+
+                // Find the CIGAR field
+                // for (int i = 0; i < 9; ++i) {
+                //     iss >> sam.cigar;
+                // }
+
+                string token;
+                while (iss >> token) {
+                    if (token.find("NM:") == 0) {
+                        sam.editDistance = stoi(token.substr(5));
+                    } else if (token.find("MD:") == 0) {
+                        sam.mismatchPositions = token.substr(5);
+                    } else if (token.find("AS:") == 0) {
+                        sam.alignmentScore = stoi(token.substr(5));
+                    }
+                }
+            } catch (const std::invalid_argument& e) {
+                std::cerr << "PM Invalid argument: " << e.what() << ". Problematic string: ";
+                std::cerr << "PM flag: " << flag << ", pos: " << pos << ", mapQ: " << mapQ << ", tLen: " << tLen << "\n";
+            } catch (const std::out_of_range& e) {
+                std::cerr << "PM Out of range: " << e.what() << ". Problematic string: ";
+                std::cerr << "PM flag: " << flag << ", pos: " << pos << ", mapQ: " << mapQ << ", tLen: " << tLen << "\n";
             }
             // convert to alignment
             Alignment aln;
@@ -217,43 +232,51 @@ public:
                 queryCount++;
                 continue;
             }
-            // cout << queryID << " " << readID << " " << flag << " " << pos << " " << mapQ << " " << cigar << " " << rNext << " " << pNext << " " << tLen << " " << seq << " " << qual << endl;
-            if (flag.find("*") != string::npos) sam.flag = 0; else sam.flag = stoi(flag.c_str());
-            if (pos.find("*") != string::npos) sam.pos = 0; else sam.pos = stoi(pos.c_str());
-            if (cigar.find("*") != string::npos) sam.cigar = ""; else sam.cigar = cigar;
-            if (!compressedFormat) {
-                if (mapQ.find("*") != string::npos) sam.mapQ = 0; else sam.mapQ = stoi(mapQ.c_str());
-                if (rNext.find("*") != string::npos) sam.rNext = ""; else sam.rNext = rNext;
-                if (pNext.find("*") != string::npos) sam.pNext = ""; else sam.pNext = pNext;
-                if (tLen.find("*") != string::npos) sam.tLen = 0; else sam.tLen = stoi(tLen.c_str());
-                if (seq.find("*") != string::npos) sam.seq = ""; else sam.seq = seq;
-                if (qual.find("*") != string::npos) sam.qual = ""; else sam.qual = qual;
-            }
-            if(sam.cigar == "")
-            {
-                cout << "!!Empty cigar!!\n";
-                continue;
-            }
-            sam.queryId = utl.extractContigId(queryID);
-            sam.readId = utl.extractContigId(readID);
-            if(sam.queryId > lastQueryID)
-                break;
-            // Parse other flags as needed
-
-            // Find the CIGAR field
-            // for (int i = 0; i < 9; ++i) {
-            //     iss >> sam.cigar;
-            // }
-
-            string token;
-            while (iss >> token) {
-                if (token.find("NM:") == 0) {
-                    sam.editDistance = stoi(token.substr(5));
-                } else if (token.find("MD:") == 0) {
-                    sam.mismatchPositions = token.substr(5);
-                } else if (token.find("AS:") == 0) {
-                    sam.alignmentScore = stoi(token.substr(5));
+            try {
+                // cout << queryID << " " << readID << " " << flag << " " << pos << " " << mapQ << " " << cigar << " " << rNext << " " << pNext << " " << tLen << " " << seq << " " << qual << endl;
+                if (flag.find("*") != string::npos) sam.flag = 0; else sam.flag = stoi(flag.c_str());
+                if (pos.find("*") != string::npos) sam.pos = 0; else sam.pos = stoi(pos.c_str());
+                if (cigar.find("*") != string::npos) sam.cigar = ""; else sam.cigar = cigar;
+                if (!compressedFormat) {
+                    if (mapQ.find("*") != string::npos) sam.mapQ = 0; else sam.mapQ = stoi(mapQ.c_str());
+                    if (rNext.find("*") != string::npos) sam.rNext = ""; else sam.rNext = rNext;
+                    if (pNext.find("*") != string::npos) sam.pNext = ""; else sam.pNext = pNext;
+                    if (tLen.find("*") != string::npos) sam.tLen = 0; else sam.tLen = stoi(tLen.c_str());
+                    if (seq.find("*") != string::npos) sam.seq = ""; else sam.seq = seq;
+                    if (qual.find("*") != string::npos) sam.qual = ""; else sam.qual = qual;
                 }
+                if(sam.cigar == "")
+                {
+                    cout << "!!Empty cigar!!\n";
+                    continue;
+                }
+                sam.queryId = utl.extractContigId(queryID);
+                sam.readId = utl.extractContigId(readID);
+                if(sam.queryId > lastQueryID)
+                    break;
+                // Parse other flags as needed
+
+                // Find the CIGAR field
+                // for (int i = 0; i < 9; ++i) {
+                //     iss >> sam.cigar;
+                // }
+
+                string token;
+                while (iss >> token) {
+                    if (token.find("NM:") == 0) {
+                        sam.editDistance = stoi(token.substr(5));
+                    } else if (token.find("MD:") == 0) {
+                        sam.mismatchPositions = token.substr(5);
+                    } else if (token.find("AS:") == 0) {
+                        sam.alignmentScore = stoi(token.substr(5));
+                    }
+            }
+            } catch (const std::invalid_argument& e) {
+                std::cerr << "Baseline Invalid argument: " << e.what() << ". Problematic string: ";
+                std::cerr << "Baseline flag: " << flag << ", pos: " << pos << ", mapQ: " << mapQ << ", tLen: " << tLen << "\n";
+            } catch (const std::out_of_range& e) {
+                std::cerr << "Baseline Out of range: " << e.what() << ". Problematic string: ";
+                std::cerr << "Baseline flag: " << flag << ", pos: " << pos << ", mapQ: " << mapQ << ", tLen: " << tLen << "\n";
             }
             // convert to alignment
             Alignmen_Baseline aln;

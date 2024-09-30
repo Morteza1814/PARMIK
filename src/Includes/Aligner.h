@@ -371,9 +371,9 @@ public:
     {
         // cerr << "queryID: " << l.queryID << ", readID: "<< l.readID << "readRegionStartPos: " << l.readRegionStartPos << endl;
         assert((l.readRegionStartPos >= 0 && l.readRegionStartPos < contigSize) && "wrong readRegionStartPos");
-        oSam << l.queryID << '\t' << l.flag << '\t' << l.readID << '\t' << l.readRegionStartPos << '\t'
+        oSam << l.queryID << '\t' << static_cast<int>(l.flag) << '\t' << l.readID << '\t' << static_cast<int>(l.readRegionStartPos) << '\t'
                 << "*" << '\t' << l.cigar << '\t' << "*" << '\t' << "*" << '\t' << "*" << '\t' 
-                << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.substitutions) << '\t' << "CC" << l.criteriaCode << '\n';
+                << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(static_cast<int>(l.substitutions)) << '\t' << "CC" << static_cast<int>(l.criteriaCode) << '\n';
     }
 
     map<contigIndT, string> readContigsFromMap(tsl::robin_map<uint32_t, string>& reads,  unordered_set<contigIndT>& contigIdSet)

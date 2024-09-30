@@ -246,8 +246,8 @@ public:
         /*oSam << l.queryID << '\t' << l.flag << '\t' << l.readID << '\t' << l.readRegionStartPos << '\t'
                 << "*" << '\t' << l.cigar << '\t' << "*" << '\t' << "*" << '\t' << "*" << '\t' 
                 << l.read << '\t' << "*" << '\t' << "NM:i:" + to_string(l.substitutions) << '\n';*/
-        oSam << l.queryID << '\t' << l.flag << '\t' << l.readID << '\t' << l.readRegionStartPos << '\t'
-            << l.cigar << '\t' << "NM:i:" + to_string(l.substitutions) << '\n';
+        oSam << l.queryID << '\t' << static_cast<int>(l.flag) << '\t' << l.readID << '\t' << static_cast<int>(l.readRegionStartPos) << '\t'
+            << l.cigar << '\t' << "NM:i:" + to_string(static_cast<int>(l.substitutions)) << '\n';
     }
 };
 
