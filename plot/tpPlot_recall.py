@@ -32,8 +32,8 @@ fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
 bar_width = 0.2
 
 # Plot using dots
-ax1.plot(x, y2, 's-', label=second_ax_name, color='navy', markersize=10)
-ax1.plot(x, y3, 'v-', label=third_ax_name, color='firebrick', markersize=10)
+ax1.plot(x, y2, '-', label=second_ax_name, color='navy', markersize=10)
+ax1.plot(x, y3, '-', label=third_ax_name, color='firebrick', markersize=10)
 
 ax1.legend(fontsize=18, loc='lower right')
 ax1.tick_params(axis='both', which='major', labelsize=18)
@@ -53,7 +53,7 @@ ax2.legend(fontsize=18, loc='lower right')
 ax2.tick_params(axis='both', which='major', labelsize=18)
 
 # Set y-axis limits to 50-100 for the zoomed-in plot
-ax2.set_ylim(50, 100)
+ax2.set_ylim(20, 100)
 
 # Format the y-axis ticks
 # formatter = ticker.FuncFormatter(lambda x, pos: '0' if x == 0 else '{:.0f}k'.format(x*1e-3))
