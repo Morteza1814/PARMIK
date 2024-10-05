@@ -64,7 +64,10 @@ def plot_recall_rate(data_collection, output_file, r_list):
         axs[i].set_xlabel('', fontsize=12)
         axs[i].set_ylabel('Recall Rate (%)', fontsize=16)
         axs[i].tick_params(axis='both', which='major', labelsize=14)
-        axs[i].legend(fontsize=14, ncol=1)
+        if i ==0:
+            axs[i].legend(fontsize=14)
+        else:
+            axs[i].legend().set_visible(False)
         axs[i].set_ylim(0, 100)
         axs[i].set_yticks(range(0, 101, 20))
         i+=1
@@ -92,7 +95,7 @@ PI = 90
 T = 1
 SC = 1
 K = 11
-R = [25, 30, 40]
+R = [30, 40]
 
 data_collection = []
 
