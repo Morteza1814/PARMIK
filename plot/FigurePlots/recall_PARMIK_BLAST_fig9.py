@@ -75,20 +75,20 @@ def read_first_and_last_column(file_path):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def calculate_recall_rate(array1, array2):
+def calculate_recall_rate(tpArray, fnArray):
     # Check if both arrays are of the same size
-    if array1.shape != array2.shape:
+    if tpArray.shape != fnArray.shape:
         raise ValueError("Both arrays must be of the same size.")
 
     # Create an array to store the recall rates
-    recall_rate_array = np.zeros_like(array1, dtype=float)
+    recall_rate_array = np.zeros_like(tpArray, dtype=float)
 
     # Calculate recall rates
-    for i in range(len(array1)):
+    for i in range(len(tpArray)):
         # Avoid division by zero
-        denominator = array1[i] + array2[i]
+        denominator = tpArray[i] + fnArray[i]
         if denominator > 0:
-            recall_rate_array[i] = (array1[i] / denominator) * 100
+            recall_rate_array[i] = (tpArray[i] / denominator) * 100
         else:
             recall_rate_array[i] = 0  # Define recall rate as 0 if both are zero
 
@@ -125,6 +125,6 @@ aln_len, parmikRecall = getRecallOutOfTpFn(parmikTpFilePath, parmikFnFilePath)
 aln_len, blastRecall = getRecallOutOfTpFn(blastTpFilePath, blastFnFilePath)
 
 plotFig(aln_len[10:150], parmikRecall[10:150], blastRecall[10:150], output_file)
-# for a, p, b in zip(aln_len[10:150], parmikRecall[10:150], blastRecall[10:150]):
-#     print(f"{a:<10} {p:<15.2f} {b:<15.2f}")
+for a, p, b in zip(aln_len[10:150], parmikRecall[10:150], blastRecall[10:150]):
+    print(f"{a:<10} {p:<15.2f} {b:<15.2f}")
 
