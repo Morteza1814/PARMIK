@@ -130,6 +130,6 @@ for r in R:
     data_collection.append(data)
 
 print(data_collection)
-output_file = experimentPath + '/allExpFigures/allrecall.png'
+output_file = experimentPath + '/allExpFigures/allExpRecall_new.pdf'
 plot_recall_rate(data_collection, output_file, R)
 

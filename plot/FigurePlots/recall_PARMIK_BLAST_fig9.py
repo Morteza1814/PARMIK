@@ -119,7 +119,7 @@ parmikTpFilePath = experimentPath + '/cmp_Baseline_parmik_AlnSz_tp.txt'
 parmikFnFilePath = experimentPath + '/cmp_Baseline_parmik_AlnSz_fn.txt'
 blastTpFilePath = experimentPath + '/cmp_Baseline_blast_AlnSz_tp.txt'
 blastFnFilePath = experimentPath + '/cmp_Baseline_blast_AlnSz_fn.txt'
-output_file = experimentPath + '/PARMIKvsBLAST_recall.png'
+output_file = experimentPath + '/PARMIKvsBLAST_recall.pdf'
 
 aln_len, parmikRecall = getRecallOutOfTpFn(parmikTpFilePath, parmikFnFilePath)
 aln_len, blastRecall = getRecallOutOfTpFn(blastTpFilePath, blastFnFilePath)
