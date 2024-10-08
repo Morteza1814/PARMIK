@@ -39,7 +39,7 @@ T = 1
 SC = 1
 K = 11
 R = 30
-markers = ['o', 'x', 's', 'D', '^']
+markers = ['o', 'D', 's', '^']
 colors = ['blue', 'green', 'red']  # Consistent colors for each PI level
 experimentPath = sys.argv[1]
 # Plot the data for each dataset and PI level with new x positions
@@ -47,14 +47,17 @@ i=0
 for metagenomicDataset in metagenomicDatasets:
     for queryDataset in queryDatasets:
         for j, pi in enumerate(PI):
-            times = []
+            times = [0] * len(tools)
             for m in M:
                 dir = experimentPath + '/' + metagenomicDataset + '/' + queryDataset + '/IKT' + str(IKT) + '_K' + str(K) + '_PI' + str(pi) + '_M' + str(m) + '_T' + str(T) + '_SC' + str(SC) + '_P_2484_1111_2444_2288_2848/'
                 parmikTimePath = dir + 'time_parmik'
-                times.append(readTime(parmikTimePath))
                 if m == 4:
+                    times[0] = readTime(parmikTimePath)
                     blastTimePath = dir + 'time_blast'
-                    times.append(readTime(blastTimePath))
+                    times[2] = readTime(blastTimePath)
+                else:
+                    times[1] = readTime(parmikTimePath)
+
             
             # Define x positions for the tools in the current dataset
             x = x_ticks_tools[i]
