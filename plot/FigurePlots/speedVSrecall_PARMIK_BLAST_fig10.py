@@ -67,6 +67,7 @@ R = 30
 
 experimentPath = sys.argv[1]
 markers = ['o', 'x', 's', 'D', '^']
+firstRound=True
 for metagenomicDataset in metagenomicDatasets:
     for queryDataset in queryDatasets:
         # Create figure and axis objects without grids
@@ -75,11 +76,11 @@ for metagenomicDataset in metagenomicDatasets:
         # Increase the font size for clarity
         plt.xticks(fontsize=12)
         plt.yticks(fontsize=12)
-        ax1.set_xlabel('Percentage Identity (%)', fontsize=18)
-        ax1.set_ylabel('Speed (Matches/Second)', fontsize=18, color='tab:blue')
+        ax1.set_xlabel('Percentage Identity (%)', fontsize=20)
+        ax1.set_ylabel('Speed (Matches/Second)', fontsize=20, color='tab:blue')
         # Create a second y-axis for Recall Rate (%)
         ax2 = ax1.twinx()
-        ax2.set_ylabel('Recall Rate (%)', fontsize=18, color='tab:red')
+        ax2.set_ylabel('Recall Rate (%)', fontsize=20, color='tab:red')
 
         if queryDataset == 'NC_045512':
             datasetName = 'Wuhan-Hu-1' + ' vs. ' + metagenomicDataset
@@ -117,16 +118,18 @@ for metagenomicDataset in metagenomicDatasets:
         print('blast_speed: ', blast_speed)
         ax1.plot(PI, blast_speed, label="BLAST", marker='^', linestyle='--', color='tab:blue')
         ax2.plot(PI, blast_recall, label="BLAST", marker='^', linestyle='--', color='tab:red')
-        ax1.tick_params(axis='y', labelcolor='tab:blue', labelsize=12)
-        ax2.tick_params(axis='y', labelcolor='tab:red', labelsize=12)
+        ax1.tick_params(axis='y', labelcolor='tab:blue', labelsize=14)
+        ax2.tick_params(axis='y', labelcolor='tab:red', labelsize=14)
         # Set the x-ticks to only show 85, 90, and 95
         ax1.set_xticks(PI)
-        ax1.set_xticklabels([85, 90, 95], fontsize=12)
+        ax1.set_xticklabels([85, 90, 95], fontsize=14)
         plt.title(datasetName, fontsize=20)
         # Combining legends
-        lines, labels = ax1.get_legend_handles_labels()
-        lines2, labels2 = ax2.get_legend_handles_labels()
-        ax1.legend(lines + lines2, labels + labels2, loc='right', fontsize=12)
+        if firstRound:
+            firstRound=False    
+            lines, labels = ax1.get_legend_handles_labels()
+            lines2, labels2 = ax2.get_legend_handles_labels()
+            ax1.legend(lines + lines2, labels + labels2, loc='center left', fontsize=14)
 
         # Adding legends with adjusted font sizes
         fig.tight_layout()
