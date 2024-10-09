@@ -66,9 +66,9 @@ plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.95, hspace=0.4)
 bar_width = 0.14
 
 # Plot using dots
-ax1.plot(x, y1, 's-', label=second_ax_name, color='navy', markersize=10)
-ax1.plot(x, y2, '^-', label=third_ax_name, color='darkseagreen', markersize=10)
-ax1.plot(x, y5, 'v-', label=sixth_ax_name, color='firebrick', markersize=10)
+ax1.plot(x, y1, '-', label=second_ax_name, color='navy', markersize=10)
+ax1.plot(x, y2, '-', label=third_ax_name, color='darkseagreen', markersize=10)
+ax1.plot(x, y5, '-', label=sixth_ax_name, color='firebrick', markersize=10)
 
 ax1.legend(fontsize=20, loc='lower right')
 ax1.tick_params(axis='both', which='major', labelsize=20)

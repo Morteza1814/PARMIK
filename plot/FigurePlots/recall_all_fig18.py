@@ -49,6 +49,8 @@ def getRecallOutOfTpFn(tpFilePath, fnFilePath, r):
 def plot_recall_rate(data_collection, output_file, r_list):
     data_collection_size = len(data_collection)
     fig, axs = plt.subplots(data_collection_size, 1, figsize=(10, data_collection_size * 5))
+    if not isinstance(axs, np.ndarray):
+        axs = [axs] 
     i = 0
     for data in data_collection:
         df = pd.DataFrame(data)
@@ -60,7 +62,7 @@ def plot_recall_rate(data_collection, output_file, r_list):
 
         # Plot for R=20
         df.plot(x='datasets', kind='bar', ax=axs[i], color=colors)
-        axs[i].set_title('R=' + str(R[i]), fontsize=18)
+        # axs[i].set_title('R=' + str(R[i]), fontsize=18)
         axs[i].set_xlabel('', fontsize=12)
         axs[i].set_ylabel('Recall Rate (%)', fontsize=16)
         axs[i].tick_params(axis='both', which='major', labelsize=14)
@@ -95,7 +97,7 @@ PI = 90
 T = 1
 SC = 1
 K = 11
-R = [30, 40]
+R = [30]
 
 data_collection = []
 
@@ -130,6 +132,6 @@ for r in R:
     data_collection.append(data)
 
 print(data_collection)
-output_file = experimentPath + '/allExpFigures/allExpRecall_new.pdf'
+output_file = experimentPath + '/allExpFigures/allExpRecall_30.pdf'
 plot_recall_rate(data_collection, output_file, R)
 

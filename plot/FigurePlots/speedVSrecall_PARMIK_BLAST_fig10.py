@@ -44,6 +44,11 @@ def getRecallOutOfTpFn(tpFilePath, fnFilePath, r):
         if r - 1 < len(tp_array) and r - 1 < len(fn_array):
             recall = calculate_recall_rate(tp_array[r-1:], fn_array[r-1:])
             return recall
+        
+def getTime(timeFilePath):
+    with open(timeFilePath, 'r') as file:
+        time = int(file.readline().strip())
+        return time
 
 def getSpeedOutOfTp(tpFilePath, timeFilePath, r):
     with open(timeFilePath, 'r') as file:
@@ -88,12 +93,15 @@ for metagenomicDataset in metagenomicDatasets:
             datasetName = queryDataset + ' vs. ' + metagenomicDataset
         print('=========================================')
         print(datasetName)
-        blast_speed = []     
+        blast_speed = []  
+        blast_time = []     
         blast_recall = []
         markerInd = 0
+        print('PI:', PI)
         for m in M:
             parmik_recall = [] 
             parmik_speed = []
+            parmik_time = []
             for pi in PI:                
                 dir = experimentPath + '/' + metagenomicDataset + '/' + queryDataset + '/IKT' + str(IKT) + '_K' + str(K) + '_PI' + str(pi) + '_M' + str(m) + '_T' + str(T) + '_SC' + str(SC) + '_P_2484_1111_2444_2288_2848/'
                 parmikTpFilePath = dir + 'cmp_Baseline_parmik_AlnSz_tp.txt'
@@ -101,20 +109,26 @@ for metagenomicDataset in metagenomicDatasets:
                 parmikTimePath = dir + 'time_parmik'
                 parmik_recall.append(getRecallOutOfTpFn(parmikTpFilePath, parmikFnFilePath, R))
                 parmik_speed.append(getSpeedOutOfTp(parmikTpFilePath, parmikTimePath, R))
+                parmik_time.append(getTime(parmikTimePath))
                 if m == 4:
                     blastTpFilePath = dir + 'cmp_Baseline_blast_AlnSz_tp.txt'
                     blastFnFilePath = dir + 'cmp_Baseline_blast_AlnSz_fn.txt'
                     blastTimePath = dir + 'time_blast'
                     blast_recall.append(getRecallOutOfTpFn(blastTpFilePath, blastFnFilePath, R))
                     blast_speed.append(getSpeedOutOfTp(blastTpFilePath, blastTimePath, R))
+                    blast_time.append(getTime(blastTimePath))
 
             ax1.plot(PI, parmik_speed, label=f'PARMIK [M={m}]', marker=markers[markerInd], color='tab:blue')
             ax2.plot(PI, parmik_recall, label=f'PARMIK [M={m}]', marker=markers[markerInd], color='tab:red')
-            print('=====>>>>', dir)        
+            print('PARMIK M =', m) 
             print('parmik_recall: ', parmik_recall)
-            print('parmik_speed: ', parmik_speed)
+            print('parmik_time (Minutes): ', parmik_time)
+            print('parmik_speed (Matches/Sec): ', parmik_speed)
+            print('---------------------------------------')
             markerInd+=1
+        print('BLAST:')
         print('blast_recall: ', blast_recall)
+        print('blast_time (Matches/Sec): ', blast_time)
         print('blast_speed: ', blast_speed)
         ax1.plot(PI, blast_speed, label="BLAST", marker='^', linestyle='--', color='tab:blue')
         ax2.plot(PI, blast_recall, label="BLAST", marker='^', linestyle='--', color='tab:red')
