@@ -6,7 +6,7 @@ This repository contains the code for **PA**rtial **R**ead **M**atching with **I
   <img src="doc/PM.png" alt="Description of Image" width="300"/>
 </p>
 
-Check out our preprint paper detailing this work on bioRxiv: https://www.biorxiv.org/content/10.1101/2024.10.14.618242v1.
+Check out our paper detailing this work on bioRxiv: https://www.biorxiv.org/content/10.1101/2024.10.14.618242v1.
 
 ## Directory Structure ##
 - `dataPrepare/`: Contains scripts to extract contigs from read and query dataset files
