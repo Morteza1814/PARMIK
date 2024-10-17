@@ -1,6 +1,7 @@
 # PARMIK
 
-This repository contains the code for **PA**rtial **R**ead **M**atching with **I**nexpensive **K**-mers (PARMIK), a fast and memory-efficient tool for identifying the  _"Partial Match"_ region between sequencing reads (e.g., aligning a 150 bp query from a newly discovered genome against a 150 bp read from a metagenomic dataset,) where the boundaries of the query and read do not necessarily align, and the overlapping region can be small, including a notable number of matches and a few mismatches (i.e., substitutions and InDels.) PARMIK indexes the metagenomic dataset to a storage-efficient Inexpensive K-mer Index (IKI), excluding highly repetitive k-mers, to keep its memory footprint small. PARMIK supports gapped and local alignment and outputs a set of alignments in SAM format. To enhance alignment speed, PARMIK supports multi-threading.
+This repository contains the code for **PA**rtial **R**ead **M**atching with **I**nexpensive **K**-mers (PARMIK), a fast and memory-efficient tool for identifying the  _"Partial Match"_ region between sequencing reads (e.g., aligning a 150 bp query from a newly discovered genome against a 150 bp read from a metagenomic dataset,) where the boundaries of the query and read do not necessarily align, and the overlapping region can be small, including a notable number of matches and a few mismatches (i.e., substitutions and InDels.) PARMIK indexes the metagenomic dataset to a storage-efficient Inexpensive K-mer Index (IKI), excluding highly repetitive k-mers, to keep its memory footprint small. PARMIK supports gapped and local alignment and outputs a set of alignments in SAM format. To enhance alignment speed, PARMIK supports multi-threading. Check out our preprint paper detailing this work on bioRxiv: https://www.biorxiv.org/content/10.1101/2024.10.14.618242v1.
+
 
 <p align="right">
   <img src="doc/PM.png" alt="Description of Image" width="300"/>
@@ -135,4 +136,21 @@ To display help for general usage:
 ```bash
 ./parmik --help
 ```
+### Citation ###
+
+```bash
+@article {Baradaran2024.10.14.618242,
+	author = {Baradaran, Morteza and Layer, Ryan M and Skadron, Kevin},
+	title = {PARMIK: PArtial Read Matching with Inexpensive K-mers},
+	elocation-id = {2024.10.14.618242},
+	year = {2024},
+	doi = {10.1101/2024.10.14.618242},
+	publisher = {Cold Spring Harbor Laboratory},
+	abstract = {Environmental metagenomic sampling is instrumental in preparing for future pandemics by enabling early identification of potential pathogens and timely intervention strategies. Novel pathogens are a major concern, especially for zoonotic events. However, discovering novel pathogens often requires genome assembly, which remains a significant bottleneck. A robust metagenomic sampling that is directly searchable with new infection samples would give us a real-time understanding of outbreak origins dynamics. In this study, we propose PArtial Read Matching with Inexpensive K-mers (PARMIK), which is a search tool for efficiently identifying similar sequences from a patient sample (query) to a metagenomic sample (read). For example, at 90\% identity between a query and a read, PARMIK surpassed BLAST, providing up to 21\% higher recall. By filtering highly frequent k-mers, we reduced PARMIK{\textquoteright}s index size by over 50\%. Moreover, PARMIK identified longer alignments faster than BLAST, peaking at 1.57x, when parallelizing across 32 cores.Competing Interest StatementThe authors have declared no competing interest.},
+	URL = {https://www.biorxiv.org/content/early/2024/10/17/2024.10.14.618242},
+	eprint = {https://www.biorxiv.org/content/early/2024/10/17/2024.10.14.618242.full.pdf},
+	journal = {bioRxiv}
+}
+```
+
 
