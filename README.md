@@ -50,25 +50,28 @@ To execute PARMIK in the indexing mode, you can execute a command like the follo
 ./parmik -a 0 -c <contig_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -i <read_count> -x -r <metagenomic_read_database_address> -f <k-mer_index_address>
 ```
 
-### Alignment ###
+### Run Alignment ###
 To execute PARMIK in the alignment mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
 
 ```bash
 ./parmik -a 1 -s <region_size> -c <contig_size> -m <min_exact_match_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -d <percentage_identity> -i <read_count> -j <query_count> -x -r <metagenomic_read_database_address> -q <query_file_address> -f <k-mer_index_address> -o <output_directory> -p <penalty_file_address>
 ```
+### Run Baseline ###
+To execute PARMIK in the baseline mode (brute force Smith-Waterman), you can execute a command like the following, replacing `<>` with your specific paths and values:
+
+```bash
+./parmik -a 3 -s <region_size> -c <contig_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -d <percentage_identity> -i <read_count> -j <query_count> -r <metagenomic_read_database_address> -q <query_file_address> -o <output_directory> -p <penalty_file_address>
+```
 ### Compare ###
+In order to compare PARMIK to
+
+#### Other tools (BLAST, BWA): #### 
 To execute PARMIK in the compare mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
 
 ```bash
 ./parmik -a 2 -l <other_tool_name> -s <region_size> -c <contig_size> -m <min_exact_match_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -d <percentage_identity> -i <read_count> -j <query_count> -x -r <metagenomic_read_database_address> -q <query_file_address> -f <k-mer_index_address> -o <output_directory> -b <other_tool_alignment_file_address> -p <penalty_file_address>
 ```
-### Baseline ###
-To execute PARMIK in the baseline mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
-
-```bash
-./parmik -a 3 -s <region_size> -c <contig_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -d <percentage_identity> -i <read_count> -j <query_count> -r <metagenomic_read_database_address> -q <query_file_address> -o <output_directory> -p <penalty_file_address>
-```
-### Compare Baseline ###
+#### Baseline: #### 
 To execute PARMIK in the compare baseline mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
 
 ```bash
