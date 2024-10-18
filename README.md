@@ -137,6 +137,7 @@ To display help for general usage:
 ./parmik --help
 ```
 ### Citation ###
+Please cite the following paper if you find this repository useful.
 
 ```bash
 @article {Baradaran2024.10.14.618242,
