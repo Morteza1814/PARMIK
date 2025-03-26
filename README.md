@@ -1,13 +1,13 @@
 # PARMIK
 
 This repository contains the code for **PA**rtial **R**ead **M**atching with **I**nexpensive **K**-mers (PARMIK), a fast and memory-efficient tool for identifying the  _"Partial Match"_ region between sequencing reads (e.g., aligning a 150 bp query from a newly discovered genome against a 150 bp read from a metagenomic dataset,) where the boundaries of the query and read do not necessarily align, and the overlapping region can be small, including a notable number of matches and a few mismatches (i.e., substitutions and InDels.) PARMIK indexes the metagenomic dataset to a storage-efficient Inexpensive K-mer Index (IKI), excluding highly repetitive k-mers, to keep its memory footprint small. PARMIK supports gapped and local alignment and outputs a set of alignments in SAM format. To enhance alignment speed, PARMIK supports multi-threading. 
+Check out our [paper](https://www.biorxiv.org/content/10.1101/2024.10.14.618242v1) for more details.
 
 <p align="right">
   <img src="doc/PM.png" alt="Description of Image" width="300"/>
 </p>
 
 
-*** Check out our paper detailing this work on bioRxiv: https://www.biorxiv.org/content/10.1101/2024.10.14.618242v1.
 
 ## Directory Structure ##
 - `dataPrepare/`: Contains scripts to extract contigs from read and query dataset files
@@ -50,25 +50,28 @@ To execute PARMIK in the indexing mode, you can execute a command like the follo
 ./parmik -a 0 -c <contig_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -i <read_count> -x -r <metagenomic_read_database_address> -f <k-mer_index_address>
 ```
 
-### Alignment ###
+### Run Alignment ###
 To execute PARMIK in the alignment mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
 
 ```bash
 ./parmik -a 1 -s <region_size> -c <contig_size> -m <min_exact_match_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -d <percentage_identity> -i <read_count> -j <query_count> -x -r <metagenomic_read_database_address> -q <query_file_address> -f <k-mer_index_address> -o <output_directory> -p <penalty_file_address>
 ```
+### Run Baseline ###
+To execute PARMIK in the baseline mode (brute force Smith-Waterman), you can execute a command like the following, replacing `<>` with your specific paths and values:
+
+```bash
+./parmik -a 3 -s <region_size> -c <contig_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -d <percentage_identity> -i <read_count> -j <query_count> -r <metagenomic_read_database_address> -q <query_file_address> -o <output_directory> -p <penalty_file_address>
+```
 ### Compare ###
+In order to compare PARMIK to
+
+#### Other tools (BLAST, BWA): #### 
 To execute PARMIK in the compare mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
 
 ```bash
 ./parmik -a 2 -l <other_tool_name> -s <region_size> -c <contig_size> -m <min_exact_match_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -d <percentage_identity> -i <read_count> -j <query_count> -x -r <metagenomic_read_database_address> -q <query_file_address> -f <k-mer_index_address> -o <output_directory> -b <other_tool_alignment_file_address> -p <penalty_file_address>
 ```
-### Baseline ###
-To execute PARMIK in the baseline mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
-
-```bash
-./parmik -a 3 -s <region_size> -c <contig_size> -t <inexpensive_k-mer_threshold> -k <k-mer_size> -d <percentage_identity> -i <read_count> -j <query_count> -r <metagenomic_read_database_address> -q <query_file_address> -o <output_directory> -p <penalty_file_address>
-```
-### Compare Baseline ###
+#### Baseline: #### 
 To execute PARMIK in the compare baseline mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
 
 ```bash
@@ -137,6 +140,7 @@ To display help for general usage:
 ./parmik --help
 ```
 ### Citation ###
+Please cite the following paper if you find this repository useful.
 
 ```bash
 @article {Baradaran2024.10.14.618242,
