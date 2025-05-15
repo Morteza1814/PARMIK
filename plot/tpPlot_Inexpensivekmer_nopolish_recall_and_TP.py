@@ -10,11 +10,12 @@ y2 = [] # t0
 y3 = [] # t5000+polish
 y4 = [] # t5000
 y5 = [] # blast
+y6 = [] # bowtie
 
 # Check if the correct number of command-line arguments are provided
-if len(sys.argv) != 10:
-    print("Usage: python script.py input_file output_file second_ax_name third_ax_name fourth_ax_name fifth_ax_name sixth_ax_name input_file2")
-    sys.exit(1)
+# if len(sys.argv) != 10:
+#     print("Usage: python script.py input_file output_file second_ax_name third_ax_name fourth_ax_name fifth_ax_name sixth_ax_name seventh_ax_name input_file2")
+#     sys.exit(1)
 
 # Extract input and output file paths from command-line arguments
 input_file1 = sys.argv[1]
@@ -25,7 +26,8 @@ third_ax_name = sys.argv[5]
 fourth_ax_name = sys.argv[6]
 fifth_ax_name = sys.argv[7]
 sixth_ax_name = sys.argv[8]
-input_file2 = sys.argv[9]
+seventh_ax_name = sys.argv[9]
+input_file2 = sys.argv[10]
 
 # Read the data from the input file
 with open(input_file1, 'r') as file:
@@ -37,6 +39,7 @@ with open(input_file1, 'r') as file:
         y3.append(float(data[3]))  # Convert y3 value to float
         y4.append(float(data[4]))  # Convert y4 value to float
         y5.append(float(data[5]))  # Convert y5 value to float
+        y6.append(float(data[5]))  # Convert y6 value to float
 
 # Initialize empty lists for x, y1, y2, y3, y4, and y5
 tp_x = [] # alignment sizes
@@ -46,6 +49,7 @@ tp_y3 = [] # IKT0 + polishing
 tp_y4 = [] # IKT5000
 tp_y5 = [] # IKT5000 + polishing
 tp_y6 = [] # BLAST
+tp_y7 = [] # Bowtie
 
 # Read the data from the input file
 with open(input_file2, 'r') as file:
@@ -58,6 +62,7 @@ with open(input_file2, 'r') as file:
         tp_y4.append(float(data[4]))  # Convert y4 value to float
         tp_y5.append(float(data[5]))  # Convert y5 value to float
         tp_y6.append(float(data[6]))  # Convert y6 value to float
+        tp_y7.append(float(data[7]))  # Convert y7 value to float
 
 # Create a figure and axes for both plots
 fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(18, 25))
@@ -69,6 +74,7 @@ bar_width = 0.14
 ax1.plot(x, y1, '-', label=second_ax_name, color='navy', markersize=10)
 ax1.plot(x, y2, '-', label=third_ax_name, color='darkseagreen', markersize=10)
 ax1.plot(x, y5, '-', label=sixth_ax_name, color='firebrick', markersize=10)
+ax1.plot(x, y6, '-', label=seventh_ax_name, color='darkorange', markersize=10)
 
 ax1.legend(fontsize=20, loc='lower right')
 ax1.tick_params(axis='both', which='major', labelsize=20)
@@ -88,6 +94,8 @@ ax2.bar([i + bar_width for i in x[zoom_start:zoom_end]], y3[zoom_start:zoom_end]
 ax2.bar([i + 2 * bar_width for i in x[zoom_start:zoom_end]], y2[zoom_start:zoom_end], label=third_ax_name, color='green', width=bar_width)  # Shift x values for Dataset 4
 ax2.bar([i + 3 * bar_width for i in x[zoom_start:zoom_end]], y4[zoom_start:zoom_end], label=fifth_ax_name, color='darkseagreen', width=bar_width)  # Shift x values for Dataset 4
 ax2.bar([i + 4 * bar_width for i in x[zoom_start:zoom_end]], y5[zoom_start:zoom_end], label=sixth_ax_name, color='firebrick', width=bar_width)  # Shift x values for Dataset 4
+ax2.bar([i + 5 * bar_width for i in x[zoom_start:zoom_end]], y6[zoom_start:zoom_end], label=seventh_ax_name, color='darkorange', width=bar_width)  # Shift x values for Dataset 4
+
 
 ax2.legend(fontsize=20, loc='lower right')
 ax2.tick_params(axis='both', which='major', labelsize=20)
@@ -111,6 +119,7 @@ ax3.bar([i + 2 * bar_width for i in tp_x[zoom_start:zoom_end]], tp_y3[zoom_start
 ax3.bar([i + 3 * bar_width for i in tp_x[zoom_start:zoom_end]], tp_y4[zoom_start:zoom_end], label=third_ax_name, color='green', width=bar_width)  # Shift x values for Dataset 4
 ax3.bar([i + 4 * bar_width for i in tp_x[zoom_start:zoom_end]], tp_y5[zoom_start:zoom_end], label=fifth_ax_name, color='darkseagreen', width=bar_width)  # Shift x values for Dataset 5
 ax3.bar([i + 5 * bar_width for i in tp_x[zoom_start:zoom_end]], tp_y6[zoom_start:zoom_end], label=sixth_ax_name, color='firebrick', width=bar_width)  # Shift x values for Dataset 5
+ax3.bar([i + 6 * bar_width for i in tp_x[zoom_start:zoom_end]], tp_y7[zoom_start:zoom_end], label=seventh_ax_name, color='darkorange', width=bar_width)  # Shift x values for Dataset 6
 
 ax3.legend(fontsize=20, loc='lower right')
 ax3.tick_params(axis='both', which='major', labelsize=20)

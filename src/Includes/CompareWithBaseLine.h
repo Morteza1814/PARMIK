@@ -18,6 +18,7 @@
 
 using namespace std;
 
+
 class CompareWithBaseLine {
 private:
     double percentageIdentity;
@@ -244,6 +245,7 @@ public:
             // Perform actions based on CIGAR operation
             switch (op) {
                 case '=':
+                case 'M':
                     // Match or mismatch (substitution)
                     simplifiedCigar << string(num, '=');
                     break;
@@ -326,6 +328,13 @@ public:
         return true;
     }
 
+    bool checkIdentityPercentangeWithAln(Alignment aln) {
+        double identity =  (double) aln.matches / (double) aln.partialMatchSize;
+        if(identity < percentageIdentity)
+            return false;
+        return true;
+    }
+
     int longestRunOfMatches(const std::string& cigarStr) {
         int maxRun = 0;
         int currentRun = 0;
@@ -369,12 +378,15 @@ public:
         fnAlnSz.open(alnReportAddressBase + "AlnSz_fn.txt");
         //read the alignment files
         vector<Alignment> tool2Alignments;
+        bool isBwotie = (tool2Name == "bowtie" || tool2Name == "BOWTIE") ? true:false;
+        bool isParmik = (tool2Name == "parmik" || tool2Name == "PARMIK") ? true:false;
+
         if(tool2Name == "BLAST" || tool2Name == "blast") {
             BlastReader blastReader(cfg.otherToolOutputFileAddress);
             blastReader.parseFile(queryCount, tool2Alignments);
-        } else if(tool2Name == "parmik" || tool2Name == "PARMIK") {
+        } else if(isParmik || isBwotie) {
             SamReader parmikSam(cfg.otherToolOutputFileAddress);
-            parmikSam.parseFile(queryCount, tool2Alignments, false);
+            parmikSam.parseFile(queryCount, tool2Alignments, false, isBwotie);//bowtie's output should be parsed like bwa
         }
         IndexContainer<uint32_t, Alignment> queryTool2Alignment;
         for (const Alignment& aln : tool2Alignments)
@@ -547,7 +559,7 @@ public:
                         tool2FP_lowAlnLen_ed_allQ.insert(aln.substitutions + aln.inDels);
                         tool2FP_lowAlnLen_matchsize_allQ.insert(ltm);
                         cmp << "FP for " + tool2Name + ", due to low aln len, alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", match size: " << ltm << endl;
-                    } else if (!checkIdentityPercentange(cigarStr)){
+                    } else if ((isBwotie && !checkIdentityPercentangeWithAln(aln)) || !checkIdentityPercentange(cigarStr)){
                         isFP = true;
                         aln.criteriaCode = 0x80;
                         tool2FP_lowPercentageIdentity++;

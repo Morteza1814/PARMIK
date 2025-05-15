@@ -17,6 +17,10 @@
 
 using namespace std;
 
+inline std::ostream& operator<<(std::ostream& os, const uint8_t& val) {
+    return os << static_cast<int>(val);
+}
+
 template <typename contigIndT>
 class Aligner {
 private:

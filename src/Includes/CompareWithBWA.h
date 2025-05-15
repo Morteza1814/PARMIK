@@ -129,9 +129,12 @@ public:
     {
         Utilities<uint16_t> utils;
         vector<Alignment> bwaAlignments, parmikAlignments;
+        bool isBwotie = (cfg.otherTool == "bowtie" || cfg.otherTool == "BOWTIE") ? true:false;
         //read the bwa file
         SamReader bwaSam(cfg.otherToolOutputFileAddress);
-        bwaSam.parseFile(queryCount, bwaAlignments, false, true);
+        // bwaSam.parseFile(queryCount, bwaAlignments, false, true);
+        cout << "isbowtie: " << isBwotie << endl;
+        bwaSam.parseFile(queryCount, bwaAlignments, false, isBwotie);//bowtie's output should be parsed like bwa
         //read the parmik file
         SamReader parmikSam(cfg.baselineBaseAddress);
         parmikSam.parseFile(queryCount, parmikAlignments, false, false);

@@ -44,7 +44,7 @@ int argParse(int argc, char** argv, Config &cfg){
 	args::ValueFlag<int> readsCountArg(parser, "", "Number of Metageomic Reads",                    {'i', "readCount"});
 	args::ValueFlag<int> queryCountArg(parser, "", "Number of Queries",                             {'j', "queryCount"});
 	args::ValueFlag<int> kmerLengthArg(parser, "", "K-mer Length",                                  {'k', "kmerLen"});
-    args::ValueFlag<string> otherToolArg(parser, "", "The Other Tool  (bwa, blast, etc)",           {'l', "otherTool"});
+    args::ValueFlag<string> otherToolArg(parser, "", "The Other Tool  (bwa, blast, bowtie, etc)",           {'l', "otherTool"});
     args::ValueFlag<int> minExactMatchLenArg(parser, "", "Minimum Exact Match Length",              {'m', "minExactMatchLen"});
     args::ValueFlag<string> kmerRangesFileAddressArg(parser, "", "K-mer Ranges File Address",       {'n', "kmerRangesFileAddress"});
 	args::ValueFlag<string> outputDirArg(parser, "", "OutputDir",                                   {'o', "outputDir"});
@@ -462,7 +462,7 @@ int run(int argc, char *argv[]) {
         } else if (cfg.parmikMode == PARMIK_MODE_COMPARE){
             vector<pair<uint32_t, uint32_t>> alnPmVsOtherAlnSizesMap;
             string comparisonResultsFileAddress = expDir + "/" + "cmp_parmik_" + cfg.otherTool + ".txt";
-            if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa")
+            if(cfg.otherTool == "BWA" || cfg.otherTool == "bwa" || cfg.otherTool == "BOWTIE" || cfg.otherTool == "bowtie")
             {
                 ComparatorWithBWA cwb(cfg.percentageIdentity);
                 cwb.comparePmWithBwa(cfg, reads, queries, queryCount, comparisonResultsFileAddress);
