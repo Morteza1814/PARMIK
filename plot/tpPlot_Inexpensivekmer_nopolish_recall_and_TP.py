@@ -39,7 +39,7 @@ with open(input_file1, 'r') as file:
         y3.append(float(data[3]))  # Convert y3 value to float
         y4.append(float(data[4]))  # Convert y4 value to float
         y5.append(float(data[5]))  # Convert y5 value to float
-        y6.append(float(data[5]))  # Convert y6 value to float
+        y6.append(float(data[6]))  # Convert y6 value to float
 
 # Initialize empty lists for x, y1, y2, y3, y4, and y5
 tp_x = [] # alignment sizes
