@@ -34,11 +34,28 @@ To clean up all compiled files:
 make clean
 ```
 ## Download Datasets ##
+### Metagenomic Reads ###
 To download datasets, we used _SRA Toolkit (v3.0.7)_. Here is the command we used to download a metagenomic dataset (SRR12432009):
 ```bash
 sratoolkit.3.0.7-ubuntu64/bin/fasterq-dump SRR12432009 -p --fasta --outdir <outputDir>
  ```
 Replace `<outputDir>` with the path to your desired output directory.
+Once downloaded, you can extract unique reads from the metagenomic dataset using the following script:
+```bash
+python3 dataPrepare/readPrepare/sampleUniqueReads.py <metagenomic_filename> <read_count> <skip_N_flag> <header_substring> <input_fasta> <output_fasta>
+ ```
+### Query Sequences ###
+You can download assembled viral genomes from NCBI to generate query sequences. For example:
+
+    NC_045512 (SARS-CoV-2 reference genome)
+
+    NC_004718 (SARS-1 coronavirus)
+
+After downloading the genome FASTA files, you can extract 150-bp query sequences using:
+```bash
+python3 dataPrepare/queryPrepare/kmerizingTheQueryFile.py <kmer_length> <genome_fasta> <output_queries_fasta> <genome_name>
+```
+
 
 ## How to run PARMIK ##
 Here are some examples for how to use different PARMIK modes:
