@@ -125,7 +125,7 @@ Below are the PARMIK's parameters in alphabetical order:
   - Name of other tool (bwa, blast, etc)
 - `-m`, `--minExactMatchLen`: Minimum Exact Match Length (*default = 0*)
   - Min length of exact match required for alignment
-  - M = (minExactMatchLen - K + 1)
+  - minExactMatchLen = (M + K - 1), where M is the minimum number of shared k-mers and K is the k-mer size..
 - `-n`, `--kmerRangesFileAddress`: K-mer Ranges File Address
   - K-mer ranges file address required for calculating the inexpensive k-mer threshold
 - `-o`, `--outputDir`: Output Directory (*required for all modes except index mode*)
