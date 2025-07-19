@@ -82,7 +82,7 @@ To execute PARMIK in the baseline mode (brute force Smith-Waterman), you can exe
 ### Compare ###
 In order to compare PARMIK to
 
-#### Other tools (BLAST, BWA): #### 
+#### Other tools (BLAST, Bowtie2, and BWA): #### 
 To execute PARMIK in the compare mode, you can execute a command like the following, replacing `<>` with your specific paths and values:
 
 ```bash
