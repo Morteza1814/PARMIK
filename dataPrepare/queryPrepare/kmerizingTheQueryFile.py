@@ -32,6 +32,7 @@ line = f.readline()
 if not line:
         print("End of file!")
         exit
+line = line.replace(" ", "").replace("\n", "")
 inputFileLen = len(line)
 print("Length of the line: ", len(line))
 queriesWithN = 0
