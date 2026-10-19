@@ -44,7 +44,7 @@ int argParse(int argc, char** argv, Config &cfg){
 	args::ValueFlag<int> readsCountArg(parser, "", "Number of Metageomic Reads",                    {'i', "readCount"});
 	args::ValueFlag<int> queryCountArg(parser, "", "Number of Queries",                             {'j', "queryCount"});
 	args::ValueFlag<int> kmerLengthArg(parser, "", "K-mer Length",                                  {'k', "kmerLen"});
-    args::ValueFlag<string> otherToolArg(parser, "", "The Other Tool  (bwa, blast, bowtie, etc)",           {'l', "otherTool"});
+    args::ValueFlag<string> otherToolArg(parser, "", "The Other Tool (baseline: parmik, blast, bowtie, minimap2)", {'l', "otherTool"});
     args::ValueFlag<int> minExactMatchLenArg(parser, "", "Minimum Exact Match Length",              {'m', "minExactMatchLen"});
     args::ValueFlag<string> kmerRangesFileAddressArg(parser, "", "K-mer Ranges File Address",       {'n', "kmerRangesFileAddress"});
 	args::ValueFlag<string> outputDirArg(parser, "", "OutputDir",                                   {'o', "outputDir"});
@@ -99,6 +99,7 @@ int argParse(int argc, char** argv, Config &cfg){
     if (otherToolAddressArg) {cfg.otherToolOutputFileAddress = args::get(otherToolAddressArg); } else {cout << "no otherToolOutputFileAddress!"<< endl; if(cfg.parmikMode == PARMIK_MODE_CMP_BASELINE || cfg.parmikMode == PARMIK_MODE_COMPARE) return 0;}
     if (baselineBaseAddressArg) {cfg.baselineBaseAddress = args::get(baselineBaseAddressArg); } else {cout << "no baselineBaseAddress!"<< endl; if(cfg.parmikMode == PARMIK_MODE_CMP_BASELINE){return 0;}}
     if (otherToolArg) {cfg.otherTool = args::get(otherToolArg);} else {cout << "no otherToolArg!"<< endl;if(cfg.parmikMode == PARMIK_MODE_COMPARE) return 0;}
+    if (cfg.otherTool == "MINIMAP2") cfg.otherTool = "minimap2";
 	if (editDistanceArg) {cfg.editDistance = args::get(editDistanceArg); } else {cfg.editDistance = NUMBER_OF_ALLOWED_EDIT_DISTANCES;}
     if (minExactMatchLenArg) {cfg.minExactMatchLen = args::get(minExactMatchLenArg); } else {cfg.minExactMatchLen = 0;}
 	cfg.readFileName = cfg.readDatabaseAddress.substr(cfg.readDatabaseAddress.find_last_of("/\\") + 1);
@@ -549,6 +550,6 @@ int main(int argc, char *argv[])
     // expensiveKmerFNEval(argc, argv);
     // evaluateSecondChance(argc, argv);
     if(DEBUG_MODE) testAligner(argc, argv);
-    if(EXE_MODE) run(argc, argv);
+    if(EXE_MODE) return run(argc, argv);
     return 0;
 }

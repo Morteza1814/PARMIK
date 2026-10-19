@@ -9,6 +9,7 @@
 #include "Aligner.h"
 #include "Alignment.h"
 #include "SamReader.h"
+#include "Minimap2Reader.h"
 #include "Container.h"
 
 #define REPORT_BEST_ALN 0
@@ -357,6 +358,20 @@ public:
     {
         const string tool2Name = cfg.otherTool;
         cout << "Comparing Baseline and " + tool2Name << endl;
+        // Validate tool input before creating comparison reports.
+        vector<Alignment> tool2Alignments;
+        bool isBwotie = (tool2Name == "bowtie" || tool2Name == "BOWTIE");
+        bool isParmik = (tool2Name == "parmik" || tool2Name == "PARMIK");
+        bool isMinimap2 = (tool2Name == "minimap2" || tool2Name == "MINIMAP2");
+        if (tool2Name == "BLAST" || tool2Name == "blast") {
+            BlastReader(cfg.otherToolOutputFileAddress).parseFile(queryCount, tool2Alignments);
+        } else if (isMinimap2) {
+            Minimap2Reader(cfg.otherToolOutputFileAddress).parseFile(queryCount, tool2Alignments);
+        } else if (isParmik || isBwotie) {
+            SamReader(cfg.otherToolOutputFileAddress).parseFile(queryCount, tool2Alignments, false, isBwotie);
+        } else {
+            throw runtime_error("Unsupported baseline comparison tool: " + tool2Name);
+        }
         ofstream cmp(comparisonResultsFileAddress);
         cout << "cmp file address: " << comparisonResultsFileAddress << endl;
         if(!cmp.is_open())
@@ -376,18 +391,6 @@ public:
         tpAlnSz.open(alnReportAddressBase + "AlnSz_tp.txt");
         bestAlnSz.open(alnReportAddressBase + "AlnSz_Best.txt");
         fnAlnSz.open(alnReportAddressBase + "AlnSz_fn.txt");
-        //read the alignment files
-        vector<Alignment> tool2Alignments;
-        bool isBwotie = (tool2Name == "bowtie" || tool2Name == "BOWTIE") ? true:false;
-        bool isParmik = (tool2Name == "parmik" || tool2Name == "PARMIK") ? true:false;
-
-        if(tool2Name == "BLAST" || tool2Name == "blast") {
-            BlastReader blastReader(cfg.otherToolOutputFileAddress);
-            blastReader.parseFile(queryCount, tool2Alignments);
-        } else if(isParmik || isBwotie) {
-            SamReader parmikSam(cfg.otherToolOutputFileAddress);
-            parmikSam.parseFile(queryCount, tool2Alignments, false, isBwotie);//bowtie's output should be parsed like bwa
-        }
         IndexContainer<uint32_t, Alignment> queryTool2Alignment;
         for (const Alignment& aln : tool2Alignments)
         {
@@ -550,7 +553,9 @@ public:
                     // }
                     bool isFP = false;
                     string cigarStr = getCigarStr(aln, cfg, tool2Name);
-                    if(CHECK_EXACT_MATCH_CRITERION && !hasConsecutiveMatches(cigarStr, cfg.kmerLength)) {
+                    // M + NM gives identity but not mismatch positions. Do not infer
+                    // exact-match runs or identity from an expanded M CIGAR for minimap2.
+                    if(!isMinimap2 && CHECK_EXACT_MATCH_CRITERION && !hasConsecutiveMatches(cigarStr, cfg.kmerLength)) {
                         // isFP = true; // this is FP in terms of not finding exact match, but in total it is TP
                         aln.criteriaCode = 0x10;
                         tool2FP_lowAlnLen++;
@@ -559,7 +564,8 @@ public:
                         tool2FP_lowAlnLen_ed_allQ.insert(aln.substitutions + aln.inDels);
                         tool2FP_lowAlnLen_matchsize_allQ.insert(ltm);
                         cmp << "FP for " + tool2Name + ", due to low aln len, alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", match size: " << ltm << endl;
-                    } else if ((isBwotie && !checkIdentityPercentangeWithAln(aln)) || !checkIdentityPercentange(cigarStr)){
+                    } else if (isMinimap2 ? !checkIdentityPercentangeWithAln(aln) :
+                               ((isBwotie && !checkIdentityPercentangeWithAln(aln)) || !checkIdentityPercentange(cigarStr))){
                         isFP = true;
                         aln.criteriaCode = 0x80;
                         tool2FP_lowPercentageIdentity++;
