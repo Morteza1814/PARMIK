@@ -57,7 +57,7 @@ This step evaluates saved alignments; it does not rerun the aligners.
 | PARMIK counts | [cmp_parmik_IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848.slurm](../../experiments/parmik/IK_SSW_PF/SRR12432009/NC_045512/cmp_parmik_IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848.slurm) |
 | BLAST counts | [cmp_blast_K11_PI90.slurm](../../experiments/parmik/IK_SSW_PF/SRR12432009/NC_045512/cmp_blast_K11_PI90.slurm) |
 | Bowtie2 counts | [cmp_bowtie_K11_PI90.slurm](../../experiments/parmik/IK_SSW_PF/SRR12432009/NC_045512/cmp_bowtie_K11_PI90.slurm) |
-| Minimap2 counts (edit input first) | [cmp_minamp2_K11_PI90.slurm](../../experiments/parmik/IK_SSW_PF/SRR12432009/NC_045512/cmp_minamp2_K11_PI90.slurm) |
+| Minimap2 counts | [cmp_minamp2_K11_PI90.slurm](../../experiments/parmik/IK_SSW_PF/SRR12432009/NC_045512/cmp_minamp2_K11_PI90.slurm) |
 | PARMIK alignments | [aln_IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848.slurm](../../experiments/parmik/IK_SSW_PF/SRR12432009/NC_045512/aln_IKT0_K11_PI90_M4_T1_SC1_P_2484_1111_2444_2288_2848.slurm) |
 | BLAST alignments | [aln_ws11_pi90_mts50M.slurm](../../experiments/blast/SRR12432009/NC_045512/mts_50M/aln_ws11_pi90_mts50M.slurm) |
 | Bowtie2 alignments | [SRR12432009_NC_045512.slurm](../../experiments/bwotie2/SRR12432009/NC_045512/SRR12432009_NC_045512.slurm) |
@@ -70,8 +70,8 @@ sbatch <script_path>
 
 Wait for alignment jobs to finish before submitting their comparison jobs;
 plot once the counts are ready. `cmp_minamp2_K11_PI90.slurm` retains its original
-filename typo and currently points `-b` at Bowtie2 output: replace that argument
-with your minimap2 SAM file before using it.
+filename typo; its input now points to `minimap2.sam`. Counts from the previous
+version used Bowtie2 output and must be regenerated before plotting minimap2.
 
 List all available Slurm scripts from the repository root:
 
