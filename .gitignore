@@ -3,9 +3,9 @@
 *.err
 *.png
 *.jpg
-*.slurm
 *.out
-parmik
+/parmik
+/src/parmik
 
 # Local Python environments
 /.venv/
