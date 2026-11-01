@@ -6,3 +6,8 @@
 *.slurm
 *.out
 parmik
+
+# Local Python environments
+/.venv/
+/.venv-plot/
+/.venv-plot-miniforge/

@@ -18,7 +18,7 @@ This repository contains the code for **PA**rtial **R**ead **M**atching with **I
 ## Prerequisites ##
 Before you begin, ensure you have the following installed on your system, (section):
 - Ubuntu: All testing has been done on Ubuntu 22.04+ Operating System.
-- GCC: The GNU Compiler Collection, specifically g++9 which supports C++11 or later.
+- GCC: A g++ compiler with C++20 support (the current `src/Makefile` uses `-std=c++20`).
 - Make: The build utility to automate the compilation.
 - OpenMP: Support for parallel programming in C++.
 - Python3 for running the scripts
@@ -26,12 +26,15 @@ Before you begin, ensure you have the following installed on your system, (secti
 ## How to Compile ##
 To compile, use:
 ```bash
-make
+make -C src
 ```
 To clean up all compiled files:
 ```bash
-make clean
+make -C src clean
 ```
+The executable is `src/parmik`; run the examples below from `src/`, or replace
+`./parmik` with `./src/parmik` when working from the repository root.
+
 ## Download Datasets ##
 To download datasets, we used _SRA Toolkit (v3.0.7)_. Here is the command we used to download a metagenomic dataset (SRR12432009):
 ```bash
@@ -129,6 +132,13 @@ Below are the PARMIK's parameters in alphabetical order:
   - If not included, PARMIK creates and use the IKI on the fly
 - `-z`, `--baselineBaseAddress`: BaseLine file base address  (*required for compare mode*)
   - Base address of the baseline alignment outputs
+
+## Reproducing paper figures
+
+See [Figure commands](plot/FigurePlots/README.md) for Figure 3: regenerate
+TP/FN counts from saved alignments, then produce recall numbers and the PDF.
+Supply your own input paths; the datasets are not included in this repository.
+Other figures and full raw-data reproduction have not yet been documented.
 
 ### Help ###
 To display help for general usage:

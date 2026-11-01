@@ -1,56 +1,47 @@
 import pandas as pd
 import argparse
+import sys
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plotFig(x, y2, y3, y4, output_file, minimap2_recall=None, show=True):
-    second_ax_name = "PARMIK"
-    third_ax_name = "BLAST"
-    fourth_ax_name = "BOWTIE"
+REPO = Path(__file__).resolve().parents[2]
+STYLES = {
+    'parmik': ('PARMIK', 'navy'),
+    'blast': ('BLAST', 'firebrick'),
+    'bowtie': ('BOWTIE2', 'darkgreen'),
+    'minimap2': ('MINIMAP2', 'darkorange'),
+}
 
-    # Create a figure and axes for both plots
+
+def tool_label(tool):
+    return STYLES.get(tool, (tool.upper(), None))[0]
+
+
+def plotFig(x, recalls, output_file, show=False):
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
-    bar_width = 0.2
-
-    # Plot using dots
-    ax1.plot(x, y2, '-', label=second_ax_name, color='navy', markersize=10)
-    ax1.plot(x, y3, '-', label=third_ax_name, color='firebrick', markersize=10)
-    ax1.plot(x, y4, '-', label=fourth_ax_name, color='darkgreen', markersize=10)
-
-    if minimap2_recall is not None:
-        ax1.plot(x, minimap2_recall, '-', label='MINIMAP2', color='darkorange', markersize=10)
-
-    ax1.legend(fontsize=18, loc='lower right')
-    ax1.tick_params(axis='both', which='major', labelsize=18)
-    ax1.set_ylabel('Recall Rate (%)', fontsize=20)
-    ax1.text(-0.1, 1.1, '(A)', transform=ax1.transAxes, fontsize=24, fontweight='bold', va='top', ha='right', color='blue')
-
+    bar_width = min(0.2, 0.8 / len(recalls))
     zoom = (x >= 21) & (x < 35)
-    x_zoom = x[zoom]
-
-    # Plot the zoomed-in portion as a bar chart in the bottom subplot
-    ax2.bar(x_zoom, y2[zoom], label=second_ax_name, color='navy', width=bar_width)
-    ax2.bar([i + bar_width for i in x_zoom], y3[zoom], label=third_ax_name, color='firebrick', width=bar_width)
-    ax2.bar([i + 2 * bar_width for i in x_zoom], y4[zoom], label=fourth_ax_name, color='darkgreen', width=bar_width)
-
-    if minimap2_recall is not None:
-        ax2.bar(x_zoom + 3 * bar_width, minimap2_recall[zoom],
-                label='MINIMAP2', color='darkorange', width=bar_width)
-
-    ax2.legend(fontsize=18, loc='lower right')
-    ax2.tick_params(axis='both', which='major', labelsize=18)
+    for index, (tool, recall) in enumerate(recalls.items()):
+        label, color = STYLES.get(tool, (tool.upper(), None))
+        line, = ax1.plot(x, recall, '-', label=label, color=color)
+        ax2.bar(x[zoom] + index * bar_width, recall[zoom],
+                label=label, color=line.get_color(), width=bar_width)
+    for ax, panel in ((ax1, '(A)'), (ax2, '(B)')):
+        ax.legend(fontsize=18, loc='lower right')
+        ax.tick_params(axis='both', which='major', labelsize=18)
+        ax.set_ylabel('Recall Rate (%)', fontsize=20)
+        ax.text(-0.1, 1.1, panel, transform=ax.transAxes, fontsize=24,
+                fontweight='bold', va='top', ha='right', color='blue')
     ax2.set_ylim(0, 100)
-    ax2.set_ylabel('Recall Rate (%)', fontsize=20)
-    ax2.text(-0.1, 1.1, '(B)', transform=ax2.transAxes, fontsize=24, fontweight='bold', va='top', ha='right', color='blue')
-
-    plt.xlabel('Minimum Alignment Size (R)', fontsize=20)
-    plt.tight_layout()
-    plt.savefig(output_file)
+    ax2.set_xlabel('Minimum Alignment Size (R)', fontsize=20)
+    fig.tight_layout()
+    fig.savefig(output_file)
     if show:
         plt.show()
     plt.close(fig)
     return fig
+
 
 def cumulative_sum_from_each_element(arr):
     return np.cumsum(arr[::-1])[::-1]
@@ -98,47 +89,53 @@ def trim_arrays_within_range(array1, lower_limit, upper_limit):
     return trimmed_array1
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Plot Figure 3 from saved TP/FN histograms")
-    parser.add_argument('experiment_path', type=Path)
-    parser.add_argument('--include-minimap2', action='store_true',
-                        help='require minimap2 counts; otherwise include them when present')
-    parser.add_argument('--output', type=Path, help='PDF destination (default: input directory)')
-    parser.add_argument('--no-show', action='store_true', help='save without opening a display')
+    parser = argparse.ArgumentParser(description="Save Figure 3 and recall numbers for every available tool")
+    parser.add_argument('experiment_path', type=Path, help='directory containing TP/FN count files')
+    parser.add_argument('--output', type=Path,
+                        default=REPO / 'figure-results/figure3/Figure3.pdf')
+    parser.add_argument('--show', action='store_true', help='also open a display')
+    parser.add_argument('--no-show', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--include-minimap2', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
-    tools = ['parmik', 'blast', 'bowtie']
-    minimap2_files = [args.experiment_path / f'cmp_Baseline_minimap2_AlnSz_{kind}.txt'
-                      for kind in ('tp', 'fn')]
-    if args.include_minimap2 or any(path.exists() for path in minimap2_files):
-        if not all(path.is_file() for path in minimap2_files):
-            parser.error('minimap2 requires both cmp_Baseline_minimap2_AlnSz_tp.txt '
-                         'and cmp_Baseline_minimap2_AlnSz_fn.txt')
-        tools.append('minimap2')
-
-    recalls = []
+    if not args.experiment_path.is_dir():
+        parser.error(f'Data directory does not exist: {args.experiment_path}')
+    prefix = 'cmp_Baseline_'
+    available = set()
+    for kind in ('tp', 'fn'):
+        suffix = f'_AlnSz_{kind}.txt'
+        available.update(p.name[len(prefix):-len(suffix)]
+                         for p in args.experiment_path.glob(f'{prefix}*{suffix}'))
+    tools = [tool for tool in STYLES if tool in available]
+    tools += sorted(available - set(STYLES))
+    recalls = {}
     lengths = None
     for tool in tools:
-        paths = [args.experiment_path / f'cmp_Baseline_{tool}_AlnSz_{kind}.txt'
+        paths = [args.experiment_path / f'{prefix}{tool}_AlnSz_{kind}.txt'
                  for kind in ('tp', 'fn')]
+        if not all(path.is_file() for path in paths):
+            print(f'Skipping {tool}: both TP and FN files are needed.', file=sys.stderr)
+            continue
         tool_lengths, recall = getRecallOutOfTpFn(*paths)
         if lengths is not None and not np.array_equal(lengths, tool_lengths):
-            raise ValueError(f"{tool}: alignment lengths differ from PARMIK")
+            raise ValueError(f'{tool}: alignment lengths differ between tools')
         lengths = tool_lengths
-        recalls.append(recall)
-
+        recalls[tool] = recall
+    if not recalls:
+        parser.error('No complete TP/FN histogram pairs found')
     mask = (lengths >= 11) & (lengths <= 150)
     if not mask.any():
-        raise ValueError('No histogram lengths in the Figure 3 range (11 to 150)')
-    x = lengths[mask]
-    plotted = [recall[mask] for recall in recalls]
-    filename = ('PARMIKvsBLASTvsBOWTIEvsMINIMAP2_recall.pdf' if len(tools) == 4
-                else 'PARMIKvsBLASTvsBOWTIE_recall.pdf')
-    output = args.output or args.experiment_path / filename
-    plotFig(x, *plotted[:3], output,
-            minimap2_recall=plotted[3] if len(tools) == 4 else None,
-            show=not args.no_show)
-    print('R          ' + ' '.join(f'{tool.upper():<15}' for tool in tools))
-    for row in zip(x, *plotted):
-        print(f"{row[0]:<10} " + ' '.join(f'{value:<15.2f}' for value in row[1:]))
+        parser.error('No histogram lengths in the Figure 3 range (11 to 150)')
+    plotted = {tool: recall[mask] for tool, recall in recalls.items()}
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    plotFig(lengths[mask], plotted, args.output, show=args.show and not args.no_show)
+    lines = ['R          ' + ' '.join(f'{tool_label(tool):<15}' for tool in plotted)]
+    for row in zip(lengths[mask], *plotted.values()):
+        lines.append(f"{row[0]:<10} " + ' '.join(f'{value:<15.2f}' for value in row[1:]))
+    table = '\n'.join(lines) + '\n'
+    numbers = args.output.with_name(args.output.stem + '_recall.txt')
+    numbers.write_text(table)
+    print(table, end='')
+    print(f'Saved plot: {args.output}\nSaved numbers: {numbers}', file=sys.stderr)
 
 
 if __name__ == '__main__':
