@@ -86,7 +86,34 @@ python3 plot/FigurePlots/recall_PARMIK_BLAST_fig3.py <counts_directory> --output
 ```
 
 Use the experiment directory containing the count files as `<counts_directory>`.
-Every tool with both TP and FN files is plotted; missing pairs are skipped.
+Every tool with a `cmp_Baseline_<tool>_RecallByThreshold.txt` file is plotted.
+Rebuild PARMIK and rerun the baseline comparisons for all tools before plotting.
+Old TP/FN histograms cannot reconstruct threshold-dependent failures; the plot
+rejects directories with tool TP histograms but missing threshold reports.
+
+The new report has three columns: `R`, `TP(R)`, `FN(R)`. These are direct counts,
+not histogram bins, and must not be cumulatively summed. A baseline pair of
+length B with an accepted tool alignment of length L contributes FN when
+`L < R <= B`; an absent or rejected tool alignment uses L=0. Queries with no
+candidates contribute all their baseline pairs. TP retains the existing policy
+of counting accepted tool alignments of length at least R, including pairs
+absent from the baseline. The older FN histogram now also includes pairs from
+queries with no candidates, but still cannot encode the threshold relationship.
 Invalid data produces an error. The command saves `<figure.pdf>` and
 `<figure>_recall.txt` beside it, creates output directories automatically,
 and prints recall percentages. No graphical display is needed.
+
+### Recall regression check
+
+From the repository root, compile and run the synthetic comparator/plot check:
+
+```bash
+g++ -std=c++20 -O0 -fopenmp tests/recall_thresholds.cc src/Includes/sw/ssw_cpp.cpp src/Includes/sw/ssw.c -lz -o /tmp/parmik_recall_test
+python3 tests/check_recall_plot.py /tmp/parmik_recall_test
+```
+
+The Python environment needs pandas, numpy, and matplotlib. The test covers a
+missing pair, a shorter tool alignment, and an equal-length alignment through
+the minimap2, Bowtie2, and PARMIK reader paths; it also verifies the generated
+plot table and rejection of legacy-only inputs. Test outputs use temporary
+folders and do not replace experiment results.

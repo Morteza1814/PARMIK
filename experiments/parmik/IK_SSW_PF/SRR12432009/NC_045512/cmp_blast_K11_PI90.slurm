@@ -5,7 +5,6 @@
 #SBATCH --mem=950000
 #SBATCH --time=4-00:00:00
 #SBATCH --partition=gpu
-#SBATCH --reservation=rgq5aw_14
 /u/rgq5aw/GIT/PARMIK/src/parmik -a 4 -l blast -s 48 -m 14 -c 150 -t 0 -k 11 -d 90 -i 17000000 -j 30000 -x \
 -r /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads \
 -q /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries \

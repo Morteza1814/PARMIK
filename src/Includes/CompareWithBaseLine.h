@@ -359,6 +359,12 @@ public:
         const string tool2Name = cfg.otherTool;
         cout << "Comparing Baseline and " + tool2Name << endl;
         // Validate tool input before creating comparison reports.
+        {
+            ifstream input(cfg.otherToolOutputFileAddress);
+            if (!input)
+                throw runtime_error("Cannot open comparison alignment input: " +
+                                    cfg.otherToolOutputFileAddress);
+        }
         vector<Alignment> tool2Alignments;
         bool isBwotie = (tool2Name == "bowtie" || tool2Name == "BOWTIE");
         bool isParmik = (tool2Name == "parmik" || tool2Name == "PARMIK");
@@ -379,6 +385,12 @@ public:
         ofstream alnPerQ;
         ofstream baseLineFn;
         ofstream fnAlnSz;
+        // A missed pair contributes FN for toolLength < R <= baselineLength.
+        // Signed range deltas retain that relationship without storing all pairs.
+        map<uint32_t, int64_t> thresholdFNChanges;
+        ofstream thresholdRecall(alnReportAddressBase + "RecallByThreshold.txt");
+        if (!thresholdRecall)
+            throw runtime_error("Cannot create threshold recall report");
         ofstream tpAlnCmp, bestAlnCmp, tpEdCmp, bestEdCmp;
         ofstream tpAlnSz, bestAlnSz;
         // if(REPORT_ALN_PER_Q) alnPerQ.open(alnPerQueryFileAddress);
@@ -531,6 +543,7 @@ public:
             cmp << "# of reads found by Baseline : " << baseLineReadPerQuery << endl;
             
             vector<uint32_t> tool2TPReadIds;
+            unordered_map<uint32_t, uint32_t> acceptedLengths;
             if(tool2ReadPerQuery == 0 && baseLineReadPerQuery == 0){
                 //TN
                 totalTool2TN++;
@@ -580,6 +593,7 @@ public:
                     else {
                         tool2TP++;
                         tool2TPReadIds.push_back(aln.readID);
+                        acceptedLengths[aln.readID] = aln.partialMatchSize;
                         addTool2TPAlnSz(aln.partialMatchSize);
                         bool blfound = false;
                         auto baselineReadIt = baselineReadID_Aln.find(aln.readID);
@@ -673,7 +687,7 @@ public:
                         baseLineTP_notool2Matches++;
                         baseLineTP_notool2Matches_alnLen_allQ.insert(aaln.matches + aaln.inDels + aaln.substitutions);
                         baseLineTP_notool2Matches_ed_allQ.insert(aaln.substitutions + aaln.inDels);
-                        addTool2FNAlnSz(aaln.matches + aaln.inDels + aaln.substitutions);
+
                     }
                 }
                 baseLineTP_notool2Matches_allQ += baseLineTP_notool2Matches;
@@ -744,6 +758,19 @@ public:
                             cmp << "Best: " + tool2Name + " & baseLine perfromed equally, baseLine alnsize: " << baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine ed: " << baseLineBestAln.inDels + baseLineBestAln.substitutions << ", baseLine readID: " << baseLineBestAln.readID << ", " + tool2Name + " alnsize: " << bestAlntool2.partialMatchSize << ", " + tool2Name + " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels << ", " + tool2Name + " readID: " << bestAlntool2.readID << endl;
                         }
                     }
+                }
+            }
+            // Run for every query, including queries with no tool candidates.
+            for (const auto& entry : baselineReadID_Aln) {
+                const auto& baseline = entry.second;
+                const uint32_t baselineLength = baseline.matches + baseline.inDels + baseline.substitutions;
+                const auto found = acceptedLengths.find(entry.first);
+                const uint32_t toolLength = found == acceptedLengths.end() ? 0 : found->second;
+                if (found == acceptedLengths.end())
+                    addTool2FNAlnSz(baselineLength);
+                if (toolLength < baselineLength) {
+                    ++thresholdFNChanges[toolLength + 1];
+                    --thresholdFNChanges[baselineLength + 1];
                 }
             }
             tool2TP_nobaseLineMatches_allQ += tool2TP_nobaseLineMatches; 
@@ -924,6 +951,17 @@ public:
             tpAlnSz << i << "\t" << baselineTP_aln_sz[i] << "\t" << tool2TP_aln_sz[i] << endl;
             bestAlnSz << i << "\t" << baselineBest_aln_sz[i] << "\t" << tool2Best_aln_sz[i] << endl;
             fnAlnSz << i << "\t" << baselineFN_aln_sz[i] << "\t" << tool2FN_aln_sz[i] << endl;
+        }
+        // Direct counts at each R, not histogram bins: consumers must not sum
+        // these rows again. Preserve the existing accepted-alignment TP policy.
+        uint64_t thresholdTP = 0;
+        for (const auto& bin : tool2TP_aln_sz) thresholdTP += bin.second;
+        int64_t thresholdFN = 0;
+        const uint32_t maxThreshold = std::max<uint32_t>(255, cfg.contigSize + 19);
+        for (uint32_t r = 1; r <= maxThreshold; ++r) {
+            thresholdFN += thresholdFNChanges[r];
+            thresholdRecall << r << "\t" << thresholdTP << "\t" << thresholdFN << "\n";
+            thresholdTP -= tool2TP_aln_sz[r];
         }
         cmp.close();
         if(REPORT_ALN_PER_Q) alnPerQ.close();
