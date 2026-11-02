@@ -57,6 +57,10 @@ public:
         return container_.equal_range(key);
     }
 
+    std::pair<ConstIterator, ConstIterator> getRange(const KeyType& key) const {
+        return container_.equal_range(key);
+    }
+
     // Insert a range of key-value pairs
     template<typename InputIterator>
     void insertRange(InputIterator rangeBegin, InputIterator rangeEnd) {

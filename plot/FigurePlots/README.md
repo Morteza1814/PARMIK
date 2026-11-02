@@ -50,6 +50,27 @@ Counts are written in the `experiment dir` printed by PARMIK, beneath
 `parmikAln.txt` from that experiment directory instead of the supplied `-b` path.
 This step evaluates saved alignments; it does not rerun the aligners.
 
+For parallel comparisons in mode `-a 4`, append `--comparison-threads 8` to
+the command above. This option defaults to 1 and must be a positive integer.
+It controls only comparison workers; it does not change the experiment
+directory or the PARMIK alignment input path. Keep `-w` at the value used for
+the saved experiment, since `-w` still participates in its directory name.
+
+Append `--comparison-summary-only` to omit per-query details from
+`cmp_Baseline_<tool>.txt` while retaining its overall summary and all count
+reports. Detailed reporting remains enabled by default. Baseline data is loaded
+one 1,000-query chunk at a time, then queries in that chunk are distributed
+among workers. Counts are merged and detailed reports retain query order.
+Loading each chunk before processing its queries also fixes the previous case
+where an `N` in query 0, 1000, etc. prevented loading the baseline for the rest
+of that chunk. Results for such inputs can therefore differ from older runs.
+
+When benchmarking, compare 1, 2, 4, and 8 workers on the same inputs with the
+same reporting option. Input parsing and disk I/O can limit scaling; use the
+worker count that improves elapsed time on your machine. Each run overwrites
+the comparison reports in the same experiment directory, so run these trials
+sequentially and save reports separately if you want to compare them.
+
 ### Existing Figure 3 Slurm jobs
 
 | Purpose | Script (click for its repository location) |
@@ -102,18 +123,3 @@ queries with no candidates, but still cannot encode the threshold relationship.
 Invalid data produces an error. The command saves `<figure.pdf>` and
 `<figure>_recall.txt` beside it, creates output directories automatically,
 and prints recall percentages. No graphical display is needed.
-
-### Recall regression check
-
-From the repository root, compile and run the synthetic comparator/plot check:
-
-```bash
-g++ -std=c++20 -O0 -fopenmp tests/recall_thresholds.cc src/Includes/sw/ssw_cpp.cpp src/Includes/sw/ssw.c -lz -o /tmp/parmik_recall_test
-python3 tests/check_recall_plot.py /tmp/parmik_recall_test
-```
-
-The Python environment needs pandas, numpy, and matplotlib. The test covers a
-missing pair, a shorter tool alignment, and an equal-length alignment through
-the minimap2, Bowtie2, and PARMIK reader paths; it also verifies the generated
-plot table and rejection of legacy-only inputs. Test outputs use temporary
-folders and do not replace experiment results.

@@ -43,6 +43,8 @@ typedef struct config
     unsigned int contigSize;
     unsigned int parmikMode;
     unsigned int numThreads;
+    unsigned int comparisonThreads = 1;
+    bool comparisonSummaryOnly = false;
     double percentageIdentity = 0.9;
     double inDelPenalty = 2;
     double subPenalty = 1;

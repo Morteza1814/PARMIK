@@ -56,6 +56,8 @@ int argParse(int argc, char** argv, Config &cfg){
     args::Flag isSecondChanceOff(parser, "", "Turn Second Chance Off",                              {'u', "isSecondChanceOff"});
 	args::Flag isVerboseLogArg(parser, "", "Verbose Logging",                                       {'v', "verboseLog"});
     args::ValueFlag<int> numThreadsArg(parser, "", "Number of Threads",                             {'w', "numThreads"});
+    args::ValueFlag<int> comparisonThreadsArg(parser, "N", "Baseline comparison threads (default: 1; mode 4)", {"comparison-threads"});
+    args::Flag comparisonSummaryOnlyArg(parser, "", "Omit per-query comparison details; keep summary and counts (mode 4)", {"comparison-summary-only"});
 	args::Flag isIndexOfflineArg(parser, "", "Is the read index offline",                           {'x', "isIndexOffline"});
     args::ValueFlag<string> baselineBaseAddressArg(parser, "", "BaseLine file base address",        {'z', "baselineBaseAddress"});
     try
@@ -78,6 +80,13 @@ int argParse(int argc, char** argv, Config &cfg){
         cerr << parser;
         return 0;
     }
+    const int comparisonThreads = comparisonThreadsArg ? args::get(comparisonThreadsArg) : 1;
+    if (comparisonThreads < 1) {
+        cerr << "--comparison-threads must be a positive integer" << endl;
+        return 0;
+    }
+    cfg.comparisonThreads = static_cast<unsigned int>(comparisonThreads);
+    cfg.comparisonSummaryOnly = static_cast<bool>(comparisonSummaryOnlyArg);
     if (parmikModeArg) {cfg.parmikMode = args::get(parmikModeArg); } else {cout << "no parmik mode is determined!"<< endl; return 0;}
 	if (readDatabaseAddressArg) {cfg.readDatabaseAddress = args::get(readDatabaseAddressArg); } else {cout << "no readDatabaseAddress!"<< endl; return 0;}
 	if (queryFileAddressArg) {cfg.queryFileAddress = args::get(queryFileAddressArg);} else {cout << "no queryFileAddress!"<< endl; return 0;}
@@ -270,6 +279,10 @@ int run(int argc, char *argv[]) {
     cout << left << setw(30) << "percentageIdentity: " << cfg.percentageIdentity << endl;
     cout << left << setw(30) << "minExactMatchLen: " << cfg.minExactMatchLen << endl;
     cout << left << setw(30) << "numThreads: " << cfg.numThreads << endl;
+    if (cfg.parmikMode == PARMIK_MODE_CMP_BASELINE) {
+        cout << left << setw(30) << "comparisonThreads: " << cfg.comparisonThreads << endl;
+        cout << left << setw(30) << "comparisonSummaryOnly: " << (cfg.comparisonSummaryOnly ? "T" : "F") << endl;
+    }
     cout << left << setw(30) << "isSecondChanceOff: " << ((cfg.isSecondChanceOff == 1) ? "T":"F") << endl;
     uint32_t minNumExactMatchKmer = 0;
     if (cfg.parmikMode != PARMIK_MODE_INDEX && cfg.parmikMode != PARMIK_MODE_BASELINE) {

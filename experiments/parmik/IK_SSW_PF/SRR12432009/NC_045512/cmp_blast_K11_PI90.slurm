@@ -1,11 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name="cmp_NC_045512_SRR12432009_blast_K11_PI90"
+#SBATCH --job-name="cmp_blast_K11_PI90"
 #SBATCH --error="cmp_blast_K11_PI90.err"
 #SBATCH --output="cmp_blast_K11_PI90.out"
 #SBATCH --mem=950000
 #SBATCH --time=4-00:00:00
 #SBATCH --partition=gpu
-/u/rgq5aw/GIT/PARMIK/src/parmik -a 4 -l blast -s 48 -m 14 -c 150 -t 0 -k 11 -d 90 -i 17000000 -j 30000 -x \
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=32
+stdbuf -oL -eL /u/rgq5aw/GIT/PARMIK/src/parmik -a 4 -l blast -s 48 -m 14 -c 150 -t 0 -k 11 -d 90 -i 17000000 -j 30000 -x --comparison-threads 32 --comparison-summary-only \
 -r /p/lava/parmik/partialMatcherProject/datasets/metagenomicDB/SRR12432009/SRR12432009_reads \
 -q /p/lava/parmik/partialMatcherProject/datasets/queryFiles/covidQueryFiles/NC_045512_queries \
 -f /p/lava/parmik/partialMatcherProject/tools/parmik/CK_INDEX/SRR12432009/ \

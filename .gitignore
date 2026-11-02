@@ -11,3 +11,6 @@
 /.venv/
 /.venv-plot/
 /.venv-plot-miniforge/
+
+# Local validation files
+/tests/
