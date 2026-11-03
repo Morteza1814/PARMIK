@@ -8,92 +8,112 @@
 #include <vector>
 #include <regex>
 #include <map>
+#include <limits>
+#include <stdexcept>
 #include "Utils.h"
 #include "Alignment.h"
 
 using namespace std;
 
 class BlastReader {
+    static uint32_t number(const string& value, uint32_t maximum) {
+        if (value.empty() || value.find_first_not_of("0123456789") != string::npos)
+            throw runtime_error("expected an unsigned integer: " + value);
+        const auto result = stoull(value);
+        if (result > maximum)
+            throw runtime_error("integer outside supported range: " + value);
+        return static_cast<uint32_t>(result);
+    }
+
+    static uint32_t contigId(const string& name) {
+        const auto dot = name.find_last_of('.');
+        return number(name.substr(dot == string::npos ? 0 : dot + 1),
+                      numeric_limits<int>::max());
+    }
+
+    static uint32_t coordinate(const string& value) {
+        // The input is one-based; Alignment stores zero-based 8-bit positions.
+        const auto position = number(value, numeric_limits<uint8_t>::max() + 1u);
+        if (position == 0) throw runtime_error("alignment coordinates must be positive");
+        return position - 1;
+    }
+
 public:
 
     BlastReader(const string& filename) : filename_(filename) {}
 
-    uint32_t getIndels(string read, string query) {
+    uint32_t getIndels(const string& read, const string& query) const {
         uint32_t inDelCount = 0;
-        if (read == "" || query == "") {
-            // cout << "q : " << query << endl;
-            // cout << "r : " << read << endl;
-            cerr << "Error: Sequences are empty." << endl;
-            return 0;
-        }
-        // Check if the sequences have the same length
-        if (read.length() != query.length()) {
-            // cout << "q : " << query << endl;
-            // cout << "r : " << read << endl;
-            cerr << "Error: Sequences have different lengths." << endl;
-            return 0;
-        }
+        if (read.empty() || query.empty())
+            throw runtime_error("aligned sequences must not be empty");
+        if (read.length() != query.length())
+            throw runtime_error("aligned sequences have different lengths");
         // Iterate through the sequences and compare corresponding characters
         for (size_t i = 0; i < read.length(); ++i) {
-            if (read[i] != query[i]) {
-                if (read[i] == '-' || query[i] == '-') {
-                    inDelCount++;
-                }
-            } 
+            if (read[i] == '-' && query[i] == '-')
+                throw runtime_error("alignment column contains two gaps");
+            if (read[i] == '-' || query[i] == '-') ++inDelCount;
         }
  
         return inDelCount;
     }
 
     void parseFile(uint32_t lastQueryID, vector<Alignment>& alignments) {
-        
         ifstream blastFile(filename_);
-        Utilities<uint32_t> utl;
-        if (!blastFile) {
-            cerr << "Error opening file: " << filename_ << endl;
-            return;
-        }
+        if (!blastFile) throw runtime_error("Cannot open BLAST alignments: " + filename_);
 
         string line;
-        uint32_t queryCount = 0;
+        size_t lineNumber = 0;
         while (getline(blastFile, line)) {
-            if (line.empty() || line == "" || line.find('#') != string::npos) {
-                continue; // Skip empty lines
+            ++lineNumber;
+            const auto first = line.find_first_not_of(" \t\r");
+            if (first == string::npos || line[first] == '#') continue;
+            try {
+                istringstream iss(line);
+                string queryID, readID, queryS, queryE, readS, readE, alignmentLength,
+                       mismatches, strand, queryAligned, readAligned;
+                if (!(iss >> queryID >> readID >> queryS >> queryE >> readS >> readE
+                          >> alignmentLength >> mismatches >> strand >> queryAligned >> readAligned))
+                    throw runtime_error("expected 11 BLAST fields including aligned sequences");
+                const auto queryId = contigId(queryID);
+                // BLAST records need not be sorted by query ID.
+                if (queryId > lastQueryID) continue;
+                const auto length = number(alignmentLength, numeric_limits<uint8_t>::max());
+                const auto substitutions = number(mismatches, length);
+                if (length == 0 || queryAligned.size() != length || readAligned.size() != length)
+                    throw runtime_error("alignment length disagrees with aligned sequences");
+                const auto indels = getIndels(readAligned, queryAligned);
+                if (substitutions + indels > length)
+                    throw runtime_error("mismatches and gaps exceed alignment length");
+                if (strand != "plus" && strand != "minus")
+                    throw runtime_error("expected plus or minus BLAST strand");
+
+                Alignment blast;
+                blast.queryID = queryId;
+                blast.readID = contigId(readID);
+                // Preserve endpoint order for reverse-strand alignments.
+                blast.queryRegionStartPos = coordinate(queryS);
+                blast.queryRegionEndPos = coordinate(queryE);
+                blast.readRegionStartPos = coordinate(readS);
+                blast.readRegionEndPos = coordinate(readE);
+                blast.partialMatchSize = length;
+                blast.substitutions = substitutions;
+                blast.inDels = indels;
+                blast.matches = length - substitutions - indels;
+                blast.editDistance = substitutions + indels;
+                blast.flag = strand == "plus" ? 0 : 16;
+                blast.alignedQuery = queryAligned;
+                blast.alignedRead = readAligned;
+                alignments.push_back(blast);
+            } catch (const exception& error) {
+                throw runtime_error(filename_ + ":" + to_string(lineNumber) + ": " + error.what());
             }
-            Alignment blast;
-            istringstream iss(line);
-            string queryID, readID, queryS, queryE, readS, readE, AlignmentLength, Mismatches, flag, queryAligned, readAligned;
-            iss >> queryID >>  readID >>  queryS >>  queryE >>  readS >>  readE >>  AlignmentLength >>  Mismatches >>  flag >> queryAligned >> readAligned;
-            try{
-                if (queryID == "") blast.queryID = 0; else blast.queryID = utl.extractContigId(queryID);
-                if (readID == "") blast.readID = 0; else blast.readID = utl.extractContigId(readID);
-                if (queryS == "") blast.queryRegionStartPos = 0; else blast.queryRegionStartPos = stoi(queryS.c_str()) - 1;
-                if (queryE == "") blast.queryRegionEndPos = 0; else blast.queryRegionEndPos = stoi(queryE.c_str()) - 1;
-                if (readS == "") blast.readRegionStartPos = 0; else blast.readRegionStartPos = stoi(readS.c_str()) - 1;
-                if (readE == "") blast.readRegionEndPos = 0; else blast.readRegionEndPos = stoi(readE.c_str()) - 1;
-                if (AlignmentLength == "") blast.partialMatchSize = 0; else blast.partialMatchSize = stoi(AlignmentLength.c_str());
-                if (Mismatches == "") blast.substitutions = 0; else blast.substitutions = stoi(Mismatches.c_str());
-                if (flag == "") blast.flag = 0; else if (flag == "plus") blast.flag = 0; else blast.flag = 16;
-                if (queryAligned == "") blast.alignedQuery = ""; else blast.alignedQuery = queryAligned;
-                if (readAligned == "") blast.alignedRead = ""; else blast.alignedRead = readAligned;
-            } catch (const std::invalid_argument& e) {
-                std::cerr << "BL Invalid argument: " << e.what() << '\n';
-            } catch (const std::out_of_range& e) {
-                std::cerr << "Out of range: " << e.what() << '\n';
-            }
-
-            blast.inDels = getIndels(readAligned, queryAligned);
-
-            if(blast.queryID > (int)lastQueryID)
-                break;
-
-            alignments.push_back(blast);
-            queryCount++;
         }
+        if (blastFile.bad()) throw runtime_error("Error reading BLAST alignments: " + filename_);
     }
 
 private:
     string filename_;
 };
 
-#endif 
+#endif

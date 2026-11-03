@@ -411,14 +411,17 @@ public:
                     simplifiedCigar << string(num, '=');
                     break;
                 case 'X':
+                case 'x':
                     // Match or mismatch (substitution)
                     simplifiedCigar << string(num, 'X');
                     break;
                 case 'I':
+                case 'i':
                     // Insertion
                     simplifiedCigar << string(num, 'I');
                     break;
                 case 'D':
+                case 'd':
                     // Deletion
                     simplifiedCigar << string(num, 'D');
                     break;
@@ -481,6 +484,7 @@ public:
 
     bool checkIdentityPercentange(string cigarStr, bool isTrimClips = false) const {
         if (isTrimClips) cigarStr = trimClips(cigarStr);
+        if (cigarStr.empty()) return false;
         uint32_t matches = getMatchesCount(cigarStr);
         double identity =  (double) matches / (double) cigarStr.size();
         if(DEBUG_MODE) cout << "matches: " << matches << ", cigarStr.size : " << cigarStr.size() << ", identity: " << identity << '\n';
@@ -490,6 +494,7 @@ public:
     }
 
     bool checkIdentityPercentangeWithAln(Alignment aln) const {
+        if (aln.partialMatchSize == 0) return false;
         double identity =  (double) aln.matches / (double) aln.partialMatchSize;
         if(identity < percentageIdentity)
             return false;
@@ -590,19 +595,31 @@ private:
         if (!cfg.comparisonSummaryOnly) cmp << "Q : " << query << ", queryInd: " << queryInd << '\n';
         Alignment bestAlntool2;
 
-        tsl::robin_map<uint32_t, Alignment> query_t2Alignments;
+        struct Candidate {
+            Alignment alignment;
+            bool passesIdentity;
+        };
+        tsl::robin_map<uint32_t, Candidate> query_t2Alignments;
         auto tool2QueryRrange = queryTool2Alignment.getRange(queryInd);
         for (auto it = tool2QueryRrange.first; it != tool2QueryRrange.second; it++){
-            Alignment aln = it->second;
+            const Alignment& aln = it->second;
+            const bool passesIdentity = (isMinimap2 || isBwotie)
+                ? checkIdentityPercentangeWithAln(aln)
+                : checkIdentityPercentange(getCigarStr(aln, cfg, tool2Name));
             auto readIt = query_t2Alignments.find(aln.readID);
             if(readIt == query_t2Alignments.end()) {
-                query_t2Alignments[aln.readID] = aln;
+                query_t2Alignments[aln.readID] = {aln, passesIdentity};
             } else {
-                Alignment readAln = readIt->second;
-                if ((readAln.matches + readAln.inDels + readAln.substitutions < aln.matches + aln.inDels + aln.substitutions) ||
-                ((readAln.matches + readAln.inDels + readAln.substitutions == aln.matches + aln.inDels + aln.substitutions) &&
-                (readAln.inDels + readAln.substitutions > aln.inDels + aln.substitutions))) {
-                    query_t2Alignments[aln.readID] = aln;
+                const auto& previous = readIt->second;
+                const auto& readAln = previous.alignment;
+                // Choose the longest accepted alignment for each pair. If all
+                // candidates fail identity, retain the best rejected one for FP reporting.
+                if ((passesIdentity && !previous.passesIdentity) ||
+                    (passesIdentity == previous.passesIdentity &&
+                     (aln.partialMatchSize > readAln.partialMatchSize ||
+                      (aln.partialMatchSize == readAln.partialMatchSize &&
+                       aln.inDels + aln.substitutions < readAln.inDels + readAln.substitutions)))) {
+                    readIt.value() = {aln, passesIdentity};
                 }
             }
         }
@@ -616,6 +633,7 @@ private:
         if(tool2ReadPerQuery == 0 && baseLineReadPerQuery == 0){
             //TN
             stats.totalTool2TN++;
+            stats.totalbaseLineTN++;
             if (!cfg.comparisonSummaryOnly) cmp << "TN for " + tool2Name << '\n';
         } else if(tool2ReadPerQuery == 0 && baseLineReadPerQuery > 0) {
             //tool2 FN
@@ -626,7 +644,7 @@ private:
         } else {    // if both tool2 and baseLine have alignments or only tool2 has alignments
             for (auto it = query_t2Alignments.begin(); it != query_t2Alignments.end(); it++)
             {
-                Alignment aln = it->second;
+                Alignment aln = it->second.alignment;
                 // string tool2R = reads[aln.readID];
                 // if(tool2R.find('N') != string::npos || tool2R.find('n') != string::npos)
                 // {
@@ -635,9 +653,11 @@ private:
                 // }
                 bool isFP = false;
                 string cigarStr = getCigarStr(aln, cfg, tool2Name);
-                // M + NM gives identity but not mismatch positions. Do not infer
-                // exact-match runs or identity from an expanded M CIGAR for minimap2.
-                if(!isMinimap2 && CHECK_EXACT_MATCH_CRITERION && !hasConsecutiveMatches(cigarStr, cfg.kmerLength)) {
+                // M + NM gives identity but not mismatch positions. Exact-run
+                // diagnostics must not interpret ambiguous M columns as exact matches.
+                const bool exactPositionsKnown = !isMinimap2 &&
+                    !(isBwotie && aln.cigar.find('M') != string::npos);
+                if(exactPositionsKnown && CHECK_EXACT_MATCH_CRITERION && !hasConsecutiveMatches(cigarStr, cfg.kmerLength)) {
                     // isFP = true; // this is FP in terms of not finding exact match, but in total it is TP
                     aln.criteriaCode = 0x10;
                     tool2FP_lowAlnLen++;
@@ -646,10 +666,11 @@ private:
                     stats.tool2FP_lowAlnLen_ed_allQ.insert(aln.substitutions + aln.inDels);
                     stats.tool2FP_lowAlnLen_matchsize_allQ.insert(ltm);
                     if (!cfg.comparisonSummaryOnly) cmp << "FP for " + tool2Name + ", due to low aln len, alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", match size: " << ltm << '\n';
-                } else if (isMinimap2 ? !checkIdentityPercentangeWithAln(aln) :
-                           ((isBwotie && !checkIdentityPercentangeWithAln(aln)) || !checkIdentityPercentange(cigarStr))){
+                }
+                // The exact-run diagnostic does not exempt a pair from identity filtering.
+                if (!it->second.passesIdentity) {
                     isFP = true;
-                    aln.criteriaCode = 0x80;
+                    aln.criteriaCode |= 0x80;
                     tool2FP_lowPercentageIdentity++;
                     stats.tool2FP_lowPercentageIdentity_alnLen_allQ.insert(aln.partialMatchSize);
                     stats.tool2FP_lowPercentageIdentity_ed_allQ.insert(aln.substitutions + aln.inDels);
@@ -677,7 +698,7 @@ private:
                         stats.tool2TP_nobaseLineMatches_alnLen_allQ.insert(aln.partialMatchSize);
                         stats.tool2TP_nobaseLineMatches_ed_allQ.insert(aln.substitutions + aln.inDels);
                         if (!cfg.comparisonSummaryOnly) cmp << "TP for " + tool2Name + ", no baseLine match, alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << '\n';
-                        stats.addBaselineFNAlnSz(bestAlntool2.partialMatchSize);
+                        stats.addBaselineFNAlnSz(aln.partialMatchSize);
                         if(REPORT_baseLine_FN) baseLineFn << queryInd << "\t" << aln.readID << "\t" << aln.flag << '\n';
                     } else {
                         if (baselineAln.matches + baselineAln.inDels + baselineAln.substitutions > aln.partialMatchSize){ //baseLine outperformed
@@ -704,7 +725,7 @@ private:
                                 stats.baseLineTP_baseLineOutperfomed_alnLen_allQ.insert(baselineAln.matches + baselineAln.inDels + baselineAln.substitutions);
                                 stats.baseLineTP_baseLineOutperfomed_ed_allQ.insert(baselineAln.substitutions + baselineAln.inDels);
                                 if (!cfg.comparisonSummaryOnly) cmp << "TP for " + tool2Name + ", baseLine outperformed in terms of ed, " + tool2Name + " alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", baseLine alnlen: " << baselineAln.matches + baselineAln.inDels << ", ed: " << baselineAln.substitutions + baselineAln.inDels << ", readID: " << baselineAln.readID << '\n';
-                                stats.addBaselineTPOutperform_edit(baselineAln.substitutions + baselineAln.inDels - aln.substitutions - aln.inDels);
+                                stats.addBaselineTPOutperform_edit(aln.substitutions + aln.inDels - baselineAln.substitutions - baselineAln.inDels);
                             } else if (baselineAln.substitutions + baselineAln.inDels > aln.substitutions + aln.inDels)//tool2 outperformed
                             {
                                 tool2TP_tool2Outperfomed++;
@@ -713,7 +734,7 @@ private:
                                 stats.baseLineTP_tool2Outperfomed_alnLen_allQ.insert(baselineAln.matches + baselineAln.inDels + baselineAln.substitutions);
                                 stats.baseLineTP_tool2Outperfomed_ed_allQ.insert(baselineAln.substitutions + baselineAln.inDels);
                                 if (!cfg.comparisonSummaryOnly) cmp << "TP for " + tool2Name + ", " + tool2Name + " outperformed in terms of ed, " + tool2Name + " alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", baseLine alnlen: " << baselineAln.matches + baselineAln.inDels << ", ed: " << baselineAln.substitutions + baselineAln.inDels << ", readID: " << baselineAln.readID << '\n';
-                                stats.addTool2TPOutperform_edit(aln.substitutions + aln.inDels - baselineAln.substitutions - baselineAln.inDels);
+                                stats.addTool2TPOutperform_edit(baselineAln.substitutions + baselineAln.inDels - aln.substitutions - aln.inDels);
                             } // tool2 and baseLine performed equally
                             else{
                                 tool2TP_tool2EqualbaseLine++;
@@ -771,7 +792,6 @@ private:
                 stats.baseLineFN_tool2_ed_allQ.insert(bestAlntool2.substitutions + bestAlntool2.inDels);
                 if (!cfg.comparisonSummaryOnly) cmp << "baseLine FN, and " + tool2Name + " alnsize: " << bestAlntool2.partialMatchSize << ", " + tool2Name + " ed: " << bestAlntool2.substitutions + bestAlntool2.inDels << ", " + tool2Name + " readID: " << bestAlntool2.readID << '\n';
                 stats.numnberOfBaseLine_FN++;
-                stats.addBaselineFNAlnSz(bestAlntool2.partialMatchSize);
             } else if(baseLineReadPerQuery > 0 && tool2TP > 0){//compare the best alignmnets for this queyry
                 if (baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions > bestAlntool2.partialMatchSize){ //baseLine outperformed
                     tool2Best_baseLineOutperfomed++;
@@ -857,7 +877,7 @@ public:
         if (cfg.comparisonThreads == 0)
             throw invalid_argument("comparisonThreads must be positive");
         const string tool2Name = cfg.otherTool;
-        cout << "Comparing Baseline and " + tool2Name << '\n';
+        cout << "Comparing Baseline and " + tool2Name << endl;
         // Validate tool input before creating comparison reports.
         {
             ifstream input(cfg.otherToolOutputFileAddress);
@@ -870,18 +890,20 @@ public:
         bool isParmik = (tool2Name == "parmik" || tool2Name == "PARMIK");
         bool isMinimap2 = (tool2Name == "minimap2" || tool2Name == "MINIMAP2");
         if (tool2Name == "BLAST" || tool2Name == "blast") {
-            BlastReader(cfg.otherToolOutputFileAddress).parseFile(queryCount, tool2Alignments);
+            if (queryCount > 0)
+                BlastReader(cfg.otherToolOutputFileAddress).parseFile(queryCount - 1, tool2Alignments);
         } else if (isMinimap2) {
             Minimap2Reader(cfg.otherToolOutputFileAddress).parseFile(queryCount, tool2Alignments);
         } else if (isParmik || isBwotie) {
-            SamReader(cfg.otherToolOutputFileAddress).parseFile(queryCount, tool2Alignments, false, isBwotie);
+            if (queryCount > 0)
+                SamReader(cfg.otherToolOutputFileAddress).parseFile(queryCount - 1, tool2Alignments, false, isBwotie);
         } else {
             throw runtime_error("Unsupported baseline comparison tool: " + tool2Name);
         }
         ofstream cmp(comparisonResultsFileAddress);
         cout << "cmp file address: " << comparisonResultsFileAddress << '\n';
         if(!cmp.is_open())
-            cout << "cmp file not opened" << '\n';
+            throw runtime_error("Cannot create comparison report: " + comparisonResultsFileAddress);
         ofstream alnPerQ;
         ofstream baseLineFn;
         ofstream fnAlnSz;
@@ -902,6 +924,9 @@ public:
         tpAlnSz.open(alnReportAddressBase + "AlnSz_tp.txt");
         bestAlnSz.open(alnReportAddressBase + "AlnSz_Best.txt");
         fnAlnSz.open(alnReportAddressBase + "AlnSz_fn.txt");
+        if (!bestAlnCmp || !tpAlnCmp || !bestEdCmp || !tpEdCmp ||
+            !tpAlnSz || !bestAlnSz || !fnAlnSz)
+            throw runtime_error("Cannot create comparison count reports: " + alnReportAddressBase);
         IndexContainer<uint32_t, Alignment> queryTool2Alignment;
         for (const Alignment& aln : tool2Alignments)
         {
@@ -921,7 +946,7 @@ public:
         for (uint32_t chunkBase = 0; chunkBase < queryCount;) {
             const uint32_t chunkEnd = chunkBase + std::min<uint32_t>(1000, queryCount - chunkBase);
             queryBaselineAlignment.clear();
-            cout << "queries processed: " << chunkBase << " / " << queryCount << '\n';
+            cout << "queries processed: " << chunkBase << " / " << queryCount << endl;
             readChunkOfBaseLine(baseLineSamAlignments, baseLineFilePrefixAddress, chunkBase, 1000);
             for (const auto& aln : baseLineSamAlignments)
                 queryBaselineAlignment.put(aln.queryID, aln);
@@ -1141,7 +1166,12 @@ public:
         tpAlnSz.close();
         bestAlnSz.close();
         fnAlnSz.close();
+        thresholdRecall.close();
+        if (!cmp || !bestAlnCmp || !tpAlnCmp || !bestEdCmp || !tpEdCmp ||
+            !tpAlnSz || !bestAlnSz || !fnAlnSz || !thresholdRecall)
+            throw runtime_error("Failed writing comparison reports: " + alnReportAddressBase);
         if (REPORT_baseLine_FN) baseLineFn.close();
+        cout << "queries processed: " << queryCount << " / " << queryCount << endl;
     }
 };
 
