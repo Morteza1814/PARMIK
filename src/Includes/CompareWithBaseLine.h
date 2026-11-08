@@ -7,6 +7,7 @@
 #include <iostream>
 #include <exception>
 #include <sstream>
+#include <cmath>
 #include <omp.h>
 #include "BlastReader.h"
 #include "Aligner.h"
@@ -52,28 +53,28 @@ private:
         map<uint16_t, uint64_t> tool2BestOutperform_edit_difference;
         map<uint16_t, uint64_t> baselineBestOutperform_edit_difference;
         map<uint32_t, int64_t> thresholdFNChanges;
-        uint32_t numberOfQueryContainN = 0;
-        uint32_t queriestool2FoundMatch = 0;
-        uint32_t queriesblfoundMatch = 0;
-        uint32_t baseLineTotalNumberOfReadIDs = 0;
-        uint32_t tool2TotalNumberOfReadIDs = 0;
-        uint32_t numnberOfBaseLine_FN = 0;
-        uint32_t tool2FN = 0;
-        uint32_t tool2FN_noCriteriaFittedMatches = 0;
-        uint32_t totalTool2TN = 0;
-        uint32_t totalbaseLineTN = 0;
-        uint32_t totaltool2TP = 0;
-        uint32_t totaltool2FP = 0;
-        uint32_t tool2TP_nobaseLineMatches_allQ = 0;
-        uint32_t tool2TP_tool2Outperfomed_allQ = 0;
-        uint32_t tool2TP_baseLineOutperfomed_allQ = 0;
-        uint32_t tool2TP_tool2EqualbaseLine_allQ = 0;
-        uint32_t baseLineTP_notool2Matches_allQ = 0;
-        uint32_t tool2FP_lowAlnLen_allQ = 0;
-        uint32_t tool2FP_lowPercentageIdentity_allQ = 0;
-        uint32_t tool2Best_tool2Outperfomed_allQ = 0;
-        uint32_t tool2Best_baseLineOutperfomed_allQ = 0;
-        uint32_t tool2Best_tool2EqualbaseLine_allQ = 0;
+        uint64_t numberOfQueryContainN = 0;
+        uint64_t queriestool2FoundMatch = 0;
+        uint64_t queriesblfoundMatch = 0;
+        uint64_t baseLineTotalNumberOfReadIDs = 0;
+        uint64_t tool2TotalNumberOfReadIDs = 0;
+        uint64_t numnberOfBaseLine_FN = 0;
+        uint64_t tool2FN = 0;
+        uint64_t tool2FN_noCriteriaFittedMatches = 0;
+        uint64_t totalTool2TN = 0;
+        uint64_t totalbaseLineTN = 0;
+        uint64_t totaltool2TP = 0;
+        uint64_t totaltool2FP = 0;
+        uint64_t tool2TP_nobaseLineMatches_allQ = 0;
+        uint64_t tool2TP_tool2Outperfomed_allQ = 0;
+        uint64_t tool2TP_baseLineOutperfomed_allQ = 0;
+        uint64_t tool2TP_tool2EqualbaseLine_allQ = 0;
+        uint64_t baseLineTP_notool2Matches_allQ = 0;
+        uint64_t tool2NoExactRun_allQ = 0;
+        uint64_t tool2FP_lowPercentageIdentity_allQ = 0;
+        uint64_t tool2Best_tool2Outperfomed_allQ = 0;
+        uint64_t tool2Best_baseLineOutperfomed_allQ = 0;
+        uint64_t tool2Best_tool2EqualbaseLine_allQ = 0;
         multiset<uint32_t> baseLineReadPerQuerySet;
         multiset<uint32_t> tool2ReadPerQuerySet;
         multiset<uint32_t> tool2TPPerQuery;
@@ -106,11 +107,11 @@ private:
         multiset<uint32_t> baseLineBest_tool2Outperfomed_ed_allQ;
         multiset<uint32_t> baseLineBest_baseLineOutperfomed_ed_allQ;
         multiset<uint32_t> baseLineBest_tool2EqualbaseLine_ed_allQ;
-        multiset<uint32_t> tool2FP_lowAlnLen_alnLen_allQ;
-        multiset<uint32_t> tool2FP_lowAlnLen_matchsize_allQ;
+        multiset<uint32_t> tool2NoExactRun_alnLen_allQ;
+        multiset<uint32_t> tool2NoExactRun_matchsize_allQ;
         multiset<uint32_t> tool2FP_lowerExactMatchKmers_alnLen_allQ;
         multiset<uint32_t> tool2FP_lowPercentageIdentity_alnLen_allQ;
-        multiset<uint32_t> tool2FP_lowAlnLen_ed_allQ;
+        multiset<uint32_t> tool2NoExactRun_ed_allQ;
         multiset<uint32_t> tool2FP_lowerExactMatchKmers_ed_allQ;
         multiset<uint32_t> tool2FP_lowPercentageIdentity_ed_allQ;
         multiset<uint32_t> tool2FN_baseLine_alnLen_allQ;
@@ -274,7 +275,7 @@ private:
             tool2TP_baseLineOutperfomed_allQ += other.tool2TP_baseLineOutperfomed_allQ;
             tool2TP_tool2EqualbaseLine_allQ += other.tool2TP_tool2EqualbaseLine_allQ;
             baseLineTP_notool2Matches_allQ += other.baseLineTP_notool2Matches_allQ;
-            tool2FP_lowAlnLen_allQ += other.tool2FP_lowAlnLen_allQ;
+            tool2NoExactRun_allQ += other.tool2NoExactRun_allQ;
             tool2FP_lowPercentageIdentity_allQ += other.tool2FP_lowPercentageIdentity_allQ;
             tool2Best_tool2Outperfomed_allQ += other.tool2Best_tool2Outperfomed_allQ;
             tool2Best_baseLineOutperfomed_allQ += other.tool2Best_baseLineOutperfomed_allQ;
@@ -312,11 +313,11 @@ private:
             baseLineBest_tool2Outperfomed_ed_allQ.merge(other.baseLineBest_tool2Outperfomed_ed_allQ);
             baseLineBest_baseLineOutperfomed_ed_allQ.merge(other.baseLineBest_baseLineOutperfomed_ed_allQ);
             baseLineBest_tool2EqualbaseLine_ed_allQ.merge(other.baseLineBest_tool2EqualbaseLine_ed_allQ);
-            tool2FP_lowAlnLen_alnLen_allQ.merge(other.tool2FP_lowAlnLen_alnLen_allQ);
-            tool2FP_lowAlnLen_matchsize_allQ.merge(other.tool2FP_lowAlnLen_matchsize_allQ);
+            tool2NoExactRun_alnLen_allQ.merge(other.tool2NoExactRun_alnLen_allQ);
+            tool2NoExactRun_matchsize_allQ.merge(other.tool2NoExactRun_matchsize_allQ);
             tool2FP_lowerExactMatchKmers_alnLen_allQ.merge(other.tool2FP_lowerExactMatchKmers_alnLen_allQ);
             tool2FP_lowPercentageIdentity_alnLen_allQ.merge(other.tool2FP_lowPercentageIdentity_alnLen_allQ);
-            tool2FP_lowAlnLen_ed_allQ.merge(other.tool2FP_lowAlnLen_ed_allQ);
+            tool2NoExactRun_ed_allQ.merge(other.tool2NoExactRun_ed_allQ);
             tool2FP_lowerExactMatchKmers_ed_allQ.merge(other.tool2FP_lowerExactMatchKmers_ed_allQ);
             tool2FP_lowPercentageIdentity_ed_allQ.merge(other.tool2FP_lowPercentageIdentity_ed_allQ);
             tool2FN_baseLine_alnLen_allQ.merge(other.tool2FN_baseLine_alnLen_allQ);
@@ -329,7 +330,10 @@ private:
         }
     };
 public:
-    CompareWithBaseLine(double pi) : percentageIdentity(pi) {}
+    CompareWithBaseLine(double pi) : percentageIdentity(pi) {
+        if (!std::isfinite(pi) || pi < 0 || pi > 1)
+            throw invalid_argument("Percentage identity must be between 0 and 1");
+    }
 
     void determineEditsLocationsAndType(string read, string query, vector<int>& editPos) {
         // Check if the sequences have the same length
@@ -531,7 +535,9 @@ private:
         const bool isMinimap2 = tool2Name == "minimap2" || tool2Name == "MINIMAP2";
         uint32_t baseLineBestAlnSize = 0;
         const auto queryIt = queries.find(queryInd);
-        const string query = queryIt == queries.end() ? string() : queryIt->second;
+        if (queryIt == queries.end())
+            throw runtime_error("Missing query ID: " + to_string(queryInd));
+        const string& query = queryIt->second;
         if(query.find('N') != string::npos || query.find('n') != string::npos)
         {
             if (!cfg.comparisonSummaryOnly) cmp << "query contains N!" << '\n';
@@ -590,7 +596,7 @@ private:
         uint32_t tool2TP_nobaseLineMatches = 0, tool2TP_tool2Outperfomed = 0, tool2TP_baseLineOutperfomed = 0, tool2TP_tool2EqualbaseLine = 0;
         uint32_t baseLineTP_notool2Matches = 0;
         uint32_t tool2Best_tool2Outperfomed = 0, tool2Best_baseLineOutperfomed = 0, tool2Best_tool2EqualbaseLine = 0;
-        uint32_t tool2FP_lowAlnLen = 0, tool2FP_lowPercentageIdentity = 0;
+        uint32_t tool2NoExactRun = 0, tool2FP_lowPercentageIdentity = 0;
         if (!cfg.comparisonSummaryOnly) cmp << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
         if (!cfg.comparisonSummaryOnly) cmp << "Q : " << query << ", queryInd: " << queryInd << '\n';
         Alignment bestAlntool2;
@@ -658,14 +664,14 @@ private:
                 const bool exactPositionsKnown = !isMinimap2 &&
                     !(isBwotie && aln.cigar.find('M') != string::npos);
                 if(exactPositionsKnown && CHECK_EXACT_MATCH_CRITERION && !hasConsecutiveMatches(cigarStr, cfg.kmerLength)) {
-                    // isFP = true; // this is FP in terms of not finding exact match, but in total it is TP
+                    // A diagnostic only; acceptance is determined by identity.
                     aln.criteriaCode = 0x10;
-                    tool2FP_lowAlnLen++;
+                    tool2NoExactRun++;
                     uint16_t ltm = longestRunOfMatches(cigarStr);
-                    stats.tool2FP_lowAlnLen_alnLen_allQ.insert(aln.partialMatchSize);
-                    stats.tool2FP_lowAlnLen_ed_allQ.insert(aln.substitutions + aln.inDels);
-                    stats.tool2FP_lowAlnLen_matchsize_allQ.insert(ltm);
-                    if (!cfg.comparisonSummaryOnly) cmp << "FP for " + tool2Name + ", due to low aln len, alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", match size: " << ltm << '\n';
+                    stats.tool2NoExactRun_alnLen_allQ.insert(aln.partialMatchSize);
+                    stats.tool2NoExactRun_ed_allQ.insert(aln.substitutions + aln.inDels);
+                    stats.tool2NoExactRun_matchsize_allQ.insert(ltm);
+                    if (!cfg.comparisonSummaryOnly) cmp << "Diagnostic for " + tool2Name + ", no exact match run of length " + to_string(cfg.kmerLength) + ", alnlen : " << aln.partialMatchSize << ", ed : " << aln.substitutions + aln.inDels << ", readID: " <<  aln.readID << ", match size: " << ltm << '\n';
                 }
                 // The exact-run diagnostic does not exempt a pair from identity filtering.
                 if (!it->second.passesIdentity) {
@@ -758,29 +764,7 @@ private:
                     }
                 }
             }
-            stats.addTool2BestAlnSz(bestAlntool2.partialMatchSize);
-            for (auto itt = baselineReadID_Aln.begin(); itt != baselineReadID_Aln.end(); itt++)
-            {
-                Alignmen_Baseline aaln = itt->second;
-                const bool tool2found = acceptedLengths.find(aaln.readID) != acceptedLengths.end();
-                if(!tool2found)
-                {
-                    baseLineTP_notool2Matches++;
-                    stats.baseLineTP_notool2Matches_alnLen_allQ.insert(aaln.matches + aaln.inDels + aaln.substitutions);
-                    stats.baseLineTP_notool2Matches_ed_allQ.insert(aaln.substitutions + aaln.inDels);
-
-                }
-            }
-            stats.baseLineTP_notool2Matches_allQ += baseLineTP_notool2Matches;
-            if (!cfg.comparisonSummaryOnly) cmp << "baseLine TP that " + tool2Name + " did not find: " << baseLineTP_notool2Matches << '\n';
-            if (!cfg.comparisonSummaryOnly) cmp << tool2Name + " TP: " << tool2TP << "\t" << tool2Name + " FP: " << tool2FP << '\n';
-            stats.tool2TPPerQuery.insert(tool2TP);
-            stats.totaltool2TP += tool2TP;
-            stats.tool2FPPerQuery.insert(tool2FP);
-            stats.totaltool2FP += tool2FP;
-            if(tool2TP > 0){
-                stats.queriestool2FoundMatch++;
-            }
+            if (tool2TP > 0) stats.addTool2BestAlnSz(bestAlntool2.partialMatchSize);
             if(baseLineReadPerQuery > 0 && tool2ReadPerQuery > 0 && tool2TP == 0){//baseLine TP
                 stats.tool2FN_noCriteriaFittedMatches++;
                 stats.tool2FN_noCriteria_baseLine_alnLen_allQ.insert(baseLineBestAln.matches + baseLineBestAln.inDels + baseLineBestAln.substitutions);
@@ -846,21 +830,36 @@ private:
             const uint32_t baselineLength = baseline.matches + baseline.inDels + baseline.substitutions;
             const auto found = acceptedLengths.find(entry.first);
             const uint32_t toolLength = found == acceptedLengths.end() ? 0 : found->second;
-            if (found == acceptedLengths.end())
+            if (found == acceptedLengths.end()) {
                 stats.addTool2FNAlnSz(baselineLength);
+                ++baseLineTP_notool2Matches;
+                stats.baseLineTP_notool2Matches_alnLen_allQ.insert(baselineLength);
+                stats.baseLineTP_notool2Matches_ed_allQ.insert(baseline.substitutions + baseline.inDels);
+            }
             if (toolLength < baselineLength) {
                 ++stats.thresholdFNChanges[toolLength + 1];
                 --stats.thresholdFNChanges[baselineLength + 1];
             }
+        }
+        // Include all evaluated queries, even when the tool has no candidates.
+        stats.baseLineTP_notool2Matches_allQ += baseLineTP_notool2Matches;
+        stats.tool2TPPerQuery.insert(tool2TP);
+        stats.tool2FPPerQuery.insert(tool2FP);
+        stats.totaltool2TP += tool2TP;
+        stats.totaltool2FP += tool2FP;
+        if (tool2TP > 0) ++stats.queriestool2FoundMatch;
+        if (!cfg.comparisonSummaryOnly) {
+            cmp << "baseLine TP that " + tool2Name + " did not find: " << baseLineTP_notool2Matches << '\n';
+            cmp << tool2Name + " TP: " << tool2TP << "\t" << tool2Name + " FP: " << tool2FP << '\n';
         }
         stats.tool2TP_nobaseLineMatches_allQ += tool2TP_nobaseLineMatches;
         stats.tool2TP_tool2Outperfomed_allQ += tool2TP_tool2Outperfomed;
         stats.tool2TP_baseLineOutperfomed_allQ += tool2TP_baseLineOutperfomed;
         stats.tool2TP_tool2EqualbaseLine_allQ += tool2TP_tool2EqualbaseLine;
         if (!cfg.comparisonSummaryOnly) cmp << tool2Name + "TP_nobaseLineMatches: " << tool2TP_nobaseLineMatches << ", " + tool2Name + "TP_tool2Outperfomed: " << tool2TP_tool2Outperfomed << ", " + tool2Name + "TP_baseLineOutperfomed: " << tool2TP_baseLineOutperfomed << ", " + tool2Name + "TP_tool2EqualbaseLine: " << tool2TP_tool2EqualbaseLine << '\n';
-        stats.tool2FP_lowAlnLen_allQ += tool2FP_lowAlnLen;
+        stats.tool2NoExactRun_allQ += tool2NoExactRun;
         stats.tool2FP_lowPercentageIdentity_allQ += tool2FP_lowPercentageIdentity;
-        if (!cfg.comparisonSummaryOnly) cmp  << tool2Name + "FP_lowAlnLen: " << tool2FP_lowAlnLen << ", " + tool2Name << "FP_lowPercentageIdentity: " << tool2FP_lowPercentageIdentity << '\n';
+        if (!cfg.comparisonSummaryOnly) cmp << tool2Name + "NoExactRun (diagnostic): " << tool2NoExactRun << ", " + tool2Name << "FP_lowPercentageIdentity: " << tool2FP_lowPercentageIdentity << '\n';
         stats.tool2Best_baseLineOutperfomed_allQ += tool2Best_baseLineOutperfomed;
         stats.tool2Best_tool2Outperfomed_allQ += tool2Best_tool2Outperfomed;
         stats.tool2Best_tool2EqualbaseLine_allQ += tool2Best_tool2EqualbaseLine;
@@ -876,6 +875,15 @@ public:
     {
         if (cfg.comparisonThreads == 0)
             throw invalid_argument("comparisonThreads must be positive");
+        // Chunk naming and reader bounds require consecutive zero-based IDs.
+        // Reject incompatible inputs before replacing any comparison reports.
+        if (queries.size() != queryCount)
+            throw invalid_argument("Query count does not match the number of unique query IDs");
+        for (uint32_t q = 0; q < queryCount; ++q) {
+            const auto query = queries.find(q);
+            if (query == queries.end() || query->second.empty())
+                throw invalid_argument("Comparison requires nonempty queries with IDs 0..queryCount-1; missing or empty ID " + to_string(q));
+        }
         const string tool2Name = cfg.otherTool;
         cout << "Comparing Baseline and " + tool2Name << endl;
         // Validate tool input before creating comparison reports.
@@ -912,6 +920,10 @@ public:
         ofstream thresholdRecall(alnReportAddressBase + "RecallByThreshold.txt");
         if (!thresholdRecall)
             throw runtime_error("Cannot create threshold recall report");
+        ofstream baselineRecall(alnReportAddressBase + "BaselineRecallByThreshold.txt");
+        ofstream additionalHits(alnReportAddressBase + "AdditionalHitsByThreshold.txt");
+        if (!baselineRecall || !additionalHits)
+            throw runtime_error("Cannot create baseline recall reports: " + alnReportAddressBase);
         ofstream tpAlnCmp, bestAlnCmp, tpEdCmp, bestEdCmp;
         ofstream tpAlnSz, bestAlnSz;
         // if(REPORT_ALN_PER_Q) alnPerQ.open(alnPerQueryFileAddress);
@@ -985,7 +997,10 @@ public:
         for (auto& local : workerStats) stats.merge(local);
         Utilities<uint32_t> util;
         cmp << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Overall Comparison Results>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << '\n';
+        cmp << "BaselineRecallByThreshold reports conventional baseline-pair recall.\n";
+        cmp << "TP/FP summaries below count accepted/rejected tool pairs across all lengths.\n";
         cmp << left << setw(80) << "# Of queries : " + to_string(queryCount) << '\n';
+        cmp << left << setw(80) << "# Of evaluated queries (excluding N): " << queryCount - stats.numberOfQueryContainN << '\n';
         cmp << left << setw(80) << "# Of queries that baseLine found match : " << stats.queriesblfoundMatch << '\n';
         cmp << left << setw(80) << "# Of queries that " + tool2Name + " found match (TP) : " << stats.queriestool2FoundMatch << '\n';
 
@@ -1097,13 +1112,13 @@ public:
         pair<uint32_t, uint32_t> avgtool2FPPerQuery = util.calculateStatistics2(stats.tool2FPPerQuery);
         cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s FP per query: " << avgtool2FPPerQuery.first << ", " << avgtool2FPPerQuery.second << '\n';
 
-        cmp << left << setw(80) << "# Of " + tool2Name + " (FP) that alignment length < R: " << stats.tool2FP_lowAlnLen_allQ << '\n';
-        pair<uint32_t, uint32_t> avgtool2FP_lowAlnLen_alnLen_allQ = util.calculateStatistics2(stats.tool2FP_lowAlnLen_alnLen_allQ);
-        pair<uint32_t, uint32_t> avgtool2FP_lowAlnLen_ed_allQ = util.calculateStatistics2(stats.tool2FP_lowAlnLen_ed_allQ);
-        pair<uint32_t, uint32_t> avgtool2FP_lowAlnLen_matchsize_allQ = util.calculateStatistics2(stats.tool2FP_lowAlnLen_matchsize_allQ);
-        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s alignment length where alignment length < R: " << avgtool2FP_lowAlnLen_alnLen_allQ.first << ", " << avgtool2FP_lowAlnLen_alnLen_allQ.second << '\n';
-        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s edit distance where alignment length < R: " << avgtool2FP_lowAlnLen_ed_allQ.first << ", " << avgtool2FP_lowAlnLen_ed_allQ.second << '\n';
-        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s match size where alignment length < R: " << avgtool2FP_lowAlnLen_matchsize_allQ.first << ", " << avgtool2FP_lowAlnLen_matchsize_allQ.second << '\n';
+        cmp << left << setw(80) << "# Of " + tool2Name + " candidates with no exact match run of length " + to_string(cfg.kmerLength) + " (diagnostic): " << stats.tool2NoExactRun_allQ << '\n';
+        pair<uint32_t, uint32_t> avgtool2NoExactRun_alnLen_allQ = util.calculateStatistics2(stats.tool2NoExactRun_alnLen_allQ);
+        pair<uint32_t, uint32_t> avgtool2NoExactRun_ed_allQ = util.calculateStatistics2(stats.tool2NoExactRun_ed_allQ);
+        pair<uint32_t, uint32_t> avgtool2NoExactRun_matchsize_allQ = util.calculateStatistics2(stats.tool2NoExactRun_matchsize_allQ);
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s alignment length where no exact match run meets k (diagnostic): " << avgtool2NoExactRun_alnLen_allQ.first << ", " << avgtool2NoExactRun_alnLen_allQ.second << '\n';
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s edit distance where no exact match run meets k (diagnostic): " << avgtool2NoExactRun_ed_allQ.first << ", " << avgtool2NoExactRun_ed_allQ.second << '\n';
+        cmp << left << setw(80) << "(avg, median) " + tool2Name + "'s longest exact run where no exact match run meets k (diagnostic): " << avgtool2NoExactRun_matchsize_allQ.first << ", " << avgtool2NoExactRun_matchsize_allQ.second << '\n';
 
         // cmp << left << setw(80) << "# Of " + tool2Name + " (FP) that # of kmers is lower than regionSize" << tool2FP_lowerExactMatchKmers_allQ << endl;
         // pair<uint32_t, uint32_t> avgtool2FP_lowerExactMatchKmers_alnLen_allQ = util.calculateStatistics2(tool2FP_lowerExactMatchKmers_alnLen_allQ);
@@ -1146,16 +1161,25 @@ public:
             bestAlnSz << i << "\t" << stats.baselineBest_aln_sz[i] << "\t" << stats.tool2Best_aln_sz[i] << '\n';
             fnAlnSz << i << "\t" << stats.baselineFN_aln_sz[i] << "\t" << stats.tool2FN_aln_sz[i] << '\n';
         }
-        // Direct counts at each R, not histogram bins: consumers must not sum
-        // these rows again. Preserve the existing accepted-alignment TP policy.
-        uint64_t thresholdTP = 0;
+        // Preserve all accepted tool hits in the legacy report; restrict
+        // conventional recall to qualifying baseline pairs at each threshold.
+        uint64_t thresholdTP = 0, thresholdBaseline = 0;
         for (const auto& bin : stats.tool2TP_aln_sz) thresholdTP += bin.second;
+        for (const auto& bin : stats.baselineTP_aln_sz) thresholdBaseline += bin.second;
         int64_t thresholdFN = 0;
         const uint32_t maxThreshold = std::max<uint32_t>(255, cfg.contigSize + 19);
         for (uint32_t r = 1; r <= maxThreshold; ++r) {
             thresholdFN += stats.thresholdFNChanges[r];
+            if (thresholdFN < 0 || uint64_t(thresholdFN) > thresholdBaseline)
+                throw logic_error("Inconsistent baseline false negatives at threshold " + to_string(r));
+            const uint64_t recoveredBaseline = thresholdBaseline - uint64_t(thresholdFN);
+            if (recoveredBaseline > thresholdTP)
+                throw logic_error("Recovered baseline pairs exceed accepted tool pairs at threshold " + to_string(r));
             thresholdRecall << r << "\t" << thresholdTP << "\t" << thresholdFN << "\n";
+            baselineRecall << r << "\t" << recoveredBaseline << "\t" << thresholdFN << "\n";
+            additionalHits << r << "\t" << thresholdTP - recoveredBaseline << "\n";
             thresholdTP -= stats.tool2TP_aln_sz[r];
+            thresholdBaseline -= stats.baselineTP_aln_sz[r];
         }
         cmp.close();
         if(REPORT_ALN_PER_Q) alnPerQ.close();
@@ -1167,8 +1191,10 @@ public:
         bestAlnSz.close();
         fnAlnSz.close();
         thresholdRecall.close();
+        baselineRecall.close();
+        additionalHits.close();
         if (!cmp || !bestAlnCmp || !tpAlnCmp || !bestEdCmp || !tpEdCmp ||
-            !tpAlnSz || !bestAlnSz || !fnAlnSz || !thresholdRecall)
+            !tpAlnSz || !bestAlnSz || !fnAlnSz || !thresholdRecall || !baselineRecall || !additionalHits)
             throw runtime_error("Failed writing comparison reports: " + alnReportAddressBase);
         if (REPORT_baseLine_FN) baseLineFn.close();
         cout << "queries processed: " << queryCount << " / " << queryCount << endl;

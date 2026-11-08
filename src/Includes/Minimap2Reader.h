@@ -56,8 +56,13 @@ public:
                 // SAM need not be sorted by query ID.
                 if (queryId >= queryCount) continue;
                 const auto readId = contigId(fields[2]);
+                const auto position = number(fields[3], std::numeric_limits<int>::max());
+                if (position == 0)
+                    throw std::runtime_error("mapped record must have a positive POS");
+                number(fields[4], 255); // MAPQ=255 denotes unavailable mapping quality.
 
                 uint32_t ambiguous = 0, exact = 0, substitutions = 0, indels = 0;
+                uint64_t queryLength = 0;
                 const auto& cigar = fields[5];
                 for (size_t i = 0; i < cigar.size();) {
                     const auto start = i;
@@ -67,7 +72,11 @@ public:
                     const auto count = number(cigar.substr(start, i - start),
                                               std::numeric_limits<int>::max());
                     if (count == 0) throw std::runtime_error("zero-length CIGAR operation");
-                    switch (cigar[i++]) {
+                    const auto operation = cigar[i++];
+                    if (operation == 'M' || operation == '=' || operation == 'X' ||
+                        operation == 'I' || operation == 'S')
+                        queryLength += count;
+                    switch (operation) {
                         case 'M': ambiguous += count; break;
                         case '=': exact += count; break;
                         case 'X': substitutions += count; break;
@@ -81,6 +90,23 @@ public:
                 }
                 const auto length = ambiguous + exact + substitutions + indels;
                 if (length == 0) throw std::runtime_error("empty alignment");
+                const auto& sequence = fields[9];
+                const auto& qualities = fields[10];
+                if (sequence != "*") {
+                    if (queryLength != sequence.size())
+                        throw std::runtime_error("SEQ length disagrees with query-consuming CIGAR operations");
+                    if (sequence.find_first_not_of(
+                            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz=.") != std::string::npos)
+                        throw std::runtime_error("invalid SAM SEQ characters");
+                }
+                if (qualities != "*") {
+                    if (sequence == "*" || qualities.size() != sequence.size())
+                        throw std::runtime_error("QUAL length disagrees with SEQ");
+                    for (const unsigned char quality : qualities) {
+                        if (quality < 33 || quality > 126)
+                            throw std::runtime_error("invalid SAM QUAL character");
+                    }
+                }
 
                 bool hasNM = false;
                 uint32_t edits = 0;

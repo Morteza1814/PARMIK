@@ -1,7 +1,8 @@
 # Figure commands
 
 Run from the repository root. Replace `<...>` with your own values.
-Run only the steps you need; existing count files can go straight to plotting.
+Run only the steps you need; current baseline recall count files can go straight
+to plotting. Rebuild and regenerate comparisons when changing the recall definition.
 
 ## 1. Build
 
@@ -49,6 +50,9 @@ Counts are written in the `experiment dir` printed by PARMIK, beneath
 `cmp_Baseline_<tool>_AlnSz_fn.txt`. For `parmik`, the program reads
 `parmikAln.txt` from that experiment directory instead of the supplied `-b` path.
 This step evaluates saved alignments; it does not rerun the aligners.
+Comparison queries must have unique, consecutive numeric IDs starting at 0,
+ending at the loaded query count minus 1. The comparison rejects unsupported IDs
+instead of silently skipping queries.
 
 For parallel comparisons in mode `-a 4`, append `--comparison-threads 8` to
 the command above. This option defaults to 1 and must be a positive integer.
@@ -107,19 +111,37 @@ python3 plot/FigurePlots/recall_PARMIK_BLAST_fig3.py <counts_directory> --output
 ```
 
 Use the experiment directory containing the count files as `<counts_directory>`.
-Every tool with a `cmp_Baseline_<tool>_RecallByThreshold.txt` file is plotted.
-Rebuild PARMIK and rerun the baseline comparisons for all tools before plotting.
-Old TP/FN histograms cannot reconstruct threshold-dependent failures; the plot
-rejects directories with tool TP histograms but missing threshold reports.
+Rebuild PARMIK and rerun the baseline comparisons for **all tools** before plotting.
+The plot now requires `cmp_Baseline_<tool>_BaselineRecallByThreshold.txt` and
+rejects older comparison reports for tools missing this file. It also rejects
+different threshold grids or different eligible-baseline counts between tools,
+which catches incompatible count sets. All runs must still use the same actual
+baseline and query set; equal count totals alone do not prove input identity.
 
-The new report has three columns: `R`, `TP(R)`, `FN(R)`. These are direct counts,
-not histogram bins, and must not be cumulatively summed. A baseline pair of
-length B with an accepted tool alignment of length L contributes FN when
-`L < R <= B`; an absent or rejected tool alignment uses L=0. Queries with no
-candidates contribute all their baseline pairs. TP retains the existing policy
-of counting accepted tool alignments of length at least R, including pairs
-absent from the baseline. The older FN histogram now also includes pairs from
-queries with no candidates, but still cannot encode the threshold relationship.
+`BaselineRecallByThreshold.txt` has three columns: `R`, `TP_baseline(R)`,
+`FN_baseline(R)`. These are direct counts, not histogram bins, and must not be
+cumulatively summed. For each R, the eligible set contains accepted baseline
+query/read pairs whose baseline alignment length B is at least R. A pair is TP
+when its best accepted tool alignment has length L at least R; otherwise it is
+FN. Thus `TP_baseline(R) + FN_baseline(R)` is the same baseline denominator for
+every tool. An absent or rejected tool alignment uses L=0, and a missed pair
+contributes FN when `L < R <= B`. Queries with no tool candidates contribute all
+their eligible baseline pairs. The plotted percentage is
+`100 * TP_baseline(R) / (TP_baseline(R) + FN_baseline(R))`; a zero denominator is
+shown as 0%.
+
+Two separate reports preserve the other information:
+
+- `cmp_Baseline_<tool>_AdditionalHitsByThreshold.txt` has two columns: R and the
+  number of accepted tool hits of length at least R outside the eligible baseline
+  set. This includes pairs absent from the accepted baseline and pairs whose
+  baseline alignment is shorter than R. These hits do not increase baseline recall.
+- `cmp_Baseline_<tool>_RecallByThreshold.txt` retains the previous three-column
+  counts using all accepted tool hits as TP. Its `TP / (TP + FN)` ratio is a
+  separate metric, rather than recall against a fixed baseline-positive set.
+
+The older `AlnSz_tp.txt` and `AlnSz_fn.txt` histograms remain available for
+alignment-length summaries, but cannot reconstruct the threshold relationship.
 Invalid data produces an error. The command saves `<figure.pdf>` and
 `<figure>_recall.txt` beside it, creates output directories automatically,
 and prints recall percentages. No graphical display is needed.

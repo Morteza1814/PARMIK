@@ -30,7 +30,7 @@ def plotFig(x, recalls, output_file, show=False):
     for ax, panel in ((ax1, '(A)'), (ax2, '(B)')):
         ax.legend(fontsize=18, loc='lower right')
         ax.tick_params(axis='both', which='major', labelsize=18)
-        ax.set_ylabel('Recall Rate (%)', fontsize=20)
+        ax.set_ylabel('Baseline Recall (%)', fontsize=20)
         ax.text(-0.1, 1.1, panel, transform=ax.transAxes, fontsize=24,
                 fontweight='bold', va='top', ha='right', color='blue')
     ax2.set_ylim(0, 100)
@@ -72,19 +72,36 @@ def calculate_recall_rate(tpArray, fnArray):
             recall_rate_array[i] = 0
     return recall_rate_array
 
-def getRecallByThreshold(file_path):
-    # Columns are R, TP(R), FN(R), already evaluated at each threshold.
-    df = pd.read_csv(file_path, sep=r'\s+', header=None)
-    if df.empty or df.shape[1] != 3:
+def read_threshold_counts(file_path):
+    # Keep counts as Python integers: converting uint64 counts through float
+    # would lose precision above 2**53, and signed int64 addition can overflow.
+    rows = []
+    for line_number, line in enumerate(Path(file_path).read_text().splitlines(), 1):
+        fields = line.split()
+        if not fields:
+            continue
+        if len(fields) != 3:
+            raise ValueError(f"{file_path}:{line_number}: expected R, TP(R), FN(R)")
+        if any(not value.isascii() or not value.isdigit() for value in fields):
+            raise ValueError(f"{file_path}:{line_number}: counts must be nonnegative integers")
+        row = tuple(int(value) for value in fields)
+        if row[0] > np.iinfo(np.int64).max:
+            raise ValueError(f"{file_path}:{line_number}: threshold is outside the supported range")
+        rows.append(row)
+    if not rows:
         raise ValueError(f"{file_path}: expected R, TP(R), FN(R)")
-    values = df.to_numpy(dtype=float)
-    if (not np.isfinite(values).all() or (values < 0).any()
-            or (values != np.floor(values)).any()):
-        raise ValueError(f"{file_path}: counts must be nonnegative integers")
-    lengths = values[:, 0].astype(np.int64)
+    lengths = np.array([row[0] for row in rows], dtype=np.int64)
     if (lengths < 1).any() or (np.diff(lengths) != 1).any():
         raise ValueError(f"{file_path}: thresholds must be positive and contiguous")
-    return lengths, calculate_recall_rate(values[:, 1], values[:, 2])
+    tp = np.array([row[1] for row in rows], dtype=object)
+    fn = np.array([row[2] for row in rows], dtype=object)
+    return lengths, tp, fn
+
+
+def getRecallByThreshold(file_path):
+    # Columns are direct threshold counts; do not cumulatively sum them.
+    lengths, tp, fn = read_threshold_counts(file_path)
+    return lengths, calculate_recall_rate(tp, fn)
 
 
 def trim_arrays_within_range(array1, lower_limit, upper_limit):
@@ -93,8 +110,8 @@ def trim_arrays_within_range(array1, lower_limit, upper_limit):
     return trimmed_array1
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Save Figure 3 and recall numbers for every available tool")
-    parser.add_argument('experiment_path', type=Path, help='directory containing RecallByThreshold count files')
+    parser = argparse.ArgumentParser(description="Save Figure 3 and baseline recall for every available tool")
+    parser.add_argument('experiment_path', type=Path, help='directory containing BaselineRecallByThreshold count files')
     parser.add_argument('--output', type=Path,
                         default=REPO / 'figure-results/figure3/Figure3.pdf')
     parser.add_argument('--show', action='store_true', help='also open a display')
@@ -104,31 +121,42 @@ def main(argv=None):
     if not args.experiment_path.is_dir():
         parser.error(f'Data directory does not exist: {args.experiment_path}')
     prefix = 'cmp_Baseline_'
-    suffix = '_RecallByThreshold.txt'
+    suffix = '_BaselineRecallByThreshold.txt'
     available = {p.name[len(prefix):-len(suffix)]
                  for p in args.experiment_path.glob(f'{prefix}*{suffix}')}
-    legacy_tools = {p.name[len(prefix):-len('_AlnSz_tp.txt')]
-                    for p in args.experiment_path.glob(f'{prefix}*_AlnSz_tp.txt')}
+    legacy_tools = set()
+    for legacy_suffix in ('_AlnSz_tp.txt', '_RecallByThreshold.txt'):
+        legacy_tools.update(p.name[len(prefix):-len(legacy_suffix)]
+                            for p in args.experiment_path.glob(f'{prefix}*{legacy_suffix}'))
     missing = legacy_tools - available
     if missing:
-        parser.error('Regenerate baseline comparisons for threshold-aware recall: '
+        parser.error('Regenerate comparisons for baseline-only recall '
+                     '(missing BaselineRecallByThreshold reports): '
                      + ', '.join(sorted(missing)))
     tools = [tool for tool in STYLES if tool in available]
     tools += sorted(available - set(STYLES))
     recalls = {}
     lengths = None
+    baseline_counts = None
     for tool in tools:
         path = args.experiment_path / f'{prefix}{tool}{suffix}'
-        tool_lengths, recall = getRecallByThreshold(path)
+        tool_lengths, tp, fn = read_threshold_counts(path)
         if lengths is not None and not np.array_equal(lengths, tool_lengths):
             raise ValueError(f'{tool}: alignment lengths differ between tools')
+        eligible_baseline = tp + fn
+        if any(right > left for left, right in zip(eligible_baseline, eligible_baseline[1:])):
+            raise ValueError(f'{tool}: eligible baseline counts must not increase with R')
+        if baseline_counts is not None and not np.array_equal(baseline_counts, eligible_baseline):
+            raise ValueError(f'{tool}: eligible baseline counts differ between tools; '
+                             'use comparisons against the same baseline and query set')
         lengths = tool_lengths
-        recalls[tool] = recall
+        baseline_counts = eligible_baseline
+        recalls[tool] = calculate_recall_rate(tp, fn)
     if not recalls:
-        parser.error('No RecallByThreshold files found; regenerate baseline comparisons')
+        parser.error('No BaselineRecallByThreshold files found; regenerate baseline comparisons')
     mask = (lengths >= 11) & (lengths <= 150)
     if not mask.any():
-        parser.error('No histogram lengths in the Figure 3 range (11 to 150)')
+        parser.error('No thresholds in the Figure 3 range (11 to 150)')
     plotted = {tool: recall[mask] for tool, recall in recalls.items()}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     plotFig(lengths[mask], plotted, args.output, show=args.show and not args.no_show)

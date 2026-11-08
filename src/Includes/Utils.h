@@ -2,7 +2,9 @@
 #define UTILS_H
 
 #include <algorithm>
+#include <iterator>
 #include <set>
+#include <type_traits>
 #include <vector>
 #include "tsl/robin_map.h"
 
@@ -51,39 +53,26 @@ public:
 
     pair<T, T> calculateStatistics2(const multiset<T>& data) 
     {
-        //initial check
-        if(data.size() == 0) {
-            return make_pair(0, 0);
-        }
-        // Calculate sum
-        T sum = 0;
+        if (data.empty()) return {T{}, T{}};
+
+        // Widen before adding: both the total and the middle-pair sum can
+        // overflow T even when their resulting average is representable.
+        using IntegerAccumulator = conditional_t<is_signed_v<T>, __int128, unsigned __int128>;
+        using Accumulator = conditional_t<is_integral_v<T>, IntegerAccumulator, long double>;
+        Accumulator sum = 0;
         for (T num : data) {
-            sum += num;
+            sum += static_cast<Accumulator>(num);
         }
-        // Calculate average
-        T average = (data.size() > 0) ? sum / data.size() : 0;
+        const T average = static_cast<T>(sum / static_cast<Accumulator>(data.size()));
 
-        // Calculate the index of the middle element
-        int size = data.size();
-        int middleIndex = size / 2;
-
-         // If the size is odd, return the middle element
-        T median;
-        if (size % 2 != 0) {
-            auto it = data.begin();
-            advance(it, middleIndex);
-            median = *it;
-        } 
-        // If the size is even, return the average of the two middle elements
-        else {
-            auto mid = data.begin();
-            auto mid_1 = data.begin();
-            advance(mid, middleIndex);
-            advance(mid_1, middleIndex-1);
-            median = ((*mid_1) + (*mid)) / 2.0;
+        auto middle = data.begin();
+        using Difference = typename multiset<T>::difference_type;
+        advance(middle, static_cast<Difference>(data.size() / 2));
+        T median = *middle;
+        if (data.size() % 2 == 0) {
+            median = static_cast<T>((static_cast<Accumulator>(*prev(middle)) +
+                                     static_cast<Accumulator>(*middle)) / 2);
         }
-
-        // Return the results as a tuple
         return make_pair(average, median);
     }
 
